@@ -44,3 +44,32 @@ class AmbitoViewset(MultiSerializerViewSet):
         'default': AmbitoSerializer,
         'create':CreateAmbitoSerializer
     }
+
+
+class SectorViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Sector.objects.all()
+    serializers = {
+        'default': SectorSerializer
+    }
+
+class CalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Calle.objects.all()
+    serializers = {
+        'default': CalleSerializer
+    }
+
+class AvenidaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Avenida.objects.all()
+    serializers = {
+        'default': AvenidaSerializer
+    }
+
+class UrbanizacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Urbanizacion.objects.all()
+    serializers = {
+        'default': UrbanizacionSerializer
+    }
