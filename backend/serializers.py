@@ -157,7 +157,10 @@ class TipologiaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
+class InmuebleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inmueble
+        fields = '__all__'
 
 
 

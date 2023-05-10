@@ -34,6 +34,10 @@ router.register(r'finesfiscales', views.FinesFiscalesViewset,basename='finesfisc
 router.register(r'tipodesincorporacion', views.TipoDesincorporacionViewset,basename='tipodesincorporacion')
 router.register(r'tipotransaccion', views.TipoTransaccionViewset,basename='tipotransaccion')
 router.register(r'tipologia', views.TipologiaViewset,basename='tipologia')
+router.register(r'inmueble', views.InmuebleViewset,basename='inmueble')
+
+
+
 urlpatterns = [
     # Base
     path('', include(router.urls)),

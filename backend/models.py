@@ -163,6 +163,10 @@ class Servicios(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Servicio")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Servicio")
 
+class Tipologia(models.Model):
+    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
+    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de tipologia")
+
 class FinesFiscales(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de fines fiscales")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de fines fiscales")
@@ -175,9 +179,35 @@ class TipoTransaccion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipo transaccion")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de transaccion")
 
-class Tipologia(models.Model):
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
-    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de tipologia")
+class Inmueble(models.Model):
+    numero_expediente = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    fecha_inscripcion = models.DateTimeField(default=datetime.now, blank=True, help_text="fecha de inscripcion")
+    tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,help_text="Sector asociado")
+    status=models.ForeignKey(EstatusInmueble,on_delete=models.PROTECT,help_text="Sector asociado")
+    ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,help_text="Sector asociado")
+    sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
+    manzana=models.ForeignKey(Manzana,on_delete=models.PROTECT,help_text="Sector asociado")
+    parcela=models.ForeignKey(Parcela,on_delete=models.PROTECT,help_text="Sector asociado")
+    subparcela=models.ForeignKey(SubParcela,on_delete=models.PROTECT,help_text="Sector asociado")
+    nivel=models.ForeignKey(NivelInmueble,on_delete=models.PROTECT,help_text="Sector asociado")
+    unidad=models.ForeignKey(UnidadInmueble,on_delete=models.PROTECT,help_text="Sector asociado")
+    urbanizacion=models.ForeignKey(Urbanizacion,on_delete=models.PROTECT,help_text="urbanizacion")
+    calle=models.ForeignKey(Calle,on_delete=models.PROTECT,help_text="Sector asociado")
+    conjunto_residencial=models.ForeignKey(ConjuntoResidencial,on_delete=models.PROTECT,help_text="Sector asociado")
+    edificio=models.ForeignKey(Edificio,on_delete=models.PROTECT,help_text="Sector asociado")
+    avenida=models.ForeignKey(Avenida,on_delete=models.PROTECT,help_text="Sector asociado")
+    torre=models.ForeignKey(Torre,on_delete=models.PROTECT,help_text="Sector asociado")
+    numero_civico = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    numero_casa = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    numero_piso = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    telefono = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    zona = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    direccion = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    referencia = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    observaciones = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+	
+
+
 
 
 

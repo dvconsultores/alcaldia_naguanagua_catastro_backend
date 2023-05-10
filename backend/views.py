@@ -250,15 +250,20 @@ class TipologiaViewset(MultiSerializerViewSet):
         'default': TipologiaSerializer
     }
 
+class InmuebleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Inmueble.objects.all()
+    serializers = {
+        'default': InmuebleSerializer
+    }
+
+
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
 #    queryset=.objects.all()
 #    serializers = {
 #        'default': Serializer
 #    }
-
-
-
 
 
 
