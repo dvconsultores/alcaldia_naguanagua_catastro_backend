@@ -136,7 +136,6 @@ class ServiciosSerializer(serializers.ModelSerializer):
         model = Servicios
         fields = '__all__'
 
-
 class FinesFiscalesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinesFiscales

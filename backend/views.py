@@ -73,3 +73,207 @@ class UrbanizacionViewset(MultiSerializerViewSet):
     serializers = {
         'default': UrbanizacionSerializer
     }
+
+class ManzanaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Manzana.objects.all()
+    serializers = {
+        'default': ManzanaSerializer
+    }
+
+class ParcelaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Parcela.objects.all()
+    serializers = {
+        'default': ParcelaSerializer
+    }
+
+class SubParcelaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=SubParcela.objects.all()
+    serializers = {
+        'default': SubParcelaSerializer
+    }
+
+class ConjuntoResidencialViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=ConjuntoResidencial.objects.all()
+    serializers = {
+        'default': ConjuntoResidencialSerializer
+    }
+
+class EdificioViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Edificio.objects.all()
+    serializers = {
+        'default': EdificioSerializer
+    }
+
+class TorreViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Torre.objects.all()
+    serializers = {
+        'default': TorreSerializer
+    }
+
+class PropietarioViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Propietario.objects.all()
+    serializers = {
+        'default': PropietarioSerializer
+    }
+
+class TipoInmuebleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoInmueble.objects.all()
+    serializers = {
+        'default': TipoInmuebleSerializer
+    }
+
+
+class EstatusInmuebleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=EstatusInmueble.objects.all()
+    serializers = {
+        'default': EstatusInmuebleSerializer
+    }
+
+class NivelInmuebleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=NivelInmueble.objects.all()
+    serializers = {
+        'default': NivelInmuebleSerializer
+    }
+
+class UnidadInmuebleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=UnidadInmueble.objects.all()
+    serializers = {
+        'default': UnidadInmuebleSerializer
+    }        
+
+class TipoDocumentoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoDocumento.objects.all()
+    serializers = {
+        'default': TipoDocumentoSerializer
+    }
+
+class TipoEspecialViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoEspecial.objects.all()
+    serializers = {
+        'default': TipoEspecialSerializer
+    }
+
+class TipoTenenciaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoTenencia.objects.all()
+    serializers = {
+        'default': TipoTenenciaSerializer
+    }
+
+class TopografiaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Topografia.objects.all()
+    serializers = {
+        'default': TopografiaSerializer
+    }
+
+class AccesoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Acceso.objects.all()
+    serializers = {
+        'default': AccesoSerializer
+    }
+
+class FormaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Forma.objects.all()
+    serializers = {
+        'default': FormaSerializer
+    }        
+
+class UbicacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Ubicacion.objects.all()
+    serializers = {
+        'default': UbicacionSerializer
+    }
+
+class UsoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Uso.objects.all()
+    serializers = {
+        'default': UsoSerializer
+    }
+
+class RegimenViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Regimen.objects.all()
+    serializers = {
+        'default': RegimenSerializer
+    }
+
+class ServiciosViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Servicios.objects.all()
+    serializers = {
+        'default': ServiciosSerializer
+    }
+
+class FinesFiscalesViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=FinesFiscales.objects.all()
+    serializers = {
+        'default': FinesFiscalesSerializer
+    }
+
+class TipoDesincorporacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoDesincorporacion.objects.all()
+    serializers = {
+        'default': TipoDesincorporacionSerializer
+    }        
+
+class TipoTransaccionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoTransaccion.objects.all()
+    serializers = {
+        'default': TipoTransaccionSerializer
+    }
+
+class TipologiaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Tipologia.objects.all()
+    serializers = {
+        'default': TipologiaSerializer
+    }
+
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
