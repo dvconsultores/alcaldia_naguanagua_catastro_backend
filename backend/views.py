@@ -257,6 +257,69 @@ class InmuebleViewset(MultiSerializerViewSet):
         'default': InmuebleSerializer
     }
 
+class InmueblePropiedadViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmueblePropiedad.objects.all()
+    serializers = {
+        'default': InmueblePropiedadSerializer
+    }
+
+
+class InmueblePropietariosViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmueblePropietarios.objects.all()
+    serializers = {
+        'default': InmueblePropietariosSerializer
+    }
+
+class InmuebleTerrenoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleTerreno.objects.all()
+    serializers = {
+        'default': InmuebleTerrenoSerializer
+    }
+
+class InmuebleConstruccionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleConstruccion.objects.all()
+    serializers = {
+        'default': InmuebleConstruccionSerializer
+    }
+
+class InmuebleValoracionTerrenoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleValoracionTerreno.objects.all()
+    serializers = {
+        'default': InmuebleValoracionTerrenoSerializer
+    }
+    
+class InmuebleValoracionConstruccionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleValoracionConstruccion.objects.all()
+    serializers = {
+        'default': InmuebleValoracionConstruccionSerializer
+    }
+
+class InmuebleUbicacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleUbicacion.objects.all()
+    serializers = {
+        'default': InmuebleUbicacionSerializer
+    }
+
+class InmuebleFaltanteViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleFaltante.objects.all()
+    serializers = {
+        'default': InmuebleFaltanteSerializer
+    }
+
+class PropietarioViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= Propietario.objects.all()
+    serializers = {
+        'default': PropietarioSerializer
+    }
 
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]

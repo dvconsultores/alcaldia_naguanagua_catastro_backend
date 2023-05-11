@@ -35,7 +35,15 @@ router.register(r'tipodesincorporacion', views.TipoDesincorporacionViewset,basen
 router.register(r'tipotransaccion', views.TipoTransaccionViewset,basename='tipotransaccion')
 router.register(r'tipologia', views.TipologiaViewset,basename='tipologia')
 router.register(r'inmueble', views.InmuebleViewset,basename='inmueble')
-
+router.register(r'inmueble_propiedad', views.InmueblePropiedadViewset,basename='inmueble_propiedad')
+router.register(r'inmueble_propietarios', views.InmueblePropietariosViewset,basename='inmueble_propietarios')
+router.register(r'inmueble_terreno', views.InmuebleTerrenoViewset,basename='inmueble_terreno')
+router.register(r'inmueble_construccion', views.InmuebleConstruccionViewset,basename='inmueble_construccion')
+router.register(r'inmueble_valoracion_terreno', views.InmuebleValoracionTerrenoViewset,basename='inmueble_valoracion_terreno')
+router.register(r'inmueble_valoracion_construccion', views.InmuebleValoracionConstruccionViewset,basename='inmueble_valoracion_construccion')
+router.register(r'inmueble_ubicacion', views.InmuebleUbicacionViewset,basename='inmueble_ubicacion')
+router.register(r'inmueble_faltante', views.InmuebleFaltanteViewset,basename='inmueble_faltante')
+router.register(r'propietario', views.PropietarioViewset,basename='propietario')
 
 
 urlpatterns = [

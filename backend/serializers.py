@@ -163,6 +163,48 @@ class InmuebleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class InmueblePropiedadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmueblePropiedad
+        fields = '__all__'
 
 
+class InmueblePropietariosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmueblePropietarios
+        fields = '__all__'
 
+class InmuebleTerrenoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleTerreno
+        fields = '__all__'
+
+class InmuebleConstruccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleConstruccion
+        fields = '__all__'
+
+class InmuebleValoracionTerrenoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleValoracionTerreno
+        fields = '__all__'
+
+class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleValoracionConstruccion
+        fields = '__all__' 
+
+class InmuebleUbicacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleUbicacion
+        fields = '__all__' 
+
+class InmuebleFaltanteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleFaltante
+        fields = '__all__' 
+
+class PropietarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Propietario
+        fields = '__all__' 
