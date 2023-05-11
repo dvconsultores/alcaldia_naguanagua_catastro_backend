@@ -208,3 +208,20 @@ class PropietarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Propietario
         fields = '__all__' 
+
+
+
+class TasaMultaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TasaMulta
+        fields = '__all__' 
+
+class EstadoCuentaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstadoCuenta
+        fields = '__all__' 
+
+class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstadoCuentaDetalle
+        fields = '__all__'         

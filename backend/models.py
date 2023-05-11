@@ -24,7 +24,7 @@ class Sector(models.Model):
     ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,help_text="ambito asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del Sector")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion del Sector")
-    area = models.TextField(null=False,blank =False, unique=True, help_text="area del Sector")
+    area = models.TextField(null=True,blank =True, unique=False, help_text="area del Sector")
     perimetro = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion del Sector")
     clasificacion= models.CharField(max_length=1, choices=CLASIFICACION, default='A', help_text='clasificacion del Sector')
 
@@ -287,7 +287,7 @@ class InmuebleValoracionTerreno(models.Model):
 class InmuebleValoracionConstruccion(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleValoracionTerreno, on_delete=models.PROTECT,help_text="Sector asociado")
     tipologia = models.ForeignKey (Tipologia, on_delete=models.PROTECT,help_text="Sector asociado")
-    fCompra	= models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    fecha_compra = models.DateTimeField(default=datetime.now, blank=True, help_text="fecha_compra")
     trimestre = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     anio = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     area = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
@@ -322,7 +322,7 @@ class InmuebleUbicacion(models.Model):
     g8_este = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
 
 class InmuebleFaltante(models.Model):
-    inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Sector asociado")
+    inmueble = models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Sector asociado")
     cedula = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     doumento_propiedad = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     observaciones = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
@@ -336,3 +336,20 @@ class Propietario(models.Model):
     telefono_secundario   = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     email_principal  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     emaill_secundario  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+
+class TasaMulta(models.Model):
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
+    unidad_tributaria  = models.TextField(null=False,blank =False, unique=True, help_text="Cantidad Unidad tributaria")
+
+class EstadoCuenta(models.Model):
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    fecha = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Sector asociado")
+    inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Sector asociado")
+    observaciones = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")	
+
+class EstadoCuentaDetalle(models.Model):
+    estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="Sector asociado")
+    tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Sector asociado")
+    unidad_tributaria  = models.TextField(null=False,blank =False, unique=True, help_text="Cantidad Unidad tributaria")	
+    cantidad  = models.TextField(null=False,blank =False, unique=True, help_text="Cantidad Unidad tributaria")

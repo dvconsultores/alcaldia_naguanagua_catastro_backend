@@ -44,7 +44,9 @@ router.register(r'inmueble_valoracion_construccion', views.InmuebleValoracionCon
 router.register(r'inmueble_ubicacion', views.InmuebleUbicacionViewset,basename='inmueble_ubicacion')
 router.register(r'inmueble_faltante', views.InmuebleFaltanteViewset,basename='inmueble_faltante')
 router.register(r'propietario', views.PropietarioViewset,basename='propietario')
-
+router.register(r'tasamulta', views.PropietarioViewset,basename='tasamulta')
+router.register(r'estadocuenta', views.PropietarioViewset,basename='estadocuenta')
+router.register(r'estadocuentadetalle', views.PropietarioViewset,basename='estadocuentadetalle')
 
 urlpatterns = [
     # Base

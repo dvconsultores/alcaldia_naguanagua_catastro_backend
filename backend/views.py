@@ -321,6 +321,27 @@ class PropietarioViewset(MultiSerializerViewSet):
         'default': PropietarioSerializer
     }
 
+class TasaMultaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TasaMulta.objects.all()
+    serializers = {
+        'default': TasaMultaSerializer
+    }
+
+class EstadoCuentaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=EstadoCuenta.objects.all()
+    serializers = {
+        'default': EstadoCuentaSerializer
+    }
+
+class EstadoCuentaDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=EstadoCuentaDetalle.objects.all()
+    serializers = {
+        'default': EstadoCuentaDetalleSerializer
+    }
+
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
 #    queryset=.objects.all()
