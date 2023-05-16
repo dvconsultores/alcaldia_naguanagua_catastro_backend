@@ -250,6 +250,13 @@ class TipologiaViewset(MultiSerializerViewSet):
         'default': TipologiaSerializer
     }
 
+class ZonaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Zona.objects.all()
+    serializers = {
+        'default': ZonaSerializer
+    }
+
 class InmuebleViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=Inmueble.objects.all()
@@ -279,11 +286,106 @@ class InmuebleTerrenoViewset(MultiSerializerViewSet):
         'default': InmuebleTerrenoSerializer
     }
 
+class InmuebleTerrenoTopografiaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleTerrenoTopografia.objects.all()
+    serializers = {
+        'default': InmuebleTerrenoTopografiaSerializer
+    }
+class InmuebleTerrenoAccesoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleTerrenoAcceso.objects.all()
+    serializers = {
+        'default': InmuebleTerrenoAccesoSerializer
+    }
+class InmuebleTerrenoUsoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleTerrenoUso.objects.all()
+    serializers = {
+        'default': InmuebleTerrenoUsoSerializer
+    }
+class InmuebleTerrenoRegimenViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleTerrenoRegimen.objects.all()
+    serializers = {
+        'default': InmuebleTerrenoRegimenSerializer
+    }
+
+class UsoConstruccionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=UsoConstruccion.objects.all()
+    serializers = {
+        'default': UsoConstruccionSerializer
+    }
+
+class SoporteViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Soporte.objects.all()
+    serializers = {
+        'default': SoporteSerializer
+    }
+
+class TechoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Techo.objects.all()
+    serializers = {
+        'default': TechoSerializer
+    }
+
+class CubiertaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Cubierta.objects.all()
+    serializers = {
+        'default': CubiertaSerializer
+    }
+
+class TipoParedViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoPared.objects.all()
+    serializers = {
+        'default': TipoParedSerializer
+    }
+
+class AcabadoParedViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=AcabadoPared.objects.all()
+    serializers = {
+        'default': AcabadoParedSerializer
+    }
+
+class ConservacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Conservacion.objects.all()
+    serializers = {
+        'default': ConservacionSerializer
+    }
+
 class InmuebleConstruccionViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset= InmuebleConstruccion.objects.all()
     serializers = {
         'default': InmuebleConstruccionSerializer
+    }
+
+class InmuebleConstruccionSoporteViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=InmuebleConstruccionSoporte.objects.all()
+    serializers = {
+        'default': InmuebleConstruccionSoporteSerializer
+    }
+
+class InmuebleConstruccionTechoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=InmuebleConstruccionTecho.objects.all()
+    serializers = {
+        'default': InmuebleConstruccionTechoSerializer
+    }
+
+class InmuebleConstruccionCubiertaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=InmuebleConstruccionCubierta.objects.all()
+    serializers = {
+        'default': InmuebleConstruccionCubiertaSerializer
     }
 
 class InmuebleValoracionTerrenoViewset(MultiSerializerViewSet):

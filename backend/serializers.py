@@ -156,6 +156,10 @@ class TipologiaSerializer(serializers.ModelSerializer):
         model = Tipologia
         fields = '__all__'
 
+class ZonaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Zona
+        fields = '__all__'
 
 class InmuebleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -179,9 +183,80 @@ class InmuebleTerrenoSerializer(serializers.ModelSerializer):
         model = InmuebleTerreno
         fields = '__all__'
 
+class InmuebleTerrenoTopografiaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleTerrenoTopografia
+        fields = '__all__'
+
+class InmuebleTerrenoAccesoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleTerrenoAcceso
+        fields = '__all__'
+
+class InmuebleTerrenoUsoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleTerrenoUso
+        fields = '__all__'
+
+class InmuebleTerrenoRegimenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleTerrenoRegimen
+        fields = '__all__'
+
+class UsoConstruccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UsoConstruccion
+        fields = '__all__'
+
+class SoporteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Soporte
+        fields = '__all__'
+
+class TechoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Techo
+        fields = '__all__'
+
+class CubiertaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cubierta
+        fields = '__all__'
+
+class TipoParedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoPared
+        fields = '__all__'
+
+class AcabadoParedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcabadoPared
+        fields = '__all__'
+
+class ConservacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Conservacion
+        fields = '__all__'
+
 class InmuebleConstruccionSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmuebleConstruccion
+        fields = '__all__'
+
+
+class InmuebleConstruccionSoporteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleConstruccionSoporte
+        fields = '__all__'
+
+class InmuebleConstruccionTechoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleConstruccionTecho
+        fields = '__all__'
+
+class InmuebleConstruccionCubiertaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleConstruccionCubierta
         fields = '__all__'
 
 class InmuebleValoracionTerrenoSerializer(serializers.ModelSerializer):
