@@ -45,19 +45,19 @@ class ManzanaSerializer(serializers.ModelSerializer):
     
     descripcion_via_norte= serializers.SerializerMethodField('loaddescripcion_via_norte')
     def loaddescripcion_via_norte(self, obj):
-      return obj.via_norte.descripcion
+      return obj.via_norte.nombre
     
     descripcion_via_sur= serializers.SerializerMethodField('loaddescripcion_via_sur')
     def loaddescripcion_via_sur(self, obj):
-      return obj.via_sur.descripcion
+      return obj.via_sur.nombre
     
     descripcion_via_este= serializers.SerializerMethodField('loaddescripcion_via_este')
     def loaddescripcion_via_este(self, obj):
-      return obj.via_este.descripcion
+      return obj.via_este.nombre
     
     descripcion_via_oeste= serializers.SerializerMethodField('loaddescripcion_via_oeste')
     def loaddescripcion_via_oeste(self, obj):
-      return obj.via_oeste.descripcion
+      return obj.via_oeste.nombre
 
 class ParcelaSerializer(serializers.ModelSerializer):
     class Meta:
