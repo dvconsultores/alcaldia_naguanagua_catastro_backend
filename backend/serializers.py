@@ -35,6 +35,29 @@ class ManzanaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manzana
         fields = '__all__'
+    descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
+    def loaddescripcion_ambito(self, obj):
+      return obj.sector.ambito.descripcion
+    
+    descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
+    def loaddescripcion_sector(self, obj):
+      return obj.sector.descripcion
+    
+    descripcion_via_norte= serializers.SerializerMethodField('loaddescripcion_via_norte')
+    def loaddescripcion_via_norte(self, obj):
+      return obj.via_norte.descripcion
+    
+    descripcion_via_sur= serializers.SerializerMethodField('loaddescripcion_via_sur')
+    def loaddescripcion_via_sur(self, obj):
+      return obj.via_sur.descripcion
+    
+    descripcion_via_este= serializers.SerializerMethodField('loaddescripcion_via_este')
+    def loaddescripcion_via_este(self, obj):
+      return obj.via_este.descripcion
+    
+    descripcion_via_oeste= serializers.SerializerMethodField('loaddescripcion_via_oeste')
+    def loaddescripcion_via_oeste(self, obj):
+      return obj.via_oeste.descripcion
 
 class ParcelaSerializer(serializers.ModelSerializer):
     class Meta:
