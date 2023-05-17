@@ -35,7 +35,7 @@ class UrbanizacionSerializer(serializers.ModelSerializer):
         fields = '__all__'
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      return obj.sector.ambito.descripcion
     
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
@@ -75,7 +75,7 @@ class ParcelaSerializer(serializers.ModelSerializer):
         fields = '__all__'
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      return obj.sector.ambito.descripcion
     
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
@@ -92,7 +92,7 @@ class SubParcelaSerializer(serializers.ModelSerializer):
         fields = '__all__'
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      return obj.sector.ambito.descripcion
     
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
@@ -113,7 +113,7 @@ class ConjuntoResidencialSerializer(serializers.ModelSerializer):
         fields = '__all__'
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      return obj.sector.ambito.descripcion
     
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
@@ -129,7 +129,7 @@ class EdificioSerializer(serializers.ModelSerializer):
         fields = '__all__'
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      return obj.sector.ambito.descripcion
     
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
@@ -149,7 +149,7 @@ class TorreSerializer(serializers.ModelSerializer):
         fields = '__all__'
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      return obj.sector.ambito.descripcion
     
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
