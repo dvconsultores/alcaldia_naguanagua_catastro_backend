@@ -96,18 +96,6 @@ class Torre(models.Model):
     conjunto_residencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
     nombre = models.TextField(null=False,blank =False, unique=True, help_text="nombre del conjunto residencial")
 
-class Propietario(models.Model):
-    tipo_documento = models.TextField(null=False,blank =False, unique=False, help_text="Tipo de documento")
-    nacionalidad = models.TextField(null=False,blank =False, unique=False, help_text="nacionalidad del propietario")
-    numero_documento = models.TextField(null=False,blank =False, unique=True, help_text="Numero del documento de identificacion")
-    nombre = models.TextField(null=False,blank =False, unique=False, help_text="Nombre del propietario")
-    apellido = models.TextField(null=False,blank =False, unique=False, help_text="Apellido del propietario")
-    telefono_principal = models.TextField(null=False,blank =False, unique=False, help_text="telefono celular del propietario")
-    email_principal = models.TextField(null=False,blank =False, unique=False, help_text="email principal del propietario")
-    telefono_secundario = models.TextField(null=False,blank =False, unique=False, help_text="telefonos del propietario")
-    email_secundario = models.TextField(null=False,blank =False, unique=False, help_text="email secundario del propietario")
-
-
 class TipoInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo de inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de inmueble")

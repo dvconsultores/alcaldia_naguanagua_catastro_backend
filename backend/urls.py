@@ -67,4 +67,7 @@ urlpatterns = [
     # Base
     path('', include(router.urls)),
     path('signin/', views.SignIn),
+    path('signup/', views.SignUp),
+    path('changepassword/', views.ChangePassword),
+
 ]
