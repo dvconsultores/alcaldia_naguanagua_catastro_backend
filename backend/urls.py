@@ -59,10 +59,17 @@ router.register(r'inmueble_valoracion_construccion', views.InmuebleValoracionCon
 router.register(r'inmueble_ubicacion', views.InmuebleUbicacionViewset,basename='inmueble_ubicacion')
 router.register(r'inmueble_faltante', views.InmuebleFaltanteViewset,basename='inmueble_faltante')
 router.register(r'propietario', views.PropietarioViewset,basename='propietario')
+router.register(r'tasabcv', views.TasaBCVViewset,basename='tasabcv')
+router.register(r'unidadtributaria', views.UnidadTributariaViewset,basename='unidadtributaria')
+router.register(r'moneda', views.MonedaViewset,basename='moneda')
 router.register(r'tasamulta', views.TasaMultaViewset,basename='tasamulta')
 router.register(r'estadocuenta', views.EstadoCuentaViewset,basename='estadocuenta')
 router.register(r'estadocuentadetalle', views.EstadoCuentaDetalleViewset,basename='estadocuentadetalle')
+router.register(r'tipopago', views.TipoPagoViewset,basename='tipopago')
+router.register(r'pagoestadocuenta', views.PagoEstadoCuentaViewset,basename='pagoestadocuenta')
+router.register(r'pagoestadocuentadetalle', views.PagoEstadoCuentaDetalleViewset,basename='pagoestadocuentadetalle')
 router.register(r'correlativo', views.CorrelativoViewset,basename='correlativo')
+router.register(r'flujo', views.FlujoViewset,basename='flujo')
 
 urlpatterns = [
     # Base

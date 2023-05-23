@@ -459,6 +459,21 @@ class PropietarioSerializer(serializers.ModelSerializer):
 
 
 
+class TasaBCVSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TasaBCV
+        fields = '__all__'
+
+class UnidadTributariaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnidadTributaria
+        fields = '__all__'   
+
+class MonedaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnidadTributaria
+        fields = '__all__'   
+
 class TasaMultaSerializer(serializers.ModelSerializer):
     class Meta:
         model = TasaMulta
@@ -474,7 +489,40 @@ class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
         model = EstadoCuentaDetalle
         fields = '__all__'         
 
+class TipoPagoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoPago
+        fields = '__all__'  
+
+class PagoEstadoCuentaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PagoEstadoCuenta
+        fields = '__all__' 
+
+class PagoEstadoCuentaDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PagoEstadoCuentaDetalle
+        fields = '__all__' 
+
 class CorrelativoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Correlativo
-        fields = '__all__'           
+        fields = '__all__'       
+
+class FlujoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Flujo
+        fields = '__all__' 
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -423,6 +423,29 @@ class PropietarioViewset(MultiSerializerViewSet):
         'default': PropietarioSerializer
     }
 
+
+
+class TasaBCVViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TasaBCV.objects.all()
+    serializers = {
+        'default': TasaBCVSerializer
+    }
+
+class UnidadTributariaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=UnidadTributaria.objects.all()
+    serializers = {
+        'default': UnidadTributariaSerializer
+    }
+
+class MonedaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Moneda.objects.all()
+    serializers = {
+        'default': MonedaSerializer
+    }
+
 class TasaMultaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=TasaMulta.objects.all()
@@ -444,12 +467,26 @@ class EstadoCuentaDetalleViewset(MultiSerializerViewSet):
         'default': EstadoCuentaDetalleSerializer
     }
 
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
+class TipoPagoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoPago.objects.all()
+    serializers = {
+        'default': TipoPagoSerializer
+    }
+
+class PagoEstadoCuentaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=PagoEstadoCuenta.objects.all()
+    serializers = {
+        'default': PagoEstadoCuentaSerializer
+    }
+
+class PagoEstadoCuentaDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=PagoEstadoCuentaDetalle.objects.all()
+    serializers = {
+        'default': PagoEstadoCuentaDetalleSerializer
+    }
 
 class CorrelativoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -458,7 +495,28 @@ class CorrelativoViewset(MultiSerializerViewSet):
         'default': CorrelativoSerializer
     }
 
+class FlujoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Flujo.objects.all()
+    serializers = {
+        'default': FlujoSerializer
+    }
 
+
+
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
 
 
 

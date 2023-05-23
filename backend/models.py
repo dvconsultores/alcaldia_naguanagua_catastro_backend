@@ -378,6 +378,7 @@ class InmuebleFaltante(models.Model):
     doumento_propiedad = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
 
+# Maestro de Propietarios/Contribuyentes
 class Propietario(models.Model):
     tipo_documento  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
     nacionalidad  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
@@ -429,7 +430,7 @@ class TasaMulta(models.Model):
 class EstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Estado de Cuenta")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
-    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Sector asociado")
+    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
 
@@ -449,7 +450,7 @@ class PagoEstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")
     estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
-    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente asociado")
+    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
 
