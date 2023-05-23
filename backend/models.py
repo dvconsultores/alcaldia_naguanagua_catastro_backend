@@ -388,22 +388,90 @@ class Propietario(models.Model):
     email_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
     emaill_secundario  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
 
+## Histoial de Actualizacion de precios de Tasa BS
+class TasaBCV(models.Model):
+    fecha = models.DateTimeField(blank=True, help_text="Fecha Actualizacion TASA")
+    fecha_vigente= models.DateTimeField(blank=True, help_text=" A partir de esta fecha se aplica los calculos")
+    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto TASA")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+
+## Histoial de Actualizacion de precios de UT
+class UnidadTributaria(models.Model):
+    fecha = models.DateTimeField(blank=True, help_text="Fecha Actualizacion Unidad Tributaria")
+    fecha_vigente= models.DateTimeField(blank=True, help_text=" A partir de esta fecha se aplica los calculos")
+    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+
+## moneda para calculo : ejemplo Petro
+class Moneda(models.Model):
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion de la Moneda")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+
+# Maestro de de Impuestos/Tasas/Multas
 class TasaMulta(models.Model):
+    TIPO = (
+        ('I', 'Impuesto'),
+        ('T', 'Tasa'),
+        ('M', 'Multa'),
+        ('O', 'Otro')
+    )
+    APLICA = (
+        ('C', 'Catastro'),
+        ('V', 'Vehiculo'),
+        ('P', 'Patente'),
+        ('O', 'Otro')
+    )
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
     unidad_tributaria  = models.TextField(null=False,blank =False, unique=False, help_text="Cantidad Unidad tributaria")
-    monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
+    tipo= models.CharField(max_length=1, choices=TIPO, default='O', help_text='tipo de recaudacion')
+    aplica= models.CharField(max_length=1, choices=APLICA, default='O', help_text='A que tipo de sector aplica')   
 
 class EstadoCuenta(models.Model):
-    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Estado de Cuenta")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Sector asociado")
-    inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Sector asociado")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
 
 class EstadoCuentaDetalle(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Id Tasa Multa")
     monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
+    monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto tasa")	
     cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
 
+#Maestro de tipos de pago
+class TipoPago(models.Model):
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion Tipo de pago")
 
+#Maestro de recibo Pago
+class PagoEstadoCuenta(models.Model):
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")
+    estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
+    fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
+    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente asociado")
+    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+
+#Detalle de recibo Pago
+class PagoEstadoCuentaDetalle(models.Model):
+    estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
+    tipopago = models.ForeignKey(TipoPago, on_delete=models.PROTECT,help_text="Id Tipo Pago")
+    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
+    nro_cuenta = models.TextField(null=False,blank =False, unique=False, help_text="nro_cuenta")
+    fecha = models.TextField(null=False,blank =False, unique=False, help_text="fecha")
+    telefono = models.TextField(null=False,blank =False, unique=False, help_text="telefono")
+    banco = models.TextField(null=False,blank =False, unique=False, help_text="banco")
+    cedula = models.TextField(null=False,blank =False, unique=False, help_text="cedula")
+    
+# tabla dee control para manejo de correlativos
+class Correlativo(models.Model):
+    ExpedienteCatastro = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Expediente de Catastro")	
+    NumeroEstadoCuenta = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Estado de Cuenta")
+    NumeroPago = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Recibo de pago")
+
+# Caranday ver 1.0
+class Flujo(models.Model):
+    inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
+    estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
+    

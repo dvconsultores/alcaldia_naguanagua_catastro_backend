@@ -451,7 +451,12 @@ class EstadoCuentaDetalleViewset(MultiSerializerViewSet):
 #        'default': Serializer
 #    }
 
-
+class CorrelativoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Correlativo.objects.all()
+    serializers = {
+        'default': CorrelativoSerializer
+    }
 
 
 

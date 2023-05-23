@@ -62,6 +62,7 @@ router.register(r'propietario', views.PropietarioViewset,basename='propietario')
 router.register(r'tasamulta', views.TasaMultaViewset,basename='tasamulta')
 router.register(r'estadocuenta', views.EstadoCuentaViewset,basename='estadocuenta')
 router.register(r'estadocuentadetalle', views.EstadoCuentaDetalleViewset,basename='estadocuentadetalle')
+router.register(r'correlativo', views.CorrelativoViewset,basename='correlativo')
 
 urlpatterns = [
     # Base

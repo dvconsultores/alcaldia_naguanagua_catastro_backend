@@ -473,3 +473,8 @@ class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstadoCuentaDetalle
         fields = '__all__'         
+
+class CorrelativoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Correlativo
+        fields = '__all__'           
