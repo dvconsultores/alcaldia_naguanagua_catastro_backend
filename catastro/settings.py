@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'simple_history',
     'django_crontab',
     'django_rest_passwordreset',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {
