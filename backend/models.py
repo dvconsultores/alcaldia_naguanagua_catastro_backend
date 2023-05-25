@@ -10,6 +10,42 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from decimal import Decimal
 
+
+class Perfil(models.Model):
+    TIPO = (('S', 'Super'), 
+            ('A', 'Admin'),
+            ('U', 'Usuario'), 
+            ('C', 'Catastro'), 
+            ('T', 'Tributario'))
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, help_text="usuario asociado")
+    activo = models.BooleanField(default=True, help_text="esta el usuario activo?")
+    tipo = models.CharField(max_length=1, null=True, choices=TIPO, default='U', help_text="Tipo de usuario")
+
+    def __str__(self):
+        return '%s - %s' % (self.usuario.username, self.tipo)
+
+class Modulo(models.Model):
+    nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True)
+
+    def __str__(self):
+        return '%s' % (self.nombre)
+
+
+class Permiso(models.Model):
+    modulo = models.ForeignKey(Modulo, null=False, blank=False,on_delete=models.CASCADE, help_text="Opcion de menu asociada")
+    perfil = models.ForeignKey(Perfil, null=False, blank=False,on_delete=models.CASCADE, help_text="Usuario asociado")
+    # Metodos
+    leer = models.BooleanField(default=False, help_text="Tiene opcion de leer?")
+    escribir = models.BooleanField(default=False, help_text="Tiene opcion de escribir?")
+    borrar = models.BooleanField(default=False, help_text="Tiene opcion de borrar?")
+    actualizar = models.BooleanField(default=False, help_text="Tiene opcion de actualizar?")
+
+    def __str__(self):
+        return '%s (Permiso: %s - Leer:%s Borrar:%s Actualizar:%s Escribir:%s)' % (self.perfil.usuario.username, self.modulo.nombre, self.leer, self.borrar, self.actualizar, self.escribir)
+
+
+
+
 class Ambito(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del ambito")
     descripcion = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del ambito")

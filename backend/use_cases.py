@@ -9,10 +9,14 @@ import re
 def generate_token(username,password):
     user = authenticate(username=username, password=password)
     if user is not None:
+        perfil = Perfil.objects.get(usuario=user)
+        permisos = Permiso.objects.filter(perfil=perfil)
+        dataPermisos = PermisoSerializer(instance=permisos, many=True).data
         return Response({'token':AuthToken.objects.create(user)[1],
                          'user_id': user.pk,
                          'email':user.email,
                          'username':user.username
+                         ,'permisos': dataPermisos
                         }, status=status.HTTP_200_OK)
     else:
         return Response('invalid credentials', status=status.HTTP_400_BAD_REQUEST)

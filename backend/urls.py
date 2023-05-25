@@ -4,6 +4,11 @@ from django.urls import include, path
 from . import views
 
 router = routers.DefaultRouter()
+
+router.register(r'perfil',views.PerfilViewset,basename='perfil')
+router.register(r'usuarios',views.UserViewset,basename='user')
+router.register(r'modulos',views.ModuloViewset,basename='modulo')
+router.register(r'permiso',views.PermisoViewset,basename='permiso')
 router.register(r'ambito', views.AmbitoViewset,basename='ambito')
 router.register(r'sector', views.SectorViewset,basename='sector')
 router.register(r'calle', views.CalleViewset,basename='calle')

@@ -36,6 +36,33 @@ def SignUp(request):
 def ChangePassword(request):
     return change_password(request.user,request.data["password"])
 
+class UserViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=User.objects.all()
+    serializers = {
+        'default': UserSerializer
+    }
+
+class PerfilViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Perfil.objects.all()
+    serializers = {
+        'default': PerfilSerializer
+    }
+
+class ModuloViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Modulo.objects.all()
+    serializers = {
+        'default': ModuloSerializer
+    }
+
+class PermisoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Permiso.objects.all()
+    serializers = {
+        'default': PermisoSerializer
+    }
 
 class AmbitoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
