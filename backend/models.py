@@ -26,9 +26,12 @@ class Perfil(models.Model):
 
 class Modulo(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True)
-
+    titulo = models.TextField(null=True,blank =True, help_text="Titulo de la opcion/menu")
+    menu = models.TextField(null=True,blank =True, help_text="nombre del menu, si el modulo es menu este campo esta vacio")
+    es_menu = models.BooleanField(default=False, help_text="es un menu?")
+    orden = models.PositiveIntegerField(null=True, blank=True,  help_text="Orden del menu y de la opcion dentro de menu")
     def __str__(self):
-        return '%s' % (self.nombre)
+        return '%s - %s - %s - %s'  % (self.orden,self.menu,self.nombre,self.titulo)
 
 
 class Permiso(models.Model):

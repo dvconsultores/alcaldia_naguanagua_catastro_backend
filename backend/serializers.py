@@ -15,6 +15,18 @@ class PermisoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permiso
         fields = '__all__'  
+    titulo_modulo= serializers.SerializerMethodField('loadtitulo_modulo')
+    def loadtitulo_modulo(self, obj):
+      return obj.modulo.titulo 
+    menu_modulo= serializers.SerializerMethodField('loadmenu_modulo')
+    def loadmenu_modulo(self, obj):
+      return obj.modulo.menu
+    es_menu_modulo= serializers.SerializerMethodField('loades_menu_modulo')
+    def loades_menu_modulo(self, obj):
+      return obj.modulo.es_menu
+    orden_modulo= serializers.SerializerMethodField('loadorden_odulo')
+    def loadorden_odulo(self, obj):
+      return obj.modulo.orden
 
 class ModuloSerializer(serializers.ModelSerializer):
     class Meta:
