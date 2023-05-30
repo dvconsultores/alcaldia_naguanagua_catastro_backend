@@ -25,13 +25,16 @@ class Perfil(models.Model):
         return '%s - %s' % (self.usuario.username, self.tipo)
 
 class Modulo(models.Model):
-    nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True)
-    titulo = models.TextField(null=True,blank =True, help_text="Titulo de la opcion/menu")
-    menu = models.TextField(null=True,blank =True, help_text="nombre del menu, si el modulo es menu este campo esta vacio")
-    es_menu = models.BooleanField(default=False, help_text="es un menu?")
+    nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre exacto del archivo .VUE (a excepcion de los menues)")
+    titulo = models.TextField(null=True,blank =True, help_text="Nombre que muestra en el Menu")
+    menu = models.TextField(null=True,blank =True, help_text="Se coloca el valor del campo NOMBRE correpondiente al menu.")
+    es_menu = models.BooleanField(default=False, help_text="Es TRUE si pertenece a un titulo de menu. En valor que contenga su campo NOMBRE lo debe contener cada campo MENU de sus opciones")
     orden = models.PositiveIntegerField(null=True, blank=True,  help_text="Orden del menu y de la opcion dentro de menu")
     def __str__(self):
-        return '%s - %s - %s - %s'  % (self.orden,self.menu,self.nombre,self.titulo)
+        return '%s - %s - %s - %s - %s'  % (self.es_menu,self.menu,self.orden, self.titulo,self.nombre)
+        
+    class Meta:
+        ordering = ['menu','-es_menu','orden']
 
 
 class Permiso(models.Model):
