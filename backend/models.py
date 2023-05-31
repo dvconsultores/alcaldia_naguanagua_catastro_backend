@@ -214,6 +214,17 @@ class Zona(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Zona")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Zona")
 
+# Maestro de Propietarios/Contribuyentes
+class Propietario(models.Model):
+    tipo_documento  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    nacionalidad  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    numero_documento  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
+    nombre  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    telefono_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    telefono_secundario   = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    email_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    emaill_secundario  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+
 class Inmueble(models.Model):
     numero_expediente = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     fecha_inscripcion = models.DateField(blank=True, help_text="fecha de inscripcion")
@@ -272,7 +283,7 @@ class InmueblePropiedad(models.Model):
 
 class InmueblePropietarios(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble")
-    propietario = models.ForeignKey (Calle, on_delete=models.PROTECT,help_text="Id Propietario")
+    propietario = models.ForeignKey (Propietario, on_delete=models.PROTECT,help_text="Id Propietario")
 
 class InmuebleTerreno(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
@@ -420,16 +431,7 @@ class InmuebleFaltante(models.Model):
     doumento_propiedad = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
 
-# Maestro de Propietarios/Contribuyentes
-class Propietario(models.Model):
-    tipo_documento  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    nacionalidad  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    numero_documento  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
-    nombre  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    telefono_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    telefono_secundario   = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    email_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    emaill_secundario  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+
 
 ## Histoial de Actualizacion de precios de Tasa BS
 class TasaBCV(models.Model):
