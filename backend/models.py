@@ -28,6 +28,7 @@ class Modulo(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre exacto del archivo .VUE (a excepcion de los menues)")
     titulo = models.TextField(null=True,blank =True, help_text="Nombre que muestra en el Menu")
     menu = models.TextField(null=True,blank =True, help_text="Se coloca el valor del campo NOMBRE correpondiente al menu.")
+    icono = models.TextField(null=True,blank =True, help_text="Icono a mostrar")
     es_menu = models.BooleanField(default=False, help_text="Es TRUE si pertenece a un titulo de menu. En valor que contenga su campo NOMBRE lo debe contener cada campo MENU de sus opciones")
     orden = models.PositiveIntegerField(null=True, blank=True,  help_text="Orden del menu y de la opcion dentro de menu")
     def __str__(self):
@@ -515,6 +516,7 @@ class PagoEstadoCuentaDetalle(models.Model):
 class Correlativo(models.Model):
     ExpedienteCatastro = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Expediente de Catastro")	
     NumeroEstadoCuenta = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Estado de Cuenta")
+    NumeroLiquidacion = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de NumeroLiquidacion")
     NumeroPago = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Recibo de pago")
 
 # Caranday ver 1.0

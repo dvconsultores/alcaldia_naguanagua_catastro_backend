@@ -100,6 +100,10 @@ class UrbanizacionViewset(MultiSerializerViewSet):
     serializers = {
         'default': UrbanizacionSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'id':['exact'],
+    }
 
 class ManzanaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -304,6 +308,10 @@ class InmueblePropietariosViewset(MultiSerializerViewSet):
     queryset= InmueblePropietarios.objects.all()
     serializers = {
         'default': InmueblePropietariosSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'propietario':['exact'],
     }
 
 class InmuebleTerrenoViewset(MultiSerializerViewSet):

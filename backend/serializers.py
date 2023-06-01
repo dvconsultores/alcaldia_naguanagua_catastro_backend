@@ -366,10 +366,15 @@ class ZonaSerializer(serializers.ModelSerializer):
         model = Zona
         fields = '__all__'
 
+
+
 class InmuebleSerializer(serializers.ModelSerializer):
+    #propietarios = InmueblePropietariosSerializer(many=True, read_only=True)
+
     class Meta:
         model = Inmueble
         fields = '__all__'
+     
 
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
@@ -438,7 +443,11 @@ class InmuebleSerializer(serializers.ModelSerializer):
 
 
 
-
+class InmueblePropietariosSerializer(serializers.ModelSerializer):
+    inmueble = InmuebleSerializer()
+    class Meta:
+        model = InmueblePropietarios
+        fields = '__all__'
 
 
 
@@ -449,10 +458,7 @@ class InmueblePropiedadSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class InmueblePropietariosSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = InmueblePropietarios
-        fields = '__all__'
+
 
 class InmuebleTerrenoSerializer(serializers.ModelSerializer):
     class Meta:
