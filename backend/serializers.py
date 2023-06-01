@@ -445,6 +445,7 @@ class InmuebleSerializer(serializers.ModelSerializer):
 
 class InmueblePropietariosSerializer(serializers.ModelSerializer):
     inmueble = InmuebleSerializer()
+    propietario = PropietarioSerializer()
     class Meta:
         model = InmueblePropietarios
         fields = '__all__'
