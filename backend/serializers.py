@@ -600,7 +600,17 @@ class EstadoCuentaSerializer(serializers.ModelSerializer):
 class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstadoCuentaDetalle
-        fields = '__all__'         
+        fields = '__all__'       
+
+class LiquidacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Liquidacion
+        fields = '__all__' 
+
+class LiquidacionDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LiquidacionDetalle
+        fields = '__all__'            
 
 class TipoPagoSerializer(serializers.ModelSerializer):
     class Meta:

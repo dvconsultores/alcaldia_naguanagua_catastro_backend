@@ -502,6 +502,20 @@ class EstadoCuentaDetalleViewset(MultiSerializerViewSet):
         'default': EstadoCuentaDetalleSerializer
     }
 
+class LiquidacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Liquidacion.objects.all()
+    serializers = {
+        'default': LiquidacionSerializer
+    }
+
+class LiquidacionDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=LiquidacionDetalle.objects.all()
+    serializers = {
+        'default': LiquidacionDetalleSerializer
+    }
+
 class TipoPagoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=TipoPago.objects.all()
