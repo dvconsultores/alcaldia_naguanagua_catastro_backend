@@ -465,6 +465,7 @@ class TasaMulta(models.Model):
         ('C', 'Catastro'),
         ('V', 'Vehiculo'),
         ('P', 'Patente'),
+        ('I', 'Industria y Comercio'),
         ('O', 'Otro')
     )
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
@@ -487,6 +488,24 @@ class EstadoCuentaDetalle(models.Model):
     monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
     monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
     cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
+
+class Liquidacion(models.Model):
+    estadocuenta = models.ForeignKey(EstadoCuenta,null=True, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Liquidacion")
+    fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
+    propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
+    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+    valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+    monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+
+class LiquidacionDetalle(models.Model):
+    liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
+    tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Id Tasa Multa")
+    monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
+    monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
+    cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
+
 
 #Maestro de tipos de pago
 class TipoPago(models.Model):
@@ -517,7 +536,7 @@ class Correlativo(models.Model):
     ExpedienteCatastro = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Expediente de Catastro")	
     NumeroEstadoCuenta = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Estado de Cuenta")
     NumeroLiquidacion = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de NumeroLiquidacion")
-    NumeroPago = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Recibo de pago")
+    NumeroPago = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Recibo de pagos")
 
 # Caranday ver 1.0
 class Flujo(models.Model):
