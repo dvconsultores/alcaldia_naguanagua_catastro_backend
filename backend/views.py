@@ -40,9 +40,8 @@ def ChangePassword(request):
 @csrf_exempt
 @permission_classes([IsAuthenticated])
 def CrearEstadoCuenta(request):
-    print('ĺucas1')
-    print(request)
-    return Crear_Estado_Cuenta(request)
+    datos=request.data
+    return Crear_Estado_Cuenta(datos)
 
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]

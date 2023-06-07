@@ -41,9 +41,17 @@ def change_password(user,password):
     
 
 def Crear_Estado_Cuenta(request):
-    if (True):
-        print('ĺucas')
+    if (request):
+        items=request['detalle']
+        print('todo')
         print(request)
+        print('detalle')
+        print(items)
+        print('propietario',request['propietario'])
+        print('monto_total',request['monto_total'])
+        for detalle in items:
+            print('estadoCuentaDetalleData',detalle['estadoCuentaDetalleData'])
+
         return Response('the password updated', status=status.HTTP_200_OK)
     else:
         return Response('The new password not match the security pattern', status=status.HTTP_400_BAD_REQUEST)
