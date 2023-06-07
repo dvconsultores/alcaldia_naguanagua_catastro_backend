@@ -593,6 +593,12 @@ class TasaMultaSerializer(serializers.ModelSerializer):
         model = TasaMulta
         fields = '__all__' 
 
+
+class TipoFlujoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoFlujo
+        fields = '__all__' 
+
 class EstadoCuentaSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstadoCuenta

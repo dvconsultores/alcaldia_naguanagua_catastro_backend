@@ -495,6 +495,13 @@ class TasaMultaViewset(MultiSerializerViewSet):
         'default': TasaMultaSerializer
     }
 
+class TipoFlujoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoFlujo.objects.all()
+    serializers = {
+        'default': TipoFlujoSerializer
+    }
+
 class EstadoCuentaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=EstadoCuenta.objects.all()
