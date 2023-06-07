@@ -568,6 +568,7 @@ class FlujoDetalleViewset(MultiSerializerViewSet):
     filterset_fields = {
       'estado':['exact'],
       'recibe_usuario':['exact'],
+      'flujo':['exact'],
     }
 #    def get_queryset(self):
 #        queryset = super().get_queryset()

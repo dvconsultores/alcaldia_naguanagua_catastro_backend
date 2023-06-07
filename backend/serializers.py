@@ -652,6 +652,10 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
         formatted_time = obj.flujo.fecha.strftime("%I:%M %p")
         return f"{formatted_date} {formatted_time}"  
 
+    tipoflujo_descripcion= serializers.SerializerMethodField('loadtipoflujo_descripcion')
+    def loadtipoflujo_descripcion(self, obj):
+      return obj.flujo.pagoestadocuenta.liquidacion.tipoflujo.descripcion
+    
     propietario_nombre= serializers.SerializerMethodField('loadpropietario_nombre')
     def loadpropietario_nombre(self, obj):
       return obj.flujo.pagoestadocuenta.liquidacion.propietario.nombre

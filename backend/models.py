@@ -573,9 +573,16 @@ class TasaMulta(models.Model):
     aplica= models.CharField(max_length=1, choices=APLICA, default='O', help_text='A que tipo de sector aplica')   
     def __str__(self):
         return '%s - %s' % (self.tipo, self.descripcion)
-    
+
+#Maestro de tipos de pago
+class TipoFlujo(models.Model):
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion Tipo de pago")
+    def __str__(self):
+        return '%s' % (self.descripcion)
+
 class EstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Estado de Cuenta")
+    tipoflujo = models.ForeignKey(TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de flujo (solo catasrro: inscripcion, actualizacion o modificar propietario")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
@@ -595,6 +602,7 @@ class EstadoCuentaDetalle(models.Model):
 class Liquidacion(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta,null=True,blank=True, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Liquidacion")
+    tipoflujo = models.ForeignKey(TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de flujo solo catasrro: inscripcion, actualizacion o modificar propietario")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
@@ -602,7 +610,7 @@ class Liquidacion(models.Model):
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     def __str__(self):
-        return '%s - %s' % (self.numero,self.propietario.nombre)
+        return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo.descripcion)
     
 class LiquidacionDetalle(models.Model):
     liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
@@ -661,15 +669,17 @@ class FlujoDetalle(models.Model):
         ('1', 'Pendiente por Recibir'),
         ('2', 'Recibido'),
         ('3', 'Pendiente por Procesar'),
-        ('4', 'Procesado'),
-        ('5', 'Pendiente por Enviar'),
-        ('6', 'Enviado'),
-        ('7', 'Finalizado'),
-        ('8', 'Fin del Proceso')
+        ('4', 'En proceso'),
+        ('5', 'Procesado'),
+        ('6', 'Pendiente por Enviar'),
+        ('7', 'Enviado'),
+        ('8', 'Finalizado'),
+        ('9', 'Fin del Proceso')
     )
     TAREA = (
-        ('1', 'Pendiente por Realizar'),
-        ('2', 'Realizado')
+        ('1', 'Pendiente por Recibir'),
+        ('3', 'Pendiente por Procesar'),
+        ('6', 'Pendiente por Enviar'),
     )
     estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado del proceso')
     tarea= models.CharField(max_length=1, choices=TAREA, default='1', help_text='Estado del proceso')
@@ -677,5 +687,7 @@ class FlujoDetalle(models.Model):
     envia_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha enviado")
     recibe_usuario  = models.ForeignKey(User, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_recibe_usuario')
     recibe_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha recepcion")
-    procesa_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha procesado")
+    inicio_proceso_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha Inicio de proceso")
+    procesa_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN de proceso")
+    fin_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN DE PROCESO")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
