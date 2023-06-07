@@ -588,7 +588,7 @@ class EstadoCuenta(models.Model):
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
     valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
-    monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+    monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="monto total")
     def __str__(self):
         return '%s - %s' % (self.numero,self.propietario.nombre)
     

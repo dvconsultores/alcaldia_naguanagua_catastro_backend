@@ -38,3 +38,12 @@ def change_password(user,password):
         return Response('the password updated', status=status.HTTP_200_OK)
     else:
         return Response('The new password not match the security pattern', status=status.HTTP_400_BAD_REQUEST)
+    
+
+def Crear_Estado_Cuenta(request):
+    if (True):
+        print('ĺucas')
+        print(request)
+        return Response('the password updated', status=status.HTTP_200_OK)
+    else:
+        return Response('The new password not match the security pattern', status=status.HTTP_400_BAD_REQUEST)

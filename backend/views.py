@@ -36,6 +36,14 @@ def SignUp(request):
 def ChangePassword(request):
     return change_password(request.user,request.data["password"])
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def CrearEstadoCuenta(request):
+    print('ĺucas1')
+    print(request)
+    return Crear_Estado_Cuenta(request)
+
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=User.objects.all()
