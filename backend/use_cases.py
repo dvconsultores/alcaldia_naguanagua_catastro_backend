@@ -15,8 +15,9 @@ def generate_token(username,password):
         return Response({'token':AuthToken.objects.create(user)[1],
                          'user_id': user.pk,
                          'email':user.email,
-                         'username':user.username
-                         ,'permisos': dataPermisos
+                         'username':user.username,
+                         'modulo':perfil.modulo.nombre,
+                         'permisos': dataPermisos
                         }, status=status.HTTP_200_OK)
     else:
         return Response('invalid credentials', status=status.HTTP_400_BAD_REQUEST)

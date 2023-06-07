@@ -31,6 +31,11 @@ class PermisoSerializer(serializers.ModelSerializer):
     def loadicono_modulo(self, obj):
       return obj.modulo.icono
 
+class DepartamentoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Departamento
+        fields = '__all__'  
+
 class ModuloSerializer(serializers.ModelSerializer):
     class Meta:
         model = Modulo
@@ -372,8 +377,6 @@ class ZonaSerializer(serializers.ModelSerializer):
 
 
 class InmuebleSerializer(serializers.ModelSerializer):
-    #propietarios = InmueblePropietariosSerializer(many=True, read_only=True)
-
     class Meta:
         model = Inmueble
         fields = '__all__'
@@ -460,8 +463,6 @@ class InmueblePropiedadSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmueblePropiedad
         fields = '__all__'
-
-
 
 
 class InmuebleTerrenoSerializer(serializers.ModelSerializer):
@@ -618,6 +619,7 @@ class TipoPagoSerializer(serializers.ModelSerializer):
         fields = '__all__'  
 
 class PagoEstadoCuentaSerializer(serializers.ModelSerializer):
+    liquidacion = LiquidacionSerializer()
     class Meta:
         model = PagoEstadoCuenta
         fields = '__all__' 
@@ -633,19 +635,65 @@ class CorrelativoSerializer(serializers.ModelSerializer):
         fields = '__all__'       
 
 class FlujoSerializer(serializers.ModelSerializer):
+    pagoestadocuenta = PagoEstadoCuentaSerializer()
     class Meta:
         model = Flujo
         fields = '__all__' 
 
 
+class FlujoDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FlujoDetalle
+        fields = '__all__' 
 
+    flujo_fecha = serializers.SerializerMethodField('get_flujo_fecha')
+    def get_flujo_fecha(self, obj):
+        formatted_date = obj.flujo.fecha.strftime("%d/%m/%Y")
+        formatted_time = obj.flujo.fecha.strftime("%I:%M %p")
+        return f"{formatted_date} {formatted_time}"  
 
+    propietario_nombre= serializers.SerializerMethodField('loadpropietario_nombre')
+    def loadpropietario_nombre(self, obj):
+      return obj.flujo.pagoestadocuenta.liquidacion.propietario.nombre
+    
+    propietario_numero= serializers.SerializerMethodField('loadpropietario_numero')
+    def loadpropietario_numero(self, obj):
+      return obj.flujo.pagoestadocuenta.liquidacion.propietario.numero_documento
 
+    expediente= serializers.SerializerMethodField('loadpexpediente')
+    def loadpexpediente(self, obj):
+      return obj.flujo.inmueble.numero_expediente
 
+    envia_usuario_nombre= serializers.SerializerMethodField('loadenvia_usuario_nombre')
+    def loadenvia_usuario_nombre(self, obj):
+      return obj.envia_usuario.username
 
+    recibe_usuario_nombre= serializers.SerializerMethodField('loadrecibe_usuario_nombre')
+    def loadrecibe_usuario_nombre(self, obj):
+      return obj.recibe_usuario.username
 
+    estado_display = serializers.SerializerMethodField('get_estado_display')
+    def get_estado_display(self, obj):
+        return dict(FlujoDetalle.ESTADO)[obj.estado]
 
+    tarea_display = serializers.SerializerMethodField('get_tarea_display')
+    def get_tarea_display(self, obj):
+        return dict(FlujoDetalle.TAREA)[obj.tarea]
+    
+    recibe_fecha = serializers.SerializerMethodField('get_recibe_fecha')
+    def get_recibe_fecha(self, obj):
+        formatted_date = obj.recibe_fecha.strftime("%d/%m/%Y")
+        formatted_time = obj.recibe_fecha.strftime("%I:%M %p")
+        return f"{formatted_date} {formatted_time}"
 
-
-
-
+    envia_fecha = serializers.SerializerMethodField('get_envia_fecha')
+    def get_envia_fecha(self, obj):
+        formatted_date = obj.envia_fecha.strftime("%d/%m/%Y")
+        formatted_time = obj.envia_fecha.strftime("%I:%M %p")
+        return f"{formatted_date} {formatted_time}"
+    
+    procesa_fecha = serializers.SerializerMethodField('get_procesa_fecha')
+    def get_procesa_fecha(self, obj):
+        formatted_date = obj.procesa_fecha.strftime("%d/%m/%Y")
+        formatted_time = obj.procesa_fecha.strftime("%I:%M %p")
+        return f"{formatted_date} {formatted_time}"    

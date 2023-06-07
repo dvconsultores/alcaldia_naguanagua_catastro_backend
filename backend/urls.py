@@ -4,7 +4,7 @@ from django.urls import include, path
 from . import views
 
 router = routers.DefaultRouter()
-
+router.register(r'departamento',views.DepartamentoViewset,basename='perfil')
 router.register(r'perfil',views.PerfilViewset,basename='perfil')
 router.register(r'usuarios',views.UserViewset,basename='user')
 router.register(r'modulos',views.ModuloViewset,basename='modulo')
@@ -75,6 +75,7 @@ router.register(r'pagoestadocuenta', views.PagoEstadoCuentaViewset,basename='pag
 router.register(r'pagoestadocuentadetalle', views.PagoEstadoCuentaDetalleViewset,basename='pagoestadocuentadetalle')
 router.register(r'correlativo', views.CorrelativoViewset,basename='correlativo')
 router.register(r'flujo', views.FlujoViewset,basename='flujo')
+router.register(r'flujodetalle', views.FlujoDetalleViewset,basename='flujodetalle')
 
 urlpatterns = [
     # Base

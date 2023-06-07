@@ -43,6 +43,13 @@ class UserViewset(MultiSerializerViewSet):
         'default': UserSerializer
     }
 
+class DepartamentoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Departamento.objects.all()
+    serializers = {
+        'default': DepartamentoSerializer
+    }
+
 class PerfilViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=Perfil.objects.all()
@@ -551,8 +558,23 @@ class FlujoViewset(MultiSerializerViewSet):
         'default': FlujoSerializer
     }
 
-
-
+class FlujoDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=FlujoDetalle.objects.all()
+    serializers = {
+        'default': FlujoDetalleSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'estado':['exact'],
+      'recibe_usuario':['exact'],
+    }
+#    def get_queryset(self):
+#        queryset = super().get_queryset()
+#        user = self.request.user
+#        queryset = queryset.filter(recibe_usuario=user)
+#        return queryset
+    
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
 #    queryset=.objects.all()
@@ -566,17 +588,4 @@ class FlujoViewset(MultiSerializerViewSet):
 #    serializers = {
 #        'default': Serializer
 #    }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -10,19 +10,11 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from decimal import Decimal
 
-
-class Perfil(models.Model):
-    TIPO = (('S', 'Super'), 
-            ('A', 'Admin'),
-            ('U', 'Usuario'), 
-            ('C', 'Catastro'), 
-            ('T', 'Tributario'))
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE, help_text="usuario asociado")
-    activo = models.BooleanField(default=True, help_text="esta el usuario activo?")
-    tipo = models.CharField(max_length=1, null=True, choices=TIPO, default='U', help_text="Tipo de usuario")
-
+class Departamento(models.Model):
+    nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre Depatamento para usuario de catastro FLUJO")
     def __str__(self):
-        return '%s - %s' % (self.usuario.username, self.tipo)
+        return '%s' % (self.nombre)
+
 
 class Modulo(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre exacto del archivo .VUE (a excepcion de los menues)")
@@ -36,6 +28,23 @@ class Modulo(models.Model):
         
     class Meta:
         ordering = ['menu','-es_menu','orden']
+
+
+class Perfil(models.Model):
+    TIPO = (('S', 'Super'), 
+            ('A', 'Admin'),
+            ('U', 'Usuario'), 
+            ('C', 'Catastro'), 
+            ('T', 'Tributario'))
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, help_text="usuario asociado")
+    activo = models.BooleanField(default=True, help_text="esta el usuario activo?")
+    tipo = models.CharField(max_length=1, null=True, choices=TIPO, default='U', help_text="Tipo de usuario")
+    departamento = models.ForeignKey(Departamento, null=True, blank=True,on_delete=models.CASCADE, help_text="Departamento del usuario")
+    modulo = models.ForeignKey(Modulo, null=True, blank=True,on_delete=models.CASCADE, help_text="Modulo INICAL al entrar")
+    def __str__(self):
+        return '%s - %s - %s' % (self.usuario.username, self.tipo,self.departamento)
+
+
 
 
 class Permiso(models.Model):
@@ -617,7 +626,9 @@ class PagoEstadoCuenta(models.Model):
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
-
+    def __str__(self):
+        return '%s - %s' % (self.numero,self.liquidacion)
+    
 #Detalle de recibo Pago
 class PagoEstadoCuentaDetalle(models.Model):
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
@@ -640,4 +651,31 @@ class Correlativo(models.Model):
 class Flujo(models.Model):
     inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
-    
+    fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha creacion")
+    def __str__(self):
+        return '%s - %s' % (self.inmueble,self.pagoestadocuenta)
+
+class FlujoDetalle(models.Model):
+    flujo = models.ForeignKey(Flujo, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
+    ESTADO = (
+        ('1', 'Pendiente por Recibir'),
+        ('2', 'Recibido'),
+        ('3', 'Pendiente por Procesar'),
+        ('4', 'Procesado'),
+        ('5', 'Pendiente por Enviar'),
+        ('6', 'Enviado'),
+        ('7', 'Finalizado'),
+        ('8', 'Fin del Proceso')
+    )
+    TAREA = (
+        ('1', 'Pendiente por Realizar'),
+        ('2', 'Realizado')
+    )
+    estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado del proceso')
+    tarea= models.CharField(max_length=1, choices=TAREA, default='1', help_text='Estado del proceso')
+    envia_usuario  = models.ForeignKey(User, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_envia_usuario')
+    envia_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha enviado")
+    recibe_usuario  = models.ForeignKey(User, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_recibe_usuario')
+    recibe_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha recepcion")
+    procesa_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha procesado")
+    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
