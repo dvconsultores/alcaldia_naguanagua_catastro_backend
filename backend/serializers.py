@@ -681,6 +681,22 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
     recibe_usuario_nombre= serializers.SerializerMethodField('loadrecibe_usuario_nombre')
     def loadrecibe_usuario_nombre(self, obj):
       return obj.recibe_usuario.username
+    
+    usuario_envia_nombre= serializers.SerializerMethodField('loadusuario_envia_nombre')
+    def loadusuario_envia_nombre(self, obj):
+      return obj.usuario_envia.usuario.username
+    
+    usuario_envia_departamento= serializers.SerializerMethodField('loadusuario_envia_departamento')
+    def loadusuario_envia_departamento(self, obj):
+      return obj.usuario_envia.departamento.nombre
+    
+    usuario_recibe_nombre= serializers.SerializerMethodField('loadusuario_recibe_nombre')
+    def loadusuario_recibe_nombre(self, obj):
+      return obj.usuario_recibe.usuario.username    
+
+    usuario_recibe_departamento= serializers.SerializerMethodField('loadusuario_recibe_departamento')    
+    def loadusuario_recibe_departamento(self, obj):
+      return obj.usuario_recibe.departamento.nombre    
 
     estado_display = serializers.SerializerMethodField('get_estado_display')
     def get_estado_display(self, obj):

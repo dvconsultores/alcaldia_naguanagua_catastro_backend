@@ -48,19 +48,6 @@ def Crear_Estado_Cuenta(request):
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = TipoFlujo.objects.get(id=request['flujo'])
         propietario = Propietario.objects.get(id=request['propietario'])
-        #print('todo')
-        #print(request)
-        #print('detalle')
-        #print(items)
-
-        print('numero',nro_liquidacion.NumeroEstadoCuenta)
-        print('tipoflujo',tipoflujo)
-        print('fecha',str(datetime.now()))
-        print('propietario',request['propietario'])
-        print('observaciones',request['observacion'])
-        print('valor_petro',valor_petro)
-        print('valor_tasa_bs',valor_tasabcv)
-        print('monto_total',request['monto_total'])
         Cabacera=EstadoCuenta(
             numero=nro_liquidacion.NumeroEstadoCuenta,
             tipoflujo=tipoflujo,
@@ -72,20 +59,7 @@ def Crear_Estado_Cuenta(request):
             monto_total=request['monto_total']
         )
         Cabacera.save()
-        
-
         for detalle in items:
-            #print('estadocuenta')
-            print('tasamulta',detalle['tasa_multa_id'])
-
-            #monto_unidad_tributaria=TasaMulta.objects.get(id=detalle['tasa_multa_id']).unidad_tributaria
-            #print('monto_unidad_tributaria',monto_unidad_tributaria)
-            #print('monto_tasa',monto_unidad_tributaria*detalle['cantidad']*valor_petro*valor_tasabcv)
-            ##print('monto_tasa',detalle['monto_unidad_tributaria']*detalle['cantidad']*valor_petro*valor_tasabcv)
-
-            print('monto_unidad_tributaria',detalle['monto_unidad_tributaria'])
-            print('monto_tasa',detalle['calculo'])
-            print('cantidad',detalle['cantidad'])
             tasa_multa_id = TasaMulta.objects.get(id=detalle['tasa_multa_id'])
 
             Detalle=EstadoCuentaDetalle(
@@ -98,9 +72,9 @@ def Crear_Estado_Cuenta(request):
             Detalle.save()
         nro_liquidacion.NumeroEstadoCuenta=nro_liquidacion.NumeroEstadoCuenta+1
         nro_liquidacion.save()
-        return Response('Insert OK', status=status.HTTP_200_OK)
+        return Response('Insert EstadoCuenta OK', status=status.HTTP_200_OK)
     else:
-        return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        return Response('Insert EstadoCuenta NOT Ok', status=status.HTTP_400_BAD_REQUEST)
     
     
 

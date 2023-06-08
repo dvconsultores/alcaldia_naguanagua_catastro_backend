@@ -582,6 +582,7 @@ class TipoFlujo(models.Model):
 
 class EstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Estado de Cuenta")
+    inmueble = models.ForeignKey (Inmueble, null=True,blank =True,on_delete=models.PROTECT,help_text="Id Inmueble asociado")
     tipoflujo = models.ForeignKey(TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de flujo (solo catasrro: inscripcion, actualizacion o modificar propietario")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
@@ -590,7 +591,7 @@ class EstadoCuenta(models.Model):
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="monto total")
     def __str__(self):
-        return '%s - %s' % (self.numero,self.propietario.nombre)
+        return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
 class EstadoCuentaDetalle(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
@@ -598,10 +599,12 @@ class EstadoCuentaDetalle(models.Model):
     monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
     monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
     cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
-
+    def __str__(self):
+        return '%s - %s' % (self.estadocuenta.numero,self.tasamulta)
 class Liquidacion(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta,null=True,blank=True, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Liquidacion")
+    inmueble = models.ForeignKey (Inmueble, null=True,blank =True,on_delete=models.PROTECT,help_text="Id Inmueble asociado")
     tipoflujo = models.ForeignKey(TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de flujo solo catasrro: inscripcion, actualizacion o modificar propietario")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
@@ -610,7 +613,7 @@ class Liquidacion(models.Model):
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     def __str__(self):
-        return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo.descripcion)
+        return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
 class LiquidacionDetalle(models.Model):
     liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
@@ -619,7 +622,7 @@ class LiquidacionDetalle(models.Model):
     monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
     cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
     def __str__(self):
-        return '%s' % (self.liquidacion)
+        return '%s - %s' % (self.liquidacion.numero,self.tasamulta)
 
 #Maestro de tipos de pago
 class TipoPago(models.Model):
@@ -687,6 +690,8 @@ class FlujoDetalle(models.Model):
     envia_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha enviado")
     recibe_usuario  = models.ForeignKey(User, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_recibe_usuario')
     recibe_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha recepcion")
+    usuario_envia   = models.ForeignKey(Perfil, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario envia", related_name='FlujoDetalle_usuario_envia')
+    usuario_recibe  = models.ForeignKey(Perfil, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario recibe",related_name='FlujoDetalle_usuario_recibe')
     inicio_proceso_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha Inicio de proceso")
     procesa_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN de proceso")
     fin_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN DE PROCESO")
