@@ -57,7 +57,7 @@ class Permiso(models.Model):
     actualizar = models.BooleanField(default=False, help_text="Tiene opcion de actualizar?")
 
     def __str__(self):
-        return '%s (Permiso: %s - Leer:%s Borrar:%s Actualizar:%s Escribir:%s)' % (self.perfil.usuario.username, self.modulo.nombre, self.leer, self.borrar, self.actualizar, self.escribir)
+        return '%s (Permiso: %s-%s-%s - Leer:%s Borrar:%s Actualizar:%s Escribir:%s)' % (self.perfil.usuario.username, self.modulo.es_menu, self.modulo.menu, self.modulo.nombre, self.leer, self.borrar, self.actualizar, self.escribir)
 
 
 
