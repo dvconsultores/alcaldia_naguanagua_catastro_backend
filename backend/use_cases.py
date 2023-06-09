@@ -48,6 +48,7 @@ def Crear_Estado_Cuenta(request):
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = TipoFlujo.objects.get(id=request['flujo'])
         inmueble = Inmueble.objects.get(id=request['inmueble'])
+        #inmueble = 'Null' if inmueble=='Null' else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         Cabacera=EstadoCuenta(
             numero=nro_liquidacion.NumeroEstadoCuenta,
@@ -87,9 +88,11 @@ def Crear_Liquidacion(request):
         tipoflujo = TipoFlujo.objects.get(id=request['flujo'])
         inmueble = Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
+        estadocuenta = EstadoCuenta.objects.get(id=request['estado_cuenta'])
         Cabacera=EstadoCuenta(
             numero=nro_liquidacion.NumeroEstadoCuenta,
             tipoflujo=tipoflujo,
+            estadocuenta=estadocuenta,
             inmueble=inmueble,
             fecha=str(datetime.now()),
             propietario=propietario,

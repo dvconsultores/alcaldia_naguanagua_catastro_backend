@@ -614,6 +614,10 @@ class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
         fields = '__all__'       
 
 class LiquidacionSerializer(serializers.ModelSerializer):
+    inmueble = InmuebleSerializer()
+    tipoflujo = TipoFlujoSerializer()
+    propietario = PropietarioSerializer()
+    estadocuenta = EstadoCuentaSerializer()
     class Meta:
         model = Liquidacion
         fields = '__all__' 
