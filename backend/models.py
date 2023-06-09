@@ -24,11 +24,9 @@ class Modulo(models.Model):
     es_menu = models.BooleanField(default=False, help_text="Es TRUE si pertenece a un titulo de menu. En valor que contenga su campo NOMBRE lo debe contener cada campo MENU de sus opciones")
     orden = models.PositiveIntegerField(null=True, blank=True,  help_text="Orden del menu y de la opcion dentro de menu")
     def __str__(self):
-        return '%s - %s - %s - %s - %s'  % (self.es_menu,self.menu,self.orden, self.titulo,self.nombre)
-        
+        return '%s - %s - %s - %s - %s'  % (self.es_menu,self.menu,self.orden, self.titulo,self.nombre)       
     class Meta:
         ordering = ['menu','-es_menu','orden']
-
 
 class Perfil(models.Model):
     TIPO = (('S', 'Super'), 
@@ -43,9 +41,6 @@ class Perfil(models.Model):
     modulo = models.ForeignKey(Modulo, null=True, blank=True,on_delete=models.CASCADE, help_text="Modulo INICAL al entrar")
     def __str__(self):
         return '%s - %s - %s' % (self.usuario.username, self.tipo,self.departamento)
-
-
-
 
 class Permiso(models.Model):
     modulo = models.ForeignKey(Modulo, null=False, blank=False,on_delete=models.CASCADE, help_text="Opcion de menu asociada")

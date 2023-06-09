@@ -46,9 +46,8 @@ def Crear_Estado_Cuenta(request):
         nro_liquidacion=Correlativo.objects.get(id=1)
         valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
-        tipoflujo = TipoFlujo.objects.get(id=request['flujo'])
-        inmueble = Inmueble.objects.get(id=request['inmueble'])
-        #inmueble = 'Null' if inmueble=='Null' else Inmueble.objects.get(id=request['inmueble'])
+        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
+        inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         Cabacera=EstadoCuenta(
             numero=nro_liquidacion.NumeroEstadoCuenta,
@@ -85,10 +84,10 @@ def Crear_Liquidacion(request):
         nro_liquidacion=Correlativo.objects.get(id=1)
         valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
-        tipoflujo = TipoFlujo.objects.get(id=request['flujo'])
-        inmueble = Inmueble.objects.get(id=request['inmueble'])
+        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
+        inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
-        estadocuenta = EstadoCuenta.objects.get(id=request['estado_cuenta'])
+        estadocuenta = None if request['estado_cuenta']==None else EstadoCuenta.objects.get(id=request['estado_cuenta'])
         Cabacera=EstadoCuenta(
             numero=nro_liquidacion.NumeroEstadoCuenta,
             tipoflujo=tipoflujo,
