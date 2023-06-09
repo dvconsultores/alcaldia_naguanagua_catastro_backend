@@ -85,5 +85,5 @@ urlpatterns = [
     path('signup/', views.SignUp),
     path('changepassword/', views.ChangePassword),
     path('crearestadocuenta/', views.CrearEstadoCuenta),
-
+    path('crearliquidacion/', views.CrearLiquidacion),
 ]

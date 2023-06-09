@@ -600,11 +600,15 @@ class TipoFlujoSerializer(serializers.ModelSerializer):
         fields = '__all__' 
 
 class EstadoCuentaSerializer(serializers.ModelSerializer):
+    inmueble = InmuebleSerializer()
+    tipoflujo = TipoFlujoSerializer()
+    propietario = PropietarioSerializer()
     class Meta:
         model = EstadoCuenta
         fields = '__all__' 
 
 class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
+    #estadocuenta=EstadoCuentaSerializer()
     class Meta:
         model = EstadoCuentaDetalle
         fields = '__all__'       

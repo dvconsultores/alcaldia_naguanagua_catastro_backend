@@ -43,6 +43,13 @@ def CrearEstadoCuenta(request):
     datos=request.data
     return Crear_Estado_Cuenta(datos)
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def CrearLiquidacion(request):
+    datos=request.data
+    return Crear_Liquidacion(datos)
+
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=User.objects.all()
