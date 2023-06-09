@@ -522,6 +522,10 @@ class EstadoCuentaViewset(MultiSerializerViewSet):
     serializers = {
         'default': EstadoCuentaSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'propietario':['exact'],
+    }
 
 class EstadoCuentaDetalleViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -529,12 +533,20 @@ class EstadoCuentaDetalleViewset(MultiSerializerViewSet):
     serializers = {
         'default': EstadoCuentaDetalleSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'estadocuenta_id':['exact'],
+    }
 
 class LiquidacionViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=Liquidacion.objects.all()
     serializers = {
         'default': LiquidacionSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'propietario':['exact'],
     }
 
 class LiquidacionDetalleViewset(MultiSerializerViewSet):

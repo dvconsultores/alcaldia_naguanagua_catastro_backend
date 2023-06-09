@@ -43,14 +43,14 @@ def change_password(user,password):
 def Crear_Estado_Cuenta(request):
     if (request):
         items=request['detalle']
-        nro_liquidacion=Correlativo.objects.get(id=1)
+        correlativo=Correlativo.objects.get(id=1)
         valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         Cabacera=EstadoCuenta(
-            numero=nro_liquidacion.NumeroEstadoCuenta,
+            numero=correlativo.NumeroEstadoCuenta,
             tipoflujo=tipoflujo,
             inmueble=inmueble,
             fecha=str(datetime.now()),
@@ -72,8 +72,8 @@ def Crear_Estado_Cuenta(request):
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
-        nro_liquidacion.NumeroEstadoCuenta=nro_liquidacion.NumeroEstadoCuenta+1
-        nro_liquidacion.save()
+        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
+        correlativo.save()
         return Response('Insert EstadoCuenta OK', status=status.HTTP_200_OK)
     else:
         return Response('Insert EstadoCuenta NOT Ok', status=status.HTTP_400_BAD_REQUEST)
@@ -81,15 +81,15 @@ def Crear_Estado_Cuenta(request):
 def Crear_Liquidacion(request):
     if (request):
         items=request['detalle']
-        nro_liquidacion=Correlativo.objects.get(id=1)
+        correlativo=Correlativo.objects.get(id=1)
         valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         estadocuenta = None if request['estado_cuenta']==None else EstadoCuenta.objects.get(id=request['estado_cuenta'])
-        Cabacera=EstadoCuenta(
-            numero=nro_liquidacion.NumeroEstadoCuenta,
+        Cabacera=Liquidacion(
+            numero=correlativo.NumeroLiquidacion,
             tipoflujo=tipoflujo,
             estadocuenta=estadocuenta,
             inmueble=inmueble,
@@ -103,8 +103,7 @@ def Crear_Liquidacion(request):
         Cabacera.save()
         for detalle in items:
             tasa_multa_id = TasaMulta.objects.get(id=detalle['tasa_multa_id'])
-
-            Detalle=EstadoCuentaDetalle(
+            Detalle=LiquidacionDetalle(
                 estadocuenta=Cabacera,
                 tasamulta=tasa_multa_id,               
                 monto_unidad_tributaria=detalle['monto_unidad_tributaria'],
@@ -112,17 +111,17 @@ def Crear_Liquidacion(request):
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
-        nro_liquidacion.NumeroEstadoCuenta=nro_liquidacion.NumeroEstadoCuenta+1
-        nro_liquidacion.save()
-        return Response('Insert EstadoCuenta OK', status=status.HTTP_200_OK)
+        correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
+        correlativo.save()
+        return Response('Insert Liquidacion OK', status=status.HTTP_200_OK)
     else:
-        return Response('Insert EstadoCuenta NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        return Response('Insert Liquidacion NOT Ok', status=status.HTTP_400_BAD_REQUEST)
     
 
 def Crear_Estado_Cuenta1(request):
     if (request):
         items=request['detalle']
-        nro_liquidacion=Correlativo.objects.get(id=1)
+        correlativo=Correlativo.objects.get(id=1)
         valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         #print('todo')
@@ -130,7 +129,7 @@ def Crear_Estado_Cuenta1(request):
         #print('detalle')
         #print(items)
 
-        print('numero',nro_liquidacion.NumeroEstadoCuenta)
+        print('numero',correlativo.NumeroEstadoCuenta)
         print('tipoflujo',request['flujo'])
         print('fecha',str(datetime.now()))
         print('propietario',request['propietario'])
@@ -139,7 +138,7 @@ def Crear_Estado_Cuenta1(request):
         print('valor_tasa_bs',valor_tasabcv)
         print('monto_total',request['monto_total'])
         Cabacera=EstadoCuenta(
-            numero=nro_liquidacion,
+            numero=correlativo,
             tipoflujo=request['flujo'],
             fecha=str(datetime.now()),
             propietario=request['propietario'],
@@ -171,8 +170,8 @@ def Crear_Estado_Cuenta1(request):
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
-        nro_liquidacion.NumeroEstadoCuenta=nro_liquidacion.NumeroEstadoCuenta+1
-        nro_liquidacion.save()
+        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
+        correlativo.save()
         return Response('Insert OK', status=status.HTTP_200_OK)
     else:
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
