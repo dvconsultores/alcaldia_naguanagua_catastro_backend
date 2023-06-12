@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from decimal import Decimal
+from django.utils import timezone
 
 class Departamento(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre Depatamento para usuario de catastro FLUJO")
@@ -658,8 +659,13 @@ class Flujo(models.Model):
     inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
     fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha creacion")
+    ESTADO = (
+        ('1', 'En Proceso'),
+        ('2', 'Cerrado'),
+    )
+    estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado dela solicitud')
     def __str__(self):
-        return '%s - %s' % (self.inmueble,self.pagoestadocuenta)
+        return '%s - %s - %s' % (self.inmueble,self.pagoestadocuenta,self.estado)
 
 class FlujoDetalle(models.Model):
     flujo = models.ForeignKey(Flujo, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
@@ -668,26 +674,56 @@ class FlujoDetalle(models.Model):
         ('2', 'Recibido'),
         ('3', 'Pendiente por Procesar'),
         ('4', 'En proceso'),
-        ('5', 'Procesado'),
+        ('5', 'Proceso Culminado'),
         ('6', 'Pendiente por Enviar'),
         ('7', 'Enviado'),
         ('8', 'Finalizado'),
-        ('9', 'Fin del Proceso')
+        ('9', 'Fin de la Solicitud'),
+        ('0', 'Pendiente por Re-Enviar')
     )
     TAREA = (
         ('1', 'Pendiente por Recibir'),
         ('3', 'Pendiente por Procesar'),
         ('6', 'Pendiente por Enviar'),
+        ('7', 'Devuelto'),
+        ('8', 'Finalizado'),
     )
     estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado del proceso')
     tarea= models.CharField(max_length=1, choices=TAREA, default='1', help_text='Estado del proceso')
+    
     envia_usuario  = models.ForeignKey(User, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_envia_usuario')
     envia_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha enviado")
-    recibe_usuario  = models.ForeignKey(User, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_recibe_usuario')
+    
+    recibe_usuario  = models.ForeignKey(User,blank=True,null=True, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_recibe_usuario')
     recibe_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha recepcion")
-    usuario_envia   = models.ForeignKey(Perfil, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario envia", related_name='FlujoDetalle_usuario_envia')
-    usuario_recibe  = models.ForeignKey(Perfil, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario recibe",related_name='FlujoDetalle_usuario_recibe')
+    
+    #usuario_envia   = models.ForeignKey(Perfil, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario envia", related_name='FlujoDetalle_usuario_envia')
+    #usuario_recibe  = models.ForeignKey(Perfil, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario recibe",related_name='FlujoDetalle_usuario_recibe')
+    departamento_envia   = models.ForeignKey(Departamento, blank=True,null=True,on_delete=models.CASCADE, help_text="Departamento envia", related_name='FlujoDetalle_departamento_envia')
+    departamento_recibe  = models.ForeignKey(Departamento, blank=True,null=True,on_delete=models.CASCADE, help_text="Departamento recibe",related_name='FlujoDetalle_departamento_recibe')
+    
+    inicio_proceso_usuario  = models.ForeignKey(User,blank=True,null=True, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_inicio_proceso_usuario')
     inicio_proceso_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha Inicio de proceso")
+    
+    procesa_usuario  = models.ForeignKey(User,blank=True,null=True, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_procesa_usuario')
     procesa_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN de proceso")
-    fin_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN DE PROCESO")
+    
+    fin_usuario  = models.ForeignKey(User, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_fin_usuario')
+    fin_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN DE LA SOLICITUD")
+
     observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+
+    def save(self, *args, **kwargs):
+        if not self.procesa_fecha:
+           self.procesa_fecha = timezone.now()
+        if self.estado=='2':
+           self.recibe_fecha = timezone.now()
+        if self.estado=='4':
+           self.inicio_proceso_fecha = timezone.now()
+        if self.estado=='5':
+           self.procesa_fecha = timezone.now()
+        if self.estado=='7':
+           self.envia_fecha = timezone.now()
+        if self.estado=='9':
+           self.fin_fecha = timezone.now()
+        super().save(*args, **kwargs)

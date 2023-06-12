@@ -18,6 +18,7 @@ def generate_token(username,password):
                          'email':user.email,
                          'username':user.username,
                          'modulo':perfil.modulo.nombre,
+                         'departamento':perfil.departamento.nombre,
                          'permisos': dataPermisos
                         }, status=status.HTTP_200_OK)
     else:
@@ -116,7 +117,47 @@ def Crear_Liquidacion(request):
         return Response('Insert Liquidacion OK', status=status.HTTP_200_OK)
     else:
         return Response('Insert Liquidacion NOT Ok', status=status.HTTP_400_BAD_REQUEST)
-    
+
+
+def Crear_Pago(request):
+    if (request):
+        items=request['detalle']
+        correlativo=Correlativo.objects.get(id=1)
+        valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
+        valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
+        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
+        inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
+        propietario = Propietario.objects.get(id=request['propietario'])
+        estadocuenta = None if request['estado_cuenta']==None else EstadoCuenta.objects.get(id=request['estado_cuenta'])
+        Cabacera=Liquidacion(
+            numero=correlativo.NumeroLiquidacion,
+            tipoflujo=tipoflujo,
+            estadocuenta=estadocuenta,
+            inmueble=inmueble,
+            fecha=str(datetime.now()),
+            propietario=propietario,
+            observaciones=request['observacion'],
+            valor_petro=valor_petro,
+            valor_tasa_bs=valor_tasabcv,
+            monto_total=request['monto_total']
+        )
+        Cabacera.save()
+        for detalle in items:
+            tasa_multa_id = TasaMulta.objects.get(id=detalle['tasa_multa_id'])
+            Detalle=LiquidacionDetalle(
+                estadocuenta=Cabacera,
+                tasamulta=tasa_multa_id,               
+                monto_unidad_tributaria=detalle['monto_unidad_tributaria'],
+                monto_tasa=detalle['calculo'],
+                cantidad=detalle['cantidad']                     
+            )
+            Detalle.save()
+        correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
+        correlativo.save()
+        return Response('Insert Liquidacion OK', status=status.HTTP_200_OK)
+    else:
+        return Response('Insert Liquidacion NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+
 
 def Crear_Estado_Cuenta1(request):
     if (request):

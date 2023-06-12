@@ -50,6 +50,13 @@ def CrearLiquidacion(request):
     datos=request.data
     return Crear_Liquidacion(datos)
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def CrearPago(request):
+    datos=request.data
+    return Crear_Pago(datos)
+
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=User.objects.all()
@@ -57,12 +64,27 @@ class UserViewset(MultiSerializerViewSet):
         'default': UserSerializer
     }
 
+
+
+
 class DepartamentoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
-    queryset=Departamento.objects.all()
+    queryset = Departamento.objects.all()
     serializers = {
         'default': DepartamentoSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+# excluye el departamento de usuario actual.
+# este filtro se usa cuando enviamos un documento en FLUJO. y con esto
+# evitamos que se envie el doucmento al mismo departamento que envia.
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        nombre_a_excluir = self.request.query_params.get('nombre')
+        if nombre_a_excluir:
+            queryset = queryset.exclude(nombre=nombre_a_excluir)
+        return queryset
+
+
 
 class PerfilViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -601,7 +623,9 @@ class FlujoDetalleViewset(MultiSerializerViewSet):
     filterset_fields = {
       'estado':['exact'],
       'recibe_usuario':['exact'],
+      'departamento_recibe':['exact'],
       'flujo':['exact'],
+      'tarea':['exact'],
     }
 #    def get_queryset(self):
 #        queryset = super().get_queryset()

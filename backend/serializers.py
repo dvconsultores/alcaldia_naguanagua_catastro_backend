@@ -653,18 +653,24 @@ class FlujoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Flujo
         fields = '__all__' 
-
+    estado_display = serializers.SerializerMethodField('get_estado_display')
+    def get_estado_display(self, obj):
+        return dict(Flujo.ESTADO)[obj.estado]
 
 class FlujoDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = FlujoDetalle
         fields = '__all__' 
 
-    flujo_fecha = serializers.SerializerMethodField('get_flujo_fecha')
+    
+    flujo_fecha = serializers.SerializerMethodField('get_flujo_fecha')   
     def get_flujo_fecha(self, obj):
-        formatted_date = obj.flujo.fecha.strftime("%d/%m/%Y")
-        formatted_time = obj.flujo.fecha.strftime("%I:%M %p")
-        return f"{formatted_date} {formatted_time}"  
+      if obj.flujo.fecha is not None:
+          formatted_date = obj.flujo.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.flujo.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+        
 
     tipoflujo_descripcion= serializers.SerializerMethodField('loadtipoflujo_descripcion')
     def loadtipoflujo_descripcion(self, obj):
@@ -684,27 +690,33 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
 
     envia_usuario_nombre= serializers.SerializerMethodField('loadenvia_usuario_nombre')
     def loadenvia_usuario_nombre(self, obj):
-      return obj.envia_usuario.username
+      if obj.envia_usuario:
+          return obj.envia_usuario.username
+      return None
+
 
     recibe_usuario_nombre= serializers.SerializerMethodField('loadrecibe_usuario_nombre')
     def loadrecibe_usuario_nombre(self, obj):
-      return obj.recibe_usuario.username
+      if obj.recibe_usuario:
+          return obj.recibe_usuario.username
+      return None
     
-    usuario_envia_nombre= serializers.SerializerMethodField('loadusuario_envia_nombre')
-    def loadusuario_envia_nombre(self, obj):
-      return obj.usuario_envia.usuario.username
     
-    usuario_envia_departamento= serializers.SerializerMethodField('loadusuario_envia_departamento')
-    def loadusuario_envia_departamento(self, obj):
-      return obj.usuario_envia.departamento.nombre
+    #usuario_envia_nombre= serializers.SerializerMethodField('loadusuario_envia_nombre')
+    #def loadusuario_envia_nombre(self, obj):
+    #  return obj.usuario_envia.usuario.username
     
-    usuario_recibe_nombre= serializers.SerializerMethodField('loadusuario_recibe_nombre')
-    def loadusuario_recibe_nombre(self, obj):
-      return obj.usuario_recibe.usuario.username    
+    #usuario_envia_departamento= serializers.SerializerMethodField('loadusuario_envia_departamento')
+    #def loadusuario_envia_departamento(self, obj):
+    #  return obj.usuario_envia.departamento.nombre
+    
+    #usuario_recibe_nombre= serializers.SerializerMethodField('loadusuario_recibe_nombre')
+    #def loadusuario_recibe_nombre(self, obj):
+    #  return obj.usuario_recibe.usuario.username    
 
-    usuario_recibe_departamento= serializers.SerializerMethodField('loadusuario_recibe_departamento')    
-    def loadusuario_recibe_departamento(self, obj):
-      return obj.usuario_recibe.departamento.nombre    
+    #usuario_recibe_departamento= serializers.SerializerMethodField('loadusuario_recibe_departamento')    
+    #def loadusuario_recibe_departamento(self, obj):
+    #  return obj.usuario_recibe.departamento.nombre    
 
     estado_display = serializers.SerializerMethodField('get_estado_display')
     def get_estado_display(self, obj):
@@ -714,20 +726,49 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
     def get_tarea_display(self, obj):
         return dict(FlujoDetalle.TAREA)[obj.tarea]
     
-    recibe_fecha = serializers.SerializerMethodField('get_recibe_fecha')
+    recibe_fecha = serializers.SerializerMethodField('get_recibe_fecha')   
     def get_recibe_fecha(self, obj):
-        formatted_date = obj.recibe_fecha.strftime("%d/%m/%Y")
-        formatted_time = obj.recibe_fecha.strftime("%I:%M %p")
-        return f"{formatted_date} {formatted_time}"
+      if obj.recibe_fecha is not None:
+          formatted_date = obj.recibe_fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.recibe_fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
 
     envia_fecha = serializers.SerializerMethodField('get_envia_fecha')
     def get_envia_fecha(self, obj):
-        formatted_date = obj.envia_fecha.strftime("%d/%m/%Y")
-        formatted_time = obj.envia_fecha.strftime("%I:%M %p")
-        return f"{formatted_date} {formatted_time}"
+      if obj.envia_fecha is not None:
+          formatted_date = obj.envia_fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.envia_fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+
     
     procesa_fecha = serializers.SerializerMethodField('get_procesa_fecha')
     def get_procesa_fecha(self, obj):
-        formatted_date = obj.procesa_fecha.strftime("%d/%m/%Y")
-        formatted_time = obj.procesa_fecha.strftime("%I:%M %p")
-        return f"{formatted_date} {formatted_time}"    
+      if obj.procesa_fecha is not None:
+          formatted_date = obj.procesa_fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.procesa_fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return ""  
+    
+    fin_fecha = serializers.SerializerMethodField('get_fin_fecha')
+    def get_fin_fecha(self, obj):
+      if obj.fin_fecha is not None:
+          formatted_date = obj.fin_fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.fin_fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+
+    inicio_proceso_fecha = serializers.SerializerMethodField('get_inicio_proceso_fecha')
+    def get_inicio_proceso_fecha(self, obj):
+      if obj.inicio_proceso_fecha is not None:
+          formatted_date = obj.inicio_proceso_fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.inicio_proceso_fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+       
+   # inicio_proceso_fecha = serializers.SerializerMethodField('get_inicio_proceso_fecha')
+   # def get_inicio_proceso_fecha(self, obj):
+   #     formatted_date = obj.inicio_proceso_fecha.strftime("%d/%m/%Y")
+   #     formatted_time = obj.inicio_proceso_fecha.strftime("%I:%M %p")
+   #     return f"{formatted_date} {formatted_time}"  
