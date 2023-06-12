@@ -165,13 +165,18 @@ def Crear_Pago(request):
                        fecha=str(datetime.now()),
                        estaso='1')
         FlujoNew.save()
+        departamentoenvia=Departamento.objects.get(nombre='Administrador')
+        departamentorecibe=Departamento.objects.get(nombre='Taquilla Catastro')
+        usuarioId=User.objects.get(username='Super')
         FlujoDetalleNew=FlujoDetalle(
             flujo=FlujoNew,
-            estadi='1',
+            estado='1',
             tarea='1',
+            departamento_envia=departamentoenvia,
+            envia_usuario=usuarioId,
+            departamento_recibe=departamentorecibe
         )
         FlujoDetalleNew.save()
-
         correlativo.NumeroPago=correlativo.NumeroPago+1
         correlativo.save()
         liquidacion.habilitado=False
