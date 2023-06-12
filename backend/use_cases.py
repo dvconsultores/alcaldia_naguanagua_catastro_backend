@@ -88,7 +88,7 @@ def Crear_Liquidacion(request):
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
-        estadocuenta = None if request['estado_cuenta']==None else EstadoCuenta.objects.get(id=request['estado_cuenta'])
+        estadocuenta = None if request['estadocuenta']==None else EstadoCuenta.objects.get(id=request['estadocuenta'])
         Cabacera=Liquidacion(
             numero=correlativo.NumeroLiquidacion,
             tipoflujo=tipoflujo,
