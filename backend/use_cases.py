@@ -103,12 +103,12 @@ def Crear_Liquidacion(request):
         )
         Cabacera.save()
         for detalle in items:
-            tasa_multa_id = TasaMulta.objects.get(id=detalle['tasa_multa_id'])
+            tasa_multa_id = TasaMulta.objects.get(id=detalle['tasamulta'])
             Detalle=LiquidacionDetalle(
-                estadocuenta=Cabacera,
+                liquidacion=Cabacera,
                 tasamulta=tasa_multa_id,               
                 monto_unidad_tributaria=detalle['monto_unidad_tributaria'],
-                monto_tasa=detalle['calculo'],
+                monto_tasa=detalle['monto_tasa'],
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
@@ -128,7 +128,7 @@ def Crear_Pago(request):
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
-        estadocuenta = None if request['estado_cuenta']==None else EstadoCuenta.objects.get(id=request['estado_cuenta'])
+        estadocuenta = None if request['estadocuenta']==None else EstadoCuenta.objects.get(id=request['estadocuenta'])
         Cabacera=Liquidacion(
             numero=correlativo.NumeroLiquidacion,
             tipoflujo=tipoflujo,
