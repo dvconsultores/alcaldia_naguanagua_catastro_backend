@@ -547,6 +547,7 @@ class EstadoCuentaViewset(MultiSerializerViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
       'propietario':['exact'],
+      'habilitado':['exact'],
     }
 
 class EstadoCuentaDetalleViewset(MultiSerializerViewSet):

@@ -112,8 +112,14 @@ def Crear_Liquidacion(request):
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
+            # actualizamos 
         correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
         correlativo.save()
+
+        #marco el estado de cuenta para que no aparezca denuevo en las listas de estados de cuenta disponibles
+        # con eso validamos que no se genere dos liquidaciones con el mismo estado de cuenta.
+        estadocuenta.habilitado=False
+        estadocuenta.save()
         return Response('Insert Liquidacion OK', status=status.HTTP_200_OK)
     else:
         return Response('Insert Liquidacion NOT Ok', status=status.HTTP_400_BAD_REQUEST)

@@ -586,6 +586,7 @@ class EstadoCuenta(models.Model):
     valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="monto total")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
