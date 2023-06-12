@@ -609,6 +609,8 @@ class Liquidacion(models.Model):
     valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
@@ -642,11 +644,12 @@ class PagoEstadoCuentaDetalle(models.Model):
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
     tipopago = models.ForeignKey(TipoPago, on_delete=models.PROTECT,help_text="Id Tipo Pago")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
-    nro_cuenta = models.TextField(null=False,blank =False, unique=False, help_text="nro_cuenta")
-    fecha = models.TextField(null=False,blank =False, unique=False, help_text="fecha")
-    telefono = models.TextField(null=False,blank =False, unique=False, help_text="telefono")
-    banco = models.TextField(null=False,blank =False, unique=False, help_text="banco")
-    cedula = models.TextField(null=False,blank =False, unique=False, help_text="cedula")
+    nro_cuenta = models.TextField(null=True,blank =True, help_text="nro_cuenta")
+    nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia")
+    fecha = models.TextField(null=True,blank =True, help_text="fecha")
+    telefono = models.TextField(null=True,blank =True,  help_text="telefono")
+    banco = models.TextField(null=True,blank =True, help_text="banco")
+    cedula = models.TextField(null=True,blank =True, help_text="cedula")
     
 # tabla dee control para manejo de correlativos
 class Correlativo(models.Model):

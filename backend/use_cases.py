@@ -129,40 +129,58 @@ def Crear_Pago(request):
     if (request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
-        valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
-        valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
-        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
-        inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
-        propietario = Propietario.objects.get(id=request['propietario'])
-        estadocuenta = None if request['estadocuenta']==None else EstadoCuenta.objects.get(id=request['estadocuenta'])
-        Cabacera=Liquidacion(
-            numero=correlativo.NumeroLiquidacion,
-            tipoflujo=tipoflujo,
-            estadocuenta=estadocuenta,
-            inmueble=inmueble,
+        propietario = Propietario.objects.get(id=request['liquidacion.propietario.id'])
+        liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
+        Cabacera=PagoEstadoCuenta(
+            numero=correlativo.NumeroPago,
+            liquidacion=liquidacion,
             fecha=str(datetime.now()),
-            propietario=propietario,
             observaciones=request['observacion'],
-            valor_petro=valor_petro,
-            valor_tasa_bs=valor_tasabcv,
-            monto_total=request['monto_total']
+            monto=request['monto']
         )
         Cabacera.save()
         for detalle in items:
-            tasa_multa_id = TasaMulta.objects.get(id=detalle['tasa_multa_id'])
-            Detalle=LiquidacionDetalle(
-                estadocuenta=Cabacera,
-                tasamulta=tasa_multa_id,               
-                monto_unidad_tributaria=detalle['monto_unidad_tributaria'],
-                monto_tasa=detalle['calculo'],
-                cantidad=detalle['cantidad']                     
+            tipopago = TipoPago.objects.get(id=detalle['tipopago'])
+            Detalle=PagoEstadoCuentaDetalle(
+                pagoestadocuenta=Cabacera,
+                tipopago = tipopago,
+                monto  = detalle['monto'],
+                nro_cuenta = detalle['nro_cuenta'],
+                fecha = detalle['fecha'],
+                telefono =detalle['telefono'],
+                banco = detalle['banco'],
+                cedula = detalle['cedula'],
+                referencia = detalle['referencia']
             )
             Detalle.save()
-        correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
+        #crear inmuebles
+        InmuebleNew=Inmueble(expediente=correlativo.ExpedienteCatastro)
+        InmuebleNew.save()
+        InmueblePropietariosNew=InmueblePropietarios(inmuenbe=InmuebleNew,
+                                                     propietario=propietario)
+        InmueblePropietariosNew.save()        
+        #crear flujo
+        FlujoNew=Flujo(inmueble=InmuebleNew,
+                       pegoestadocuenta=Cabacera,
+                       fecha=str(datetime.now()),
+                       estaso='1')
+        FlujoNew.save()
+        FlujoDetalleNew=FlujoDetalle(
+            flujo=FlujoNew,
+            estadi='1',
+            tarea='1',
+        )
+        FlujoDetalleNew.save()
+
+        correlativo.NumeroPago=correlativo.NumeroPago+1
         correlativo.save()
-        return Response('Insert Liquidacion OK', status=status.HTTP_200_OK)
+        liquidacion.habilitado=False
+        liquidacion.save()
+
+
+        return Response('Insert Pago OK', status=status.HTTP_200_OK)
     else:
-        return Response('Insert Liquidacion NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        return Response('Insert Pago NOT Ok', status=status.HTTP_400_BAD_REQUEST)
 
 
 def Crear_Estado_Cuenta1(request):

@@ -570,6 +570,7 @@ class LiquidacionViewset(MultiSerializerViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
       'propietario':['exact'],
+      'habilitado':['exact'],
     }
 
 class LiquidacionDetalleViewset(MultiSerializerViewSet):
