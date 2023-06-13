@@ -664,7 +664,7 @@ class PagoEstadoCuentaDetalle(models.Model):
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
     bancocuenta = models.ForeignKey(BancoCuenta, on_delete=models.PROTECT,help_text="ID Banco")
     nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia")
-    fecha = models.TextField(null=True,blank =True, help_text="fecha")
+    fechapago = models.DateTimeField(blank=True, help_text="Fecha pago")
     
 # tabla dee control para manejo de correlativos
 class Correlativo(models.Model):
