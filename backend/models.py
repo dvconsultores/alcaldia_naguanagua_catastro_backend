@@ -628,7 +628,25 @@ class TipoPago(models.Model):
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion Tipo de pago")
     def __str__(self):
         return '%s' % (self.descripcion)
-        
+
+   
+class Banco(models.Model):
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Nombre del banco")
+    def __str__(self):
+        return '%s' % (self.descripcion)
+
+class BancoCuenta(models.Model):
+    banco = models.ForeignKey(Banco, on_delete=models.PROTECT,help_text="ID Banco")
+    numero  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Cuenta")
+    TIPO = (
+        ('1', 'Corriente'),
+        ('2', 'Ahorro'),
+    )
+    tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='Tipo de Cuenta')
+    def __str__(self):
+        return '%s - %s - %s' % (self.banco.descripcion,self.numero,self.tipo)
+
+
 #Maestro de recibo Pago
 class PagoEstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")
@@ -644,11 +662,11 @@ class PagoEstadoCuentaDetalle(models.Model):
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
     tipopago = models.ForeignKey(TipoPago, on_delete=models.PROTECT,help_text="Id Tipo Pago")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
-    nro_cuenta = models.TextField(null=True,blank =True, help_text="nro_cuenta")
+    bancocuenta = models.ForeignKey(BancoCuenta, on_delete=models.PROTECT,help_text="ID Banco")
     nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia")
     fecha = models.TextField(null=True,blank =True, help_text="fecha")
     telefono = models.TextField(null=True,blank =True,  help_text="telefono")
-    banco = models.TextField(null=True,blank =True, help_text="banco")
+    banco = models.ForeignKey(Banco, on_delete=models.PROTECT,help_text="ID Banco")
     cedula = models.TextField(null=True,blank =True, help_text="cedula")
     
 # tabla dee control para manejo de correlativos

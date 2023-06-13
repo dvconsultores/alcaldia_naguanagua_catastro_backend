@@ -74,6 +74,8 @@ router.register(r'estadocuentadetalle', views.EstadoCuentaDetalleViewset,basenam
 router.register(r'liquidacion', views.LiquidacionViewset,basename='liquidacion')
 router.register(r'liquidaciondetalle', views.LiquidacionDetalleViewset,basename='liquidaciondetalle')
 router.register(r'tipopago', views.TipoPagoViewset,basename='tipopago')
+router.register(r'banco', views.BancoViewset,basename='banco')
+router.register(r'bancocuenta', views.BancoCuentaViewset,basename='bancocuenta')
 router.register(r'pagoestadocuenta', views.PagoEstadoCuentaViewset,basename='pagoestadocuenta')
 router.register(r'pagoestadocuentadetalle', views.PagoEstadoCuentaDetalleViewset,basename='pagoestadocuentadetalle')
 router.register(r'correlativo', views.CorrelativoViewset,basename='correlativo')

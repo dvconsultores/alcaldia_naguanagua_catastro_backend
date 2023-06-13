@@ -632,6 +632,16 @@ class TipoPagoSerializer(serializers.ModelSerializer):
         model = TipoPago
         fields = '__all__'  
 
+class BancoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banco
+        fields = '__all__'  
+
+class BancoCuentaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BancoCuenta
+        fields = '__all__'  
+
 class PagoEstadoCuentaSerializer(serializers.ModelSerializer):
     liquidacion = LiquidacionSerializer()
     class Meta:

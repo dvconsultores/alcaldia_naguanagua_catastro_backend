@@ -587,6 +587,22 @@ class TipoPagoViewset(MultiSerializerViewSet):
         'default': TipoPagoSerializer
     }
 
+
+class BancoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Banco.objects.all()
+    serializers = {
+        'default': BancoSerializer
+    }
+
+class BancoCuentaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=BancoCuenta.objects.all()
+    serializers = {
+        'default': BancoCuentaSerializer
+    }
+
+
 class PagoEstadoCuentaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=PagoEstadoCuenta.objects.all()
