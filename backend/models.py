@@ -662,7 +662,7 @@ class PagoEstadoCuentaDetalle(models.Model):
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
     tipopago = models.ForeignKey(TipoPago, on_delete=models.PROTECT,help_text="Id Tipo Pago")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
-    bancocuenta = models.ForeignKey(BancoCuenta, on_delete=models.PROTECT,help_text="ID Banco")
+    bancocuenta = models.ForeignKey(BancoCuenta,null=True,blank =True, on_delete=models.PROTECT,help_text="ID Banco")
     nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia")
     fechapago = models.DateTimeField(blank=True, help_text="Fecha pago")
     
