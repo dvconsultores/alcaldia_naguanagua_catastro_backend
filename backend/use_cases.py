@@ -141,15 +141,13 @@ def Crear_Pago(request):
         Cabacera.save()
         for detalle in items:
             tipopago = TipoPago.objects.get(id=detalle['tipopago'])
+            bancocuenta = None if detalle['bancocuenta']==None else BancoCuenta.objects.get(id=detalle['bancocuenta'])
             Detalle=PagoEstadoCuentaDetalle(
                 pagoestadocuenta=Cabacera,
                 tipopago = tipopago,
+                bancocuenta=bancocuenta,
                 monto  = detalle['monto'],
-                nro_cuenta = detalle['nro_cuenta'],
-                fecha = detalle['fecha'],
-                telefono =detalle['telefono'],
-                banco = detalle['banco'],
-                cedula = detalle['cedula'],
+                fechapago = detalle['fechapago'],
                 referencia = detalle['referencia']
             )
             Detalle.save()
