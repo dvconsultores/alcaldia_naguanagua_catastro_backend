@@ -156,7 +156,7 @@ def Crear_Pago(request):
         #crear inmuebles
         InmuebleNew=Inmueble(expediente=correlativo.ExpedienteCatastro)
         InmuebleNew.save()
-        InmueblePropietariosNew=InmueblePropietarios(inmuenbe=InmuebleNew,
+        InmueblePropietariosNew=InmueblePropietarios(inmuenble=InmuebleNew,
                                                      propietario=propietario)
         InmueblePropietariosNew.save()        
         #crear flujo
@@ -183,7 +183,6 @@ def Crear_Pago(request):
         #marca la liquidacion como procesada
         liquidacion.habilitado=False
         liquidacion.save()
-
 
         return Response('Insert Pago OK', status=status.HTTP_200_OK)
     else:
