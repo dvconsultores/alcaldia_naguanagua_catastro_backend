@@ -129,7 +129,7 @@ def Crear_Pago(request):
     if (request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
-        propietario = Propietario.objects.get(id=request['liquidacion.propietario.id'])
+        propietario = Propietario.objects.get(id=request['propietario'])
         liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
         Cabacera=PagoEstadoCuenta(
             numero=correlativo.NumeroPago,
