@@ -148,7 +148,7 @@ def Crear_Pago(request):
                 bancocuenta=bancocuenta,
                 monto  = detalle['monto'],
                 fechapago = detalle['fechapago'],
-                referencia = detalle['referencia']
+                nro_referencia = detalle['referencia']
             )
             Detalle.save()
         #crear inmuebles
