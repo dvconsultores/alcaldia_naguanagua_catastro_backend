@@ -177,8 +177,10 @@ def Crear_Pago(request):
             departamento_recibe=departamentorecibe
         )
         FlujoDetalleNew.save()
+        #actualiza corrrelativo de pago
         correlativo.NumeroPago=correlativo.NumeroPago+1
         correlativo.save()
+        #marca la liquidacion como procesada
         liquidacion.habilitado=False
         liquidacion.save()
 
