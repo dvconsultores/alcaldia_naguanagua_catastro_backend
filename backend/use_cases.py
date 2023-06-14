@@ -134,7 +134,8 @@ def Crear_Pago(request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
         propietario = Propietario.objects.get(id=request['propietario'])
-        liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
+        #liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
+        liquidacion = Liquidacion.objects.get(id=request['liquidacion'])
         Cabacera=PagoEstadoCuenta(
             numero=correlativo.NumeroPago,
             liquidacion=liquidacion,
@@ -155,33 +156,41 @@ def Crear_Pago(request):
                 nro_referencia = detalle['referencia']
             )
             Detalle.save()
-        #crear inmuebles
-        InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro)
-        InmuebleNew.save()
-        InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
-                                                     propietario=propietario)
-        InmueblePropietariosNew.save()        
-        #crear flujo
-        FlujoNew=Flujo(inmueble=InmuebleNew,
-                       pagoestadocuenta=Cabacera,
-                       fecha=str(datetime.now()),
-                       estado='1')
-        FlujoNew.save()
-        departamentoenvia=Departamento.objects.get(nombre='Admin')
-        usuarioenvia=User.objects.get(username='Admin')
-        departamentorecibe=Departamento.objects.get(nombre='Taquilla Catastro')
-        FlujoDetalleNew=FlujoDetalle(
-            flujo=FlujoNew,
-            estado='1',
-            tarea='1',
-            departamento_envia=departamentoenvia,
-            envia_usuario=usuarioenvia,
-            departamento_recibe=departamentorecibe
-        )
-        FlujoDetalleNew.save()
+        #actualiza el correlativo de numero de pagos
+        correlativo.NumeroPago=correlativo.NumeroPago+1  
+        # solo aplica cuando la peticion viene de catastro y es una de esas 3 opciones
+        if liquidacion.tipoflujo.id in [1, 2, 3]:
+            #solo aplica cuanbdo es inscripcion, el inmueble se debe crear nuevo
+            if liquidacion.tipoflujo.id==1:
+                #crear inmuebles
+                InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro)
+                InmuebleNew.save()
+                InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
+                                                            propietario=propietario)
+                InmueblePropietariosNew.save()  
+                #actualiza en correlativo del expediente 
+                correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
+            else:
+                #seleciona el inmueble ya seleccionado desde la liquidacion
+                InmuebleNew=Inmueble.objects.get(id=liquidacion.inmueble.id)
+            #crear flujo
+            FlujoNew=Flujo(inmueble=InmuebleNew,
+                            pagoestadocuenta=Cabacera,
+                            estado='1')
+            FlujoNew.save()
+            departamentoenvia=Departamento.objects.get(nombre='Admin')
+            usuarioenvia=User.objects.get(username='Admin')
+            departamentorecibe=Departamento.objects.get(nombre='Taquilla Catastro')
+            FlujoDetalleNew=FlujoDetalle(
+                flujo=FlujoNew,
+                estado='1',
+                tarea='1',
+                departamento_envia=departamentoenvia,
+                envia_usuario=usuarioenvia,
+                departamento_recibe=departamentorecibe
+            )
+            FlujoDetalleNew.save()
         #actualiza corrrelativo de pago
-        correlativo.NumeroPago=correlativo.NumeroPago+1
-        correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
         correlativo.save()
         #marca la liquidacion como procesada
         liquidacion.habilitado=False

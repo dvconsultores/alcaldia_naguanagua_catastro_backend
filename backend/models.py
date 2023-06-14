@@ -400,6 +400,8 @@ class UsoConstruccion(models.Model):
 class Soporte(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Soporte")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Soporte")
+    def __str__(self):
+        return '%s - %s' % (self.codigo, self.descripcion)
 
 class Techo(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Techo")
@@ -608,7 +610,6 @@ class Liquidacion(models.Model):
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     habilitado = models.BooleanField(default=True, help_text="Se muestra la liquidacion?")
-
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
@@ -683,6 +684,10 @@ class Flujo(models.Model):
     estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado dela solicitud')
     def __str__(self):
         return '%s - %s - %s' % (self.inmueble,self.pagoestadocuenta,self.estado)
+    def save(self, *args, **kwargs):
+        self.fecha = timezone.now()
+        super().save(*args, **kwargs)
+
 
 class FlujoDetalle(models.Model):
     flujo = models.ForeignKey(Flujo, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
@@ -731,8 +736,8 @@ class FlujoDetalle(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
     def save(self, *args, **kwargs):
-        if not self.procesa_fecha:
-           self.procesa_fecha = timezone.now()
+        if self.estado=='1':
+           self.envia_fecha = timezone.now()
         if self.estado=='2':
            self.recibe_fecha = timezone.now()
         if self.estado=='4':

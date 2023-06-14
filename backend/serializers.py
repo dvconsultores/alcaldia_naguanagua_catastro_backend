@@ -374,17 +374,14 @@ class ZonaSerializer(serializers.ModelSerializer):
         model = Zona
         fields = '__all__'
 
-
-
 class InmuebleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inmueble
-        fields = '__all__'
-     
+        fields = '__all__'    
 
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion 
+      return obj.ambito.descripcion
 
     descripcion_tipo= serializers.SerializerMethodField('loaddescripcion_tipo')
     def loaddescripcion_tipo(self, obj):
@@ -422,7 +419,6 @@ class InmuebleSerializer(serializers.ModelSerializer):
     def loadnombre_urbanizacion(self, obj):
       return obj.urbanizacion.nombre
 
-
     nombre_calle= serializers.SerializerMethodField('loadnombre_calle')
     def loadnombre_calle(self, obj):
       return obj.calle.nombre
@@ -447,8 +443,6 @@ class InmuebleSerializer(serializers.ModelSerializer):
     def loaddescripcion_zona(self, obj):
       return obj.zona.descripcion
 
-
-
 class InmueblePropietariosSerializer(serializers.ModelSerializer):
     inmueble = InmuebleSerializer()
     propietario = PropietarioSerializer()
@@ -456,14 +450,10 @@ class InmueblePropietariosSerializer(serializers.ModelSerializer):
         model = InmueblePropietarios
         fields = '__all__'
 
-
-
-
 class InmueblePropiedadSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmueblePropiedad
         fields = '__all__'
-
 
 class InmuebleTerrenoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -571,8 +561,6 @@ class PropietarioSerializer(serializers.ModelSerializer):
         model = Propietario
         fields = '__all__' 
 
-
-
 class TasaBCVSerializer(serializers.ModelSerializer):
     class Meta:
         model = TasaBCV
@@ -660,19 +648,31 @@ class CorrelativoSerializer(serializers.ModelSerializer):
 
 class FlujoSerializer(serializers.ModelSerializer):
     pagoestadocuenta = PagoEstadoCuentaSerializer()
+    #inmueble = InmuebleSerializer()
     class Meta:
         model = Flujo
         fields = '__all__' 
     estado_display = serializers.SerializerMethodField('get_estado_display')
     def get_estado_display(self, obj):
         return dict(Flujo.ESTADO)[obj.estado]
+    expediente= serializers.SerializerMethodField('loadpexpediente')
+    def loadpexpediente(self, obj):
+      return obj.inmueble.numero_expediente
+    
+    fecha = serializers.SerializerMethodField('get_fecha')
+    def get_fecha(self, obj):
+      if obj.fecha is not None:
+          formatted_date = obj.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return ""     
 
+    
 class FlujoDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = FlujoDetalle
         fields = '__all__' 
 
-    
     flujo_fecha = serializers.SerializerMethodField('get_flujo_fecha')   
     def get_flujo_fecha(self, obj):
       if obj.flujo.fecha is not None:
@@ -681,7 +681,6 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
           return f"{formatted_date} {formatted_time}"
       return "" 
         
-
     tipoflujo_descripcion= serializers.SerializerMethodField('loadtipoflujo_descripcion')
     def loadtipoflujo_descripcion(self, obj):
       return obj.flujo.pagoestadocuenta.liquidacion.tipoflujo.descripcion
@@ -724,23 +723,7 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
           formatted_date = obj.recibe_fecha.strftime("%d/%m/%Y")
           formatted_time = obj.recibe_fecha.strftime("%I:%M %p")
           return f"{formatted_date} {formatted_time}"
-      return "" 
-    
-    #usuario_envia_nombre= serializers.SerializerMethodField('loadusuario_envia_nombre')
-    #def loadusuario_envia_nombre(self, obj):
-    #  return obj.usuario_envia.usuario.username
-    
-    #usuario_envia_departamento= serializers.SerializerMethodField('loadusuario_envia_departamento')
-    #def loadusuario_envia_departamento(self, obj):
-    #  return obj.usuario_envia.departamento.nombre
-    
-    #usuario_recibe_nombre= serializers.SerializerMethodField('loadusuario_recibe_nombre')
-    #def loadusuario_recibe_nombre(self, obj):
-    #  return obj.usuario_recibe.usuario.username    
-
-    #usuario_recibe_departamento= serializers.SerializerMethodField('loadusuario_recibe_departamento')    
-    #def loadusuario_recibe_departamento(self, obj):
-    #  return obj.usuario_recibe.departamento.nombre    
+      return ""  
 
     estado_display = serializers.SerializerMethodField('get_estado_display')
     def get_estado_display(self, obj):
@@ -791,10 +774,3 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
       if obj.inicio_proceso_usuario:
           return obj.inicio_proceso_usuario.username
       return None
-    
-
-   # inicio_proceso_fecha = serializers.SerializerMethodField('get_inicio_proceso_fecha')
-   # def get_inicio_proceso_fecha(self, obj):
-   #     formatted_date = obj.inicio_proceso_fecha.strftime("%d/%m/%Y")
-   #     formatted_time = obj.inicio_proceso_fecha.strftime("%I:%M %p")
-   #     return f"{formatted_date} {formatted_time}"  

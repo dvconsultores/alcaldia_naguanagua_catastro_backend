@@ -355,6 +355,7 @@ class InmueblePropietariosViewset(MultiSerializerViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
       'propietario':['exact'],
+      'inmueble':['exact'],
     }
 
 class InmuebleTerrenoViewset(MultiSerializerViewSet):
