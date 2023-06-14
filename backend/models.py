@@ -56,8 +56,6 @@ class Permiso(models.Model):
         return '%s (Permiso: %s-%s-%s - Leer:%s Borrar:%s Actualizar:%s Escribir:%s)' % (self.perfil.usuario.username, self.modulo.es_menu, self.modulo.menu, self.modulo.nombre, self.leer, self.borrar, self.actualizar, self.escribir)
 
 
-
-
 class Ambito(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del ambito")
     descripcion = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del ambito")
@@ -76,7 +74,7 @@ class Sector(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del Sector")
     descripcion = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del Sector")
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    perimetro = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del Sector")
+    perimetro = models.TextField(null=True,blank =True, help_text="Descripcion del Sector")
     clasificacion= models.CharField(max_length=1, choices=CLASIFICACION, default='A', help_text='clasificacion del Sector')
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
@@ -120,7 +118,7 @@ class Manzana(models.Model):
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la Manzana")
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    perimetro = models.TextField(null=False,blank =False, unique=False, help_text="Perimetro de la manzana")
+    perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la manzana")
     via_norte=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana norte",related_name='manzana_via_norte')
     via_sur=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana sur",related_name='manzana_via_sur')
     via_este=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana este",related_name='manzana_via_este')
@@ -132,7 +130,7 @@ class Parcela(models.Model):
     manzana=models.ForeignKey(Manzana,on_delete=models.PROTECT,help_text="Manzana asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la Parcela")
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    perimetro = models.TextField(null=False,blank =False, unique=False, help_text="Perimetro de la Parcela")
+    perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la Parcela")
     def __str__(self):
         return '%s' % (self.codigo)
     
@@ -140,7 +138,7 @@ class SubParcela(models.Model):
     parcela=models.ForeignKey(Parcela,on_delete=models.PROTECT,help_text="Parcela asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la SubParcela")
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    perimetro = models.TextField(null=False,blank =False, unique=False, help_text="Perimetro de la SubParcela")
+    perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la SubParcela")
     def __str__(self):
         return '%s' % (self.codigo)
 
@@ -285,15 +283,15 @@ class Propietario(models.Model):
     numero_documento  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
     nombre  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
     telefono_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    telefono_secundario   = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    telefono_secundario   = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     email_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    emaill_secundario  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    emaill_secundario  = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     def __str__(self):
         return '%s - %s' % (self.numero_documento, self.nombre)
     
 class Inmueble(models.Model):
     numero_expediente = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
-    fecha_inscripcion = models.DateField(blank=True, help_text="fecha de inscripcion")
+    fecha_inscripcion = models.DateField(blank=True,null=True, help_text="fecha de inscripcion")
     tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="TipoInmueble asociado")
     status=models.ForeignKey(EstatusInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="status asociado")
     ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,null=True,blank =True,help_text="ambito asociado")
@@ -329,25 +327,25 @@ class InmueblePropiedad(models.Model):
     fecha_vigencia = models.DateField(blank=True, help_text="fecha de inscripcion")
     fecha_documento	= models.DateField(blank=True, help_text="fecha de inscripcion")
     numero_documento = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente")
-    matricula_documento	= models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    anio_folio_documento = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    matricula_documento	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    anio_folio_documento = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     fecha_terreno = models.DateField(blank=True, help_text="fecha de inscripcion")
-    numero_terreno = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    folio_terreno = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    protocolo_terreno = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    tomo_terreno = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    numero_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    folio_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    protocolo_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    tomo_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     area_terreno =  models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="area_terreno en m2")
-    valor_terreno = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    valor_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     fecha_construccion = models.DateField(blank=True, help_text="fecha de inscripcion")
-    numero_construccion	= models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    folio_construccion = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    protocolo_construccion = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    tomo_construccion = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    numero_construccion	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    folio_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    protocolo_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    tomo_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     area_construccion =  models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="area_construccion en m2")
-    lindero_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    lindero_sur	= models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    lindero_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    lindero_oeste = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    lindero_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    lindero_sur	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    lindero_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    lindero_oeste = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     def __str__(self):
         return '%s' % (self.inmueble.numero_expediente)
 
@@ -367,7 +365,7 @@ class InmuebleTerreno(models.Model):
     #uso	= models.ForeignKey (Uso, on_delete=models.PROTECT,help_text="uso asociado")
     #regimen	= models.ForeignKey (Regimen, on_delete=models.PROTECT,help_text="regimen asociado")
     servicios = models.ForeignKey (Servicios, on_delete=models.PROTECT,help_text="Servicios Asociado")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="Observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="Observaciones")
     def __str__(self):
         return '%s' % (self.inmueble.numero_expediente)
     
@@ -448,8 +446,8 @@ class InmuebleConstruccion(models.Model):
     conservacion = models.ForeignKey (Conservacion, on_delete=models.PROTECT,help_text="Conservacion asociado")
     anio_construccion = models.PositiveIntegerField(default=0, help_text="anio_construccion")
     anio_refaccion = models.PositiveIntegerField(default=0, help_text="anio_refaccion")
-    porcentaje_refaccion = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    edad_efectiva = models.TextField(null=False,blank =False, unique=False, help_text="edad_efectiva")
+    porcentaje_refaccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    edad_efectiva = models.TextField(null=True,blank =True, help_text="edad_efectiva")
     numero_niveles = models.PositiveIntegerField(default=0, help_text="Numero de niveles")
     numero_edificaciones = models.PositiveIntegerField(default=0, help_text="numero de edificaciones")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
@@ -477,7 +475,7 @@ class InmuebleValoracionTerreno(models.Model):
     forma_factor_ajuste	= models.ForeignKey (Forma, on_delete=models.PROTECT,help_text="Forma del factor de ajuste")
     valor_ajustado = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Valor Ajustado")
     valor_total = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Valor Total")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
 class InmuebleValoracionConstruccion(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleValoracionTerreno, on_delete=models.PROTECT,help_text="Id inmueble_terreno asociado")
@@ -488,39 +486,39 @@ class InmuebleValoracionConstruccion(models.Model):
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
     valor = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
     depreciacion = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="depreciacion")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
 class InmuebleUbicacion(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
-    lindero_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    lindero_sur = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    lindero_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    lindero_oeste = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    lindero_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    lindero_sur = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    lindero_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    lindero_oeste = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     imagen_inmueble = models.ImageField(upload_to='media/paises', null=True, blank=True, help_text="Imagen asociado al pais")
     imagen_plano = models.ImageField(upload_to='media/paises', null=True, blank=True, help_text="Imagen asociado al pais")
     imagan_plano_mesura =models.ImageField(upload_to='media/paises', null=True, blank=True, help_text="Imagen asociado al pais")
-    g1_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g1_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g2_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g2_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g3_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g3_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g4_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g4_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g5_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g5_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g6_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g6_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g7_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g7_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g8_norte = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    g8_este = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
+    g1_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g1_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g2_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g2_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g3_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g3_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g4_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g4_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g5_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g5_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g6_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g6_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g7_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g7_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g8_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    g8_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
 
 class InmuebleFaltante(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
-    cedula = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    doumento_propiedad = models.TextField(null=False,blank =False, unique=False, help_text="Numero de expediente")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    cedula = models.TextField(null=True,blank =True,help_text="Numero de expediente")
+    documentopropiedad = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    observaciones = models.TextField(null=True,blank =True,help_text="observaciones")
 
 
 
@@ -582,7 +580,7 @@ class EstadoCuenta(models.Model):
     tipoflujo = models.ForeignKey(TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de flujo (solo catasrro: inscripcion, actualizacion o modificar propietario")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="monto total")
@@ -605,7 +603,7 @@ class Liquidacion(models.Model):
     tipoflujo = models.ForeignKey(TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de flujo solo catasrro: inscripcion, actualizacion o modificar propietario")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
@@ -652,7 +650,7 @@ class PagoEstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")
     liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
     def __str__(self):
         return '%s - %s' % (self.numero,self.liquidacion)
@@ -730,7 +728,7 @@ class FlujoDetalle(models.Model):
     fin_usuario  = models.ForeignKey(User, blank=True,null=True,on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_fin_usuario')
     fin_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN DE LA SOLICITUD")
 
-    observaciones = models.TextField(null=False,blank =False, unique=False, help_text="observaciones")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
     def save(self, *args, **kwargs):
         if not self.procesa_fecha:

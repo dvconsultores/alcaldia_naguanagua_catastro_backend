@@ -28,7 +28,7 @@ def SignIn(request):
 @csrf_exempt
 @permission_classes([AllowAny])
 def SignUp(request):
-    return create_user(request.data["username"],request.data["email"],request.data["password"])
+    return create_user(request.data["username"],request.data["password"],request.data["email"])
 
 @api_view(["POST"])
 @csrf_exempt

@@ -32,6 +32,10 @@ def create_user(username,password,email):
                                  email=email,
                                  password=password)
         user.save()
+        perfil=Perfil(usuario=user,
+                      tipo='U',
+                      activo=True)
+        perfil.save()
         return generate_token(username,password)
     
 def change_password(user,password):
@@ -140,43 +144,44 @@ def Crear_Pago(request):
         )
         Cabacera.save()
         for detalle in items:
-            tipopago = TipoPago.objects.get(id=detalle['tipopago'])
+            tipopago = None if detalle['tipopago']==None else TipoPago.objects.get(id=detalle['tipopago'])
             bancocuenta = None if detalle['bancocuenta']==None else BancoCuenta.objects.get(id=detalle['bancocuenta'])
             Detalle=PagoEstadoCuentaDetalle(
                 pagoestadocuenta=Cabacera,
                 tipopago = tipopago,
                 bancocuenta=bancocuenta,
                 monto  = detalle['monto'],
-                fechapago = detalle['fechapago'],
+                fechapago =  str(datetime.now()),#detalle['fechapago'],
                 nro_referencia = detalle['referencia']
             )
             Detalle.save()
         #crear inmuebles
-        InmuebleNew=Inmueble(expediente=correlativo.ExpedienteCatastro)
+        InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro)
         InmuebleNew.save()
-        InmueblePropietariosNew=InmueblePropietarios(inmuenble=InmuebleNew,
+        InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
                                                      propietario=propietario)
         InmueblePropietariosNew.save()        
         #crear flujo
         FlujoNew=Flujo(inmueble=InmuebleNew,
-                       pegoestadocuenta=Cabacera,
+                       pagoestadocuenta=Cabacera,
                        fecha=str(datetime.now()),
-                       estaso='1')
+                       estado='1')
         FlujoNew.save()
-        departamentoenvia=Departamento.objects.get(nombre='Administrador')
+        departamentoenvia=Departamento.objects.get(nombre='Admin')
+        usuarioenvia=User.objects.get(username='Admin')
         departamentorecibe=Departamento.objects.get(nombre='Taquilla Catastro')
-        usuarioId=User.objects.get(username='Super')
         FlujoDetalleNew=FlujoDetalle(
             flujo=FlujoNew,
             estado='1',
             tarea='1',
             departamento_envia=departamentoenvia,
-            envia_usuario=usuarioId,
+            envia_usuario=usuarioenvia,
             departamento_recibe=departamentorecibe
         )
         FlujoDetalleNew.save()
         #actualiza corrrelativo de pago
         correlativo.NumeroPago=correlativo.NumeroPago+1
+        correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
         correlativo.save()
         #marca la liquidacion como procesada
         liquidacion.habilitado=False
