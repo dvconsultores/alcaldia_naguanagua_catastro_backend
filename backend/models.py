@@ -671,9 +671,11 @@ class Correlativo(models.Model):
     NumeroEstadoCuenta = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Estado de Cuenta")
     NumeroLiquidacion = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de NumeroLiquidacion")
     NumeroPago = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Recibo de pagos")
+    NumeroSolicitud = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Solicitud")
 
 # Caranday ver 1.0
 class Flujo(models.Model):
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Solicitud")
     inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
     fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha creacion")

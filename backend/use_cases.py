@@ -174,9 +174,10 @@ def Crear_Pago(request):
                 #seleciona el inmueble ya seleccionado desde la liquidacion
                 InmuebleNew=Inmueble.objects.get(id=liquidacion.inmueble.id)
             #crear flujo
-            FlujoNew=Flujo(inmueble=InmuebleNew,
-                            pagoestadocuenta=Cabacera,
-                            estado='1')
+            FlujoNew=Flujo(numero=correlativo.NumeroSolicitud,
+                           inmueble=InmuebleNew,
+                           pagoestadocuenta=Cabacera,
+                           estado='1')
             FlujoNew.save()
             departamentoenvia=Departamento.objects.get(nombre='Admin')
             usuarioenvia=User.objects.get(username='Admin')
@@ -190,6 +191,8 @@ def Crear_Pago(request):
                 departamento_recibe=departamentorecibe
             )
             FlujoDetalleNew.save()
+            #actualiza en correlativo del expediente 
+            correlativo.NumeroSolicitud=correlativo.NumeroSolicitud+1
         #actualiza corrrelativo de pago
         correlativo.save()
         #marca la liquidacion como procesada
