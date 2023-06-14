@@ -377,72 +377,103 @@ class ZonaSerializer(serializers.ModelSerializer):
 class InmuebleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inmueble
-        fields = '__all__'    
-
+        fields = '__all__'
+    
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.ambito.descripcion
+      if obj.ambito:
+        return obj.ambito.descripcion
+      return None
 
     descripcion_tipo= serializers.SerializerMethodField('loaddescripcion_tipo')
     def loaddescripcion_tipo(self, obj):
-      return obj.tipo.descripcion
+      if obj.tipo:
+        return obj.tipo.descripcion
+      return None
 
     descripcion_status= serializers.SerializerMethodField('loaddescripcion_status')
     def loaddescripcion_status(self, obj):
-      return obj.status.descripcion
+      if obj.status:
+        return obj.status.descripcion
+      return None
 
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
-      return obj.sector.descripcion
+      if obj.sector:
+        return obj.sector.descripcion
+      return None
 
     descripcion_manzana= serializers.SerializerMethodField('loaddescripcion_manzana')
     def loaddescripcion_manzana(self, obj):
-      return obj.manzana.codigo
+      if obj.manzana:
+        return obj.manzana.codigo
+      return None
 
     codigo_parcela= serializers.SerializerMethodField('loadcodigo_parcela')
     def loadcodigo_parcela(self, obj):
-      return obj.parcela.codigo
+      if obj.parcela:
+        return obj.parcela.codigo
+      return None
 
     codigo_subparcela= serializers.SerializerMethodField('loadcodigo_subparcela')
     def loadcodigo_subparcela(self, obj):
-      return obj.subparcela.codigo
+      if obj.subparcela:
+        return obj.subparcela.codigo
+      return None
 
     descripcion_nivel= serializers.SerializerMethodField('loaddescripcion_nivel')
     def loaddescripcion_nivel(self, obj):
-      return obj.nivel.descripcion
-
+      if obj.nivel:
+        return obj.nivel.descripcion
+      return None
+    
     descripcion_unidad= serializers.SerializerMethodField('loaddescripcion_unidad')
     def loaddescripcion_unidad(self, obj):
-      return obj.unidad.descripcion
-
+      if obj.unidad:
+        return obj.unidad.descripcion
+      return None
+    
     nombre_urbanizacion= serializers.SerializerMethodField('loadnombre_urbanizacion')
     def loadnombre_urbanizacion(self, obj):
-      return obj.urbanizacion.nombre
-
+      if obj.urbanizacion:
+        return obj.urbanizacion.nombre
+      return None
+    
     nombre_calle= serializers.SerializerMethodField('loadnombre_calle')
     def loadnombre_calle(self, obj):
-      return obj.calle.nombre
+      if obj.calle:
+          return obj.calle.nombre
+      return None
     
     nombre_conjunto_residencial= serializers.SerializerMethodField('loadnombre_conjunto_residencial')
     def loadnombre_conjunto_residencial(self, obj):
-      return obj.conjunto_residencial.nombre
-    
+      if obj.conjunto_residencial:
+        return obj.conjunto_residencial.nombre
+      return None    
     nombre_edificio= serializers.SerializerMethodField('loadnombre_edificio')
     def loadnombre_edificio(self, obj):
-      return obj.edificio.nombre
-    
+      if obj.edificio:
+        return obj.edificio.nombre
+      return None
+        
     nombre_avenida= serializers.SerializerMethodField('loadnombre_avenida')
     def loadnombre_avenida(self, obj):
-      return obj.avenida.nombre
-    
+      if obj.avenida:
+        return obj.avenida.nombre
+      return None
+        
     nombre_torre= serializers.SerializerMethodField('loadnombre_torre')
     def loadnombre_torre(self, obj):
-      return obj.torre.nombre
-
+      if obj.torre:
+        return obj.torre.nombre
+      return None
+    
     descripcion_zona= serializers.SerializerMethodField('loaddescripcion_zona')
     def loaddescripcion_zona(self, obj):
-      return obj.zona.descripcion
-
+      if obj.zona:
+        return obj.zona.descripcion
+      return None
+    
 class InmueblePropietariosSerializer(serializers.ModelSerializer):
     inmueble = InmuebleSerializer()
     propietario = PropietarioSerializer()
