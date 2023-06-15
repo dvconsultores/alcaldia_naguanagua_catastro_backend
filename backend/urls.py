@@ -91,4 +91,5 @@ urlpatterns = [
     path('crearestadocuenta/', views.CrearEstadoCuenta),
     path('crearliquidacion/', views.CrearLiquidacion),
     path('crearPago/', views.CrearPago),
+    path('CrearInmueblePropietario/', views.CrearInmueblePropietario),
 ]

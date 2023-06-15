@@ -57,6 +57,13 @@ def CrearPago(request):
     datos=request.data
     return Crear_Pago(datos)
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def CrearInmueblePropietario(request):
+    datos=request.data
+    return Crear_Inmueble_Propietario(datos)
+
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=User.objects.all()

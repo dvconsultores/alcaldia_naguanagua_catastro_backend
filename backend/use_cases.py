@@ -203,6 +203,19 @@ def Crear_Pago(request):
     else:
         return Response('Insert Pago NOT Ok', status=status.HTTP_400_BAD_REQUEST)
 
+def Crear_Inmueble_Propietario(request):
+    if (request):
+        inmueble = Inmueble.objects.get(id=request['inmueble'])
+        propietario = Propietario.objects.get(id=request['propietario'])
+        inmubelepropietario=InmueblePropietarios(
+            inmueble=inmueble,
+            propietario=propietario
+        )
+        inmubelepropietario.save()
+        return Response('Insert OK', status=status.HTTP_200_OK)
+    else:
+        return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+
 
 def Crear_Estado_Cuenta1(request):
     if (request):
