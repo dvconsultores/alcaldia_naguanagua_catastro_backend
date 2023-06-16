@@ -546,6 +546,13 @@ class TipoFlujoViewset(MultiSerializerViewSet):
         'default': TipoFlujoSerializer
     }
 
+class TipoFlujoDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TipoFlujoDetalle.objects.all()
+    serializers = {
+        'default': TipoFlujoDetalleSerializer
+    }
+
 class EstadoCuentaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=EstadoCuenta.objects.all()

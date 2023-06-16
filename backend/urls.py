@@ -69,6 +69,7 @@ router.register(r'unidadtributaria', views.UnidadTributariaViewset,basename='uni
 router.register(r'moneda', views.MonedaViewset,basename='moneda')
 router.register(r'tasamulta', views.TasaMultaViewset,basename='tasamulta')
 router.register(r'tipoflujo', views.TipoFlujoViewset,basename='tipoflujo')
+router.register(r'tipoflujodetalle', views.TipoFlujoDetalleViewset,basename='tipoflujodetalle')
 router.register(r'estadocuenta', views.EstadoCuentaViewset,basename='estadocuenta')
 router.register(r'estadocuentadetalle', views.EstadoCuentaDetalleViewset,basename='estadocuentadetalle')
 router.register(r'liquidacion', views.LiquidacionViewset,basename='liquidacion')

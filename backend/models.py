@@ -570,11 +570,18 @@ class TasaMulta(models.Model):
     def __str__(self):
         return '%s - %s' % (self.tipo, self.descripcion)
 
-#Maestro de tipos de pago
+#Maestro de tipos de pago (sirce para validar los conceptos de catastro, dias de vencimiento, pre-carga items que regulamente se cargan en ese tipo de flujo)
 class TipoFlujo(models.Model):
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion Tipo de pago")
+    vencimiento = models.PositiveIntegerField(null=True, blank=True,  help_text="dias vencimiento pra validar el estado de cuenta")
     def __str__(self):
-        return '%s' % (self.descripcion)
+        return '%s - %s' % (self.descripcion,self.vencimiento)
+    
+class TipoFlujoDetalle(models.Model):
+    tipoflujo = models.ForeignKey (TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Id TipoFlujo")
+    tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Id Tasa Multa")
+    def __str__(self):
+        return '%s - %s' % (self.tipoflujo.descripcion,self.tasamulta)
 
 class EstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Estado de Cuenta")
