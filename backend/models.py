@@ -11,6 +11,12 @@ from django.utils.html import strip_tags
 from decimal import Decimal
 from django.utils import timezone
 
+def immuebles_path(instance, filename):
+    return "immueble_{0}/imgs/{1}".format(instance.id, filename)
+
+def flujo_path(instance, filename):
+    return "flujo_{0}/docs/{1}".format(instance.id, filename)
+
 class Departamento(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre Depatamento para usuario de catastro FLUJO")
     def __str__(self):
@@ -496,9 +502,9 @@ class InmuebleUbicacion(models.Model):
     lindero_sur = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_oeste = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    imagen_inmueble = models.ImageField(upload_to='media/paises', null=True, blank=True, help_text="Imagen asociado al pais")
-    imagen_plano = models.ImageField(upload_to='media/paises', null=True, blank=True, help_text="Imagen asociado al pais")
-    imagan_plano_mesura =models.ImageField(upload_to='media/paises', null=True, blank=True, help_text="Imagen asociado al pais")
+    imagen_inmueble = models.ImageField(upload_to=immuebles_path, null=True, blank=True, help_text="Imagen asociado al pais")
+    imagen_plano = models.ImageField(upload_to=immuebles_path, null=True, blank=True, help_text="Imagen asociado al pais")
+    imagan_plano_mesura =models.ImageField(upload_to=immuebles_path, null=True, blank=True, help_text="Imagen asociado al pais")
     g1_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     g1_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     g2_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
