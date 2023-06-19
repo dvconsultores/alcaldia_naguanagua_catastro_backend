@@ -518,11 +518,20 @@ class TasaBCVViewset(MultiSerializerViewSet):
         'default': TasaBCVSerializer
     }
 
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'habilitado':['exact'],
+    }
+
 class UnidadTributariaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=UnidadTributaria.objects.all()
     serializers = {
         'default': UnidadTributariaSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'habilitado':['exact'],
     }
 
 class MonedaViewset(MultiSerializerViewSet):
