@@ -64,6 +64,15 @@ def CrearInmueblePropietario(request):
     datos=request.data
     return Crear_Inmueble_Propietario(datos)
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def MuestraTasa(request):
+    datos=request.data
+    return Muestra_Tasa(datos)
+
+
+
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=User.objects.all()

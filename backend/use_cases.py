@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
 import re
 from datetime import datetime,timedelta
+from pyDolarVenezuela import price
 
 def generate_token(username,password):
     user = authenticate(username=username, password=password)
@@ -167,7 +168,19 @@ def Crear_Pago(request):
                 InmuebleNew.save()
                 InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
                                                             propietario=propietario)
-                InmueblePropietariosNew.save()  
+                InmueblePropietariosNew.save()
+                InmueblePropiedadNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmueblePropiedadNew.save()
+                InmuebleTerrenoNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleTerrenoNew.save()
+                InmuebleConstruccionNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleConstruccionNew.save()
+                InmuebleValoracionTerrenoNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleValoracionTerrenoNew.save()
+                InmuebleUbicacionNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleUbicacionNew.save()
+                InmuebleFaltanteNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleFaltanteNew.save()
                 #actualiza en correlativo del expediente 
                 correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
             else:
@@ -275,3 +288,8 @@ def Crear_Estado_Cuenta1(request):
     else:
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
     
+def Muestra_Tasa(request):
+    precios = price()
+    print(precios,request)  
+    tasa=precios['$bcv']
+    return Response('Tasa BCV al dia: '+tasa,status=status.HTTP_200_OK)
