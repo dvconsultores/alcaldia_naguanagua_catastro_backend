@@ -570,6 +570,10 @@ class TipoFlujoDetalleViewset(MultiSerializerViewSet):
     serializers = {
         'default': TipoFlujoDetalleSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'tipoflujo':['exact'],
+    }
 
 class EstadoCuentaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]

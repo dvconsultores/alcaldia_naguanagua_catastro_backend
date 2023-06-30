@@ -169,17 +169,17 @@ def Crear_Pago(request):
                 InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
                                                             propietario=propietario)
                 InmueblePropietariosNew.save()
-                InmueblePropiedadNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmueblePropiedadNew=InmueblePropiedad(inmueble=InmuebleNew)
                 InmueblePropiedadNew.save()
-                InmuebleTerrenoNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleTerrenoNew=InmuebleTerreno(inmueble=InmuebleNew)
                 InmuebleTerrenoNew.save()
-                InmuebleConstruccionNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleConstruccionNew=InmuebleConstruccion(inmueble=InmuebleNew)
                 InmuebleConstruccionNew.save()
-                InmuebleValoracionTerrenoNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleValoracionTerrenoNew=InmuebleValoracionTerreno(inmueble=InmuebleNew)
                 InmuebleValoracionTerrenoNew.save()
-                InmuebleUbicacionNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleUbicacionNew=InmuebleUbicacion(inmueble=InmuebleNew)
                 InmuebleUbicacionNew.save()
-                InmuebleFaltanteNew=InmueblePropietarios(inmueble=InmuebleNew)
+                InmuebleFaltanteNew=InmuebleFaltante(inmueble=InmuebleNew)
                 InmuebleFaltanteNew.save()
                 #actualiza en correlativo del expediente 
                 correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1

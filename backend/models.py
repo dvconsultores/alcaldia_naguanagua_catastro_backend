@@ -252,9 +252,22 @@ class Servicios(models.Model):
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
+class Zona(models.Model):
+    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Zona")
+    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Zona")
+    def __str__(self):
+        return '%s - %s' % (self.codigo, self.descripcion)
+
 class Tipologia(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de tipologia")
+    m2desde = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    m2hasta = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    valor = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Valor")
+    zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
+    tarifa = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Tarifa o Alicuota")
+    se_lista = models.BooleanField(default=True, help_text="Se muestra en las listas")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
@@ -266,7 +279,7 @@ class FinesFiscales(models.Model):
     
 class TipoDesincorporacion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipo desincorporacion")
-    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de desincorporacion")
+    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de desincorporacion (cuando se desincorpora un propietario de un inmueble)")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
@@ -276,11 +289,7 @@ class TipoTransaccion(models.Model):
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
-class Zona(models.Model):
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Zona")
-    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Zona")
-    def __str__(self):
-        return '%s - %s' % (self.codigo, self.descripcion)
+
     
 # Maestro de Propietarios/Contribuyentes
 class Propietario(models.Model):
@@ -329,13 +338,13 @@ class InmueblePropiedad(models.Model):
     tipo_documento = models.ForeignKey (TipoDocumento, null=True,blank =True,on_delete=models.PROTECT,help_text="Sector asociado")
     tipo_especial = models.ForeignKey (TipoEspecial, null=True,blank =True,on_delete=models.PROTECT,help_text="Sector asociado")
     fecha_habitabilidad	= models.DateField(null=True,blank =True, help_text="fecha_habitabilidad")
-    tipo_tenencia = models.ForeignKey (TipoTenencia, on_delete=models.PROTECT,help_text="tipo_tenencia asociado")
+    tipo_tenencia = models.ForeignKey (TipoTenencia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipo_tenencia asociado")
     fecha_vigencia = models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
     fecha_documento	= models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
     numero_documento = models.TextField(null=True,blank =True,unique=True, help_text="Numero de expediente")
     matricula_documento	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
     anio_folio_documento = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    fecha_terreno = models.DateField(blank=True, help_text="fecha de inscripcion")
+    fecha_terreno = models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
     numero_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     folio_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     protocolo_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
