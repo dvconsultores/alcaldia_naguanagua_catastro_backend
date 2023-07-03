@@ -360,7 +360,10 @@ class InmueblePropiedadViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmueblePropiedadSerializer
     }
-
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }
 
 class InmueblePropietariosViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -380,6 +383,10 @@ class InmuebleTerrenoViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleTerrenoSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }    
 
 class InmuebleTerrenoTopografiaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -461,6 +468,10 @@ class InmuebleConstruccionViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleConstruccionSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }    
 
 class InmuebleConstruccionSoporteViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -489,12 +500,20 @@ class InmuebleValoracionTerrenoViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleValoracionTerrenoSerializer
     }
-    
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }
+
 class InmuebleValoracionConstruccionViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset= InmuebleValoracionConstruccion.objects.all()
     serializers = {
         'default': InmuebleValoracionConstruccionSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble_terreno':['exact'],
     }
 
 class InmuebleUbicacionViewset(MultiSerializerViewSet):
@@ -503,6 +522,10 @@ class InmuebleUbicacionViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleUbicacionSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }    
 
 class InmuebleFaltanteViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -510,6 +533,10 @@ class InmuebleFaltanteViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleFaltanteSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }    
 
 class PropietarioViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
