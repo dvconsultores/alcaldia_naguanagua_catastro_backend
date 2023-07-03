@@ -503,6 +503,7 @@ class InmuebleValoracionConstruccion(models.Model):
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
     valor = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
     depreciacion = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="depreciacion")
+    valor_actual = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
 class InmuebleUbicacion(models.Model):
