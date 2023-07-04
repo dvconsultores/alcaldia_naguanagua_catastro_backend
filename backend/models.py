@@ -497,14 +497,12 @@ class InmuebleValoracionTerreno(models.Model):
 class InmuebleValoracionConstruccion(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleValoracionTerreno, on_delete=models.PROTECT,help_text="Id inmueble_terreno asociado")
     tipologia = models.ForeignKey (Tipologia, on_delete=models.PROTECT,help_text="tipologia asociado")
-    fecha_compra = models.DateField(blank=True, help_text="fecha_compra")
-    trimestre = models.PositiveIntegerField(default=0,help_text="trimestre")
-    anio = models.PositiveIntegerField(default=0, help_text="Numero de expediente")
+    sub_utilizado = models.BooleanField(default=True, help_text="subutilizado si o no")
+    fecha_construccion = models.DateField(blank=True, help_text="fecha construccion")
     area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
     valor = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
     depreciacion = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="depreciacion")
     valor_actual = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
-    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
 class InmuebleUbicacion(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
