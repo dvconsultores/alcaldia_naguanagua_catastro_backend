@@ -79,7 +79,7 @@ class Sector(models.Model):
     ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,help_text="ambito asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del Sector")
     descripcion = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del Sector")
-    area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Descripcion del Sector")
     clasificacion= models.CharField(max_length=1, choices=CLASIFICACION, default='A', help_text='clasificacion del Sector')
     def __str__(self):
@@ -123,7 +123,7 @@ class Urbanizacion(models.Model):
 class Manzana(models.Model):
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la Manzana")
-    area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la manzana")
     via_norte=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana norte",related_name='manzana_via_norte')
     via_sur=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana sur",related_name='manzana_via_sur')
@@ -135,7 +135,7 @@ class Manzana(models.Model):
 class Parcela(models.Model):
     manzana=models.ForeignKey(Manzana,on_delete=models.PROTECT,help_text="Manzana asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la Parcela")
-    area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la Parcela")
     def __str__(self):
         return '%s' % (self.codigo)
@@ -143,7 +143,7 @@ class Parcela(models.Model):
 class SubParcela(models.Model):
     parcela=models.ForeignKey(Parcela,on_delete=models.PROTECT,help_text="Parcela asociado")
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la SubParcela")
-    area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la SubParcela")
     def __str__(self):
         return '%s' % (self.codigo)
@@ -261,11 +261,11 @@ class Zona(models.Model):
 class Tipologia(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de tipologia")
-    m2desde = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    m2hasta = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    valor = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Valor")
+    m2desde = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
+    m2hasta = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
+    valor = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor")
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
-    tarifa = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Tarifa o Alicuota")
+    tarifa = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Tarifa o Alicuota")
     se_lista = models.BooleanField(default=True, help_text="Se muestra en las listas")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
@@ -349,14 +349,14 @@ class InmueblePropiedad(models.Model):
     folio_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     protocolo_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     tomo_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    area_terreno =  models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="area_terreno en m2")
+    area_terreno =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="area_terreno en m2")
     valor_terreno = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     fecha_construccion = models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
     numero_construccion	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
     folio_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     protocolo_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     tomo_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    area_construccion =  models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="area_construccion en m2")
+    area_construccion =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="area_construccion en m2")
     lindero_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_sur	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
@@ -484,14 +484,14 @@ class InmuebleConstruccionCubierta(models.Model):
 
 class InmuebleValoracionTerreno(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
-    area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado")
     fines_fiscales	= models.ForeignKey (FinesFiscales,null=True,blank =True, on_delete=models.PROTECT,help_text="fines_fiscales asociado")
-    valor_unitario = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor_unitario")
-    area_factor_ajuste =  models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2 del factor de ajuste")
+    valor_unitario = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor_unitario")
+    area_factor_ajuste =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 del factor de ajuste")
     forma_factor_ajuste	= models.ForeignKey (Forma,null=True,blank =True, on_delete=models.PROTECT,help_text="Forma del factor de ajuste")
-    valor_ajustado = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Valor Ajustado")
-    valor_total = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Valor Total")
+    valor_ajustado = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Ajustado")
+    valor_total = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Total")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
 
 class InmuebleValoracionConstruccion(models.Model):
@@ -499,10 +499,10 @@ class InmuebleValoracionConstruccion(models.Model):
     tipologia = models.ForeignKey (Tipologia, on_delete=models.PROTECT,help_text="tipologia asociado")
     sub_utilizado = models.BooleanField(default=True, help_text="subutilizado si o no")
     fecha_construccion = models.DateField(blank=True, help_text="fecha construccion")
-    area = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Area en m2")
-    valor = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
-    depreciacion = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="depreciacion")
-    valor_actual = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="valor")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
+    valor = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
+    depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
+    valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
 
 class InmuebleUbicacion(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
@@ -542,7 +542,7 @@ class InmuebleFaltante(models.Model):
 class TasaBCV(models.Model):
     fecha = models.DateField(blank=True, help_text="Fecha Actualizacion TASA")
     fecha_vigente= models.DateField(blank=True, help_text=" A partir de esta fecha se aplica los calculos")
-    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto TASA")
+    monto  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto TASA")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
         return '%s - %s' % (self.monto, self.fecha)
@@ -550,7 +550,7 @@ class TasaBCV(models.Model):
 class UnidadTributaria(models.Model):
     fecha = models.DateField(blank=True, help_text="Fecha Actualizacion Unidad Tributaria")
     fecha_vigente= models.DateField(blank=True, help_text=" A partir de esta fecha se aplica los calculos")
-    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")
+    monto  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
         return '%s - %s' % (self.monto, self.fecha)
@@ -604,9 +604,9 @@ class EstadoCuenta(models.Model):
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
-    valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
-    valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
-    monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="monto total")
+    valor_petro  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
+    valor_tasa_bs = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
+    monto_total  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto total")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
@@ -614,9 +614,9 @@ class EstadoCuenta(models.Model):
 class EstadoCuentaDetalle(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Id Tasa Multa")
-    monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
-    monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
-    cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
+    monto_unidad_tributaria  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
+    monto_tasa  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
+    cantidad  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
     def __str__(self):
         return '%s - %s' % (self.estadocuenta.numero,self.tasamulta)
 class Liquidacion(models.Model):
@@ -627,9 +627,9 @@ class Liquidacion(models.Model):
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     propietario=models.ForeignKey(Propietario, on_delete=models.PROTECT,help_text="Contribuyente/Propietario asociado")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
-    valor_petro  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
-    valor_tasa_bs = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
-    monto_total  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+    valor_petro  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
+    valor_tasa_bs = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
+    monto_total  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
     habilitado = models.BooleanField(default=True, help_text="Se muestra la liquidacion?")
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
@@ -637,9 +637,9 @@ class Liquidacion(models.Model):
 class LiquidacionDetalle(models.Model):
     liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
     tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Id Tasa Multa")
-    monto_unidad_tributaria  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
-    monto_tasa  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
-    cantidad  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
+    monto_unidad_tributaria  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto Unidad tributaria")	
+    monto_tasa  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto total del renglon tasa(monto_unidad_tributaria * cantidad)")	
+    cantidad  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Cantidad Unidad tributaria")
     def __str__(self):
         return '%s - %s' % (self.liquidacion.numero,self.tasamulta)
 
@@ -673,7 +673,7 @@ class PagoEstadoCuenta(models.Model):
     liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
-    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False, help_text="total")
+    monto  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
     def __str__(self):
         return '%s - %s' % (self.numero,self.liquidacion)
     
@@ -681,7 +681,7 @@ class PagoEstadoCuenta(models.Model):
 class PagoEstadoCuentaDetalle(models.Model):
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
     tipopago = models.ForeignKey(TipoPago, on_delete=models.PROTECT,help_text="Id Tipo Pago")
-    monto  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
+    monto  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False,  help_text="Monto del pago")	
     bancocuenta = models.ForeignKey(BancoCuenta,null=True,blank =True, on_delete=models.PROTECT,help_text="ID Banco")
     nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia")
     fechapago = models.DateTimeField(blank=True, help_text="Fecha pago")
