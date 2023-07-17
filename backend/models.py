@@ -257,7 +257,9 @@ class Zona(models.Model):
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Zona")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
-
+#las tipologias USOS no se deben eliminar nunca, forman parte de la trazabilidad de los cálculos, tampoco de puede modificar
+#los montos, si existe un cambio de cuota por una nueva ordenanza. se debe INHABILITAR y crear uno nuevo. y el deshabilitado
+# se lo coloca la observacion de que pertenecia a la ordenza de fecha xxxx vigende hasta la fecha xx-xx-xxx
 class Tipologia(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de tipologia")
@@ -268,6 +270,7 @@ class Tipologia(models.Model):
     tarifa = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Tarifa o Alicuota")
     se_lista = models.BooleanField(default=True, help_text="Se muestra en las listas")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones en caso de no esar hablita por que cambio el valor a causa de una ordenanza nueva.")    
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
