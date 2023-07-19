@@ -171,6 +171,10 @@ class Torre(models.Model):
 class TipoInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo de inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de inmueble")
+    TIPO = (('U', 'Unifamiliar Residencial'), 
+            ('M', 'Multifamiliar No residencial'))
+    tipo = models.CharField(max_length=1, null=True, choices=TIPO, default='U', help_text="Requerido para cálculo de multas artículo 99 y 101")
+      
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
@@ -370,6 +374,8 @@ class InmueblePropiedad(models.Model):
 class InmueblePropietarios(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble")
     propietario = models.ForeignKey (Propietario, on_delete=models.PROTECT,help_text="Id Propietario")
+    fecha_compra = models.DateField(null=True,blank =True, help_text="fecha de compra del inmueble")
+
     def __str__(self):
         return '%s - %s' % (self.inmueble.numero_expediente,self.propietario.nombre)
 
@@ -587,6 +593,7 @@ class TasaMulta(models.Model):
         ('O', 'Otro')
     )
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
+    detalle  = models.TextField(null=True,blank =True, unique=True, help_text="Información extra. en caso de un artoculo especifico de la ordenanza")
     unidad_tributaria  = models.TextField(null=False,blank =False, unique=False, help_text="Cantidad Unidad tributaria")
     tipo= models.CharField(max_length=1, choices=TIPO, default='O', help_text='tipo de recaudacion')
     aplica= models.CharField(max_length=1, choices=APLICA, default='O', help_text='A que tipo de sector aplica')   
@@ -595,8 +602,12 @@ class TasaMulta(models.Model):
 
 #Maestro de tipos de pago (sirce para validar los conceptos de catastro, dias de vencimiento, pre-carga items que regulamente se cargan en ese tipo de flujo)
 class TipoFlujo(models.Model):
+    """
+    Una clase típica definiendo un modelo, derivado desde la clase Model.
+    """
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion Tipo de pago")
     vencimiento = models.PositiveIntegerField(null=True, blank=True,  help_text="dias vencimiento pra validar el estado de cuenta")
+
     def __str__(self):
         return '%s - %s' % (self.descripcion,self.vencimiento)
     
@@ -617,6 +628,9 @@ class EstadoCuenta(models.Model):
     valor_tasa_bs = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto total")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    fecha_compra = models.DateField(null=True,blank =True, help_text="Fecha de compra del inmueble (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
+    tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
@@ -640,6 +654,9 @@ class Liquidacion(models.Model):
     valor_tasa_bs = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
     monto_total  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total")
     habilitado = models.BooleanField(default=True, help_text="Se muestra la liquidacion?")
+    fecha_compra = models.DateField(null=True,blank =True, help_text="Fecha de compra del inmueble (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
+    tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
