@@ -492,23 +492,32 @@ class InmuebleTerrenoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class InmuebleTerrenoTopografiaSerializer(serializers.ModelSerializer):
+    inmueble_terreno=InmuebleTerrenoSerializer()
+    topografia=TopografiaSerializer()
     class Meta:
         model = InmuebleTerrenoTopografia
         fields = '__all__'
 
 class InmuebleTerrenoAccesoSerializer(serializers.ModelSerializer):
+    inmueble_terreno=InmuebleTerrenoSerializer()
+    acceso=AccesoSerializer()
     class Meta:
         model = InmuebleTerrenoAcceso
         fields = '__all__'
 
 class InmuebleTerrenoUsoSerializer(serializers.ModelSerializer):
+    inmueble_terreno=InmuebleTerrenoSerializer()
+    uso=UsoSerializer()
     class Meta:
         model = InmuebleTerrenoUso
         fields = '__all__'
 
-class InmuebleTerrenoRegimenSerializer(serializers.ModelSerializer):
+
+class InmuebleTerrenoServicioSerializer(serializers.ModelSerializer):
+    inmueble_terreno=InmuebleTerrenoSerializer()
+    servicios=ServiciosSerializer()
     class Meta:
-        model = InmuebleTerrenoRegimen
+        model = InmuebleTerrenoServicio
         fields = '__all__'
 
 class UsoConstruccionSerializer(serializers.ModelSerializer):
@@ -553,16 +562,22 @@ class InmuebleConstruccionSerializer(serializers.ModelSerializer):
 
 
 class InmuebleConstruccionSoporteSerializer(serializers.ModelSerializer):
+    inmueble_construccion=InmuebleConstruccionSerializer()
+    soporte=SoporteSerializer()
     class Meta:
         model = InmuebleConstruccionSoporte
         fields = '__all__'
 
 class InmuebleConstruccionTechoSerializer(serializers.ModelSerializer):
+    inmueble_construccion=InmuebleConstruccionSerializer()
+    techo=TechoSerializer()
     class Meta:
         model = InmuebleConstruccionTecho
         fields = '__all__'
 
 class InmuebleConstruccionCubiertaSerializer(serializers.ModelSerializer):
+    inmueble_construccion=InmuebleConstruccionSerializer()
+    cubierta=CubiertaSerializer()
     class Meta:
         model = InmuebleConstruccionCubierta
         fields = '__all__'
