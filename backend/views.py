@@ -514,7 +514,7 @@ class InmuebleValoracionConstruccionViewset(MultiSerializerViewSet):
     }
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
-      'inmueble_terreno':['exact'],
+      'inmueblevaloracionterreno':['exact'],
     }
 
 class InmuebleUbicacionViewset(MultiSerializerViewSet):
