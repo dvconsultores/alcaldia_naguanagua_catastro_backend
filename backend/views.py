@@ -406,11 +406,12 @@ class InmuebleTerrenoUsoViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleTerrenoUsoSerializer
     }
-class InmuebleTerrenoRegimenViewset(MultiSerializerViewSet):
+
+class InmuebleTerrenoServicioViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
-    queryset= InmuebleTerrenoRegimen.objects.all()
+    queryset= InmuebleTerrenoServicio.objects.all()
     serializers = {
-        'default': InmuebleTerrenoRegimenSerializer
+        'default': InmuebleTerrenoServicioSerializer
     }
 
 class UsoConstruccionViewset(MultiSerializerViewSet):
