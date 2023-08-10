@@ -588,6 +588,8 @@ class InmuebleValoracionTerrenoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
+    tipologia=TipologiaSerializer()
+    tipo=TipoInmuebleSerializer()
     class Meta:
         model = InmuebleValoracionConstruccion
         fields = '__all__' 
@@ -826,3 +828,54 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
       if obj.inicio_proceso_usuario:
           return obj.inicio_proceso_usuario.username
       return None
+    
+class IC_PeriodoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_Periodo
+        fields = '__all__' 
+
+class IC_ImpuestoCargosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoCargos
+        fields = '__all__' 
+
+class IC_ImpuestoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_Impuesto
+        fields = '__all__' 
+
+class IC_ImpuestoDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoDetalle
+        fields = '__all__' 
+
+class IC_ImpuestoCorreccionesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoCorrecciones
+        fields = '__all__' 
+
+class IC_ImpuestoCorreccionesDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoCorreccionesDetalle
+        fields = '__all__' 
+
+
+class IC_ImpuestoPeriodoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoPeriodo
+        fields = '__all__' 
+
+class IC_ImpuestoDescuentoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoDescuento
+        fields = '__all__' 
+
+
+class IC_ImpuestoDetalleDescuentosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoDetalleDescuentos
+        fields = '__all__' 
+
+
+
+

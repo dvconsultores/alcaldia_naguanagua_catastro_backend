@@ -67,6 +67,36 @@ def CrearInmueblePropietario(request):
 @api_view(["POST"])
 @csrf_exempt
 @permission_classes([IsAuthenticated])
+def MultaInmueble(request):
+    #TipoFlujo.id
+    #Inmueble.Id
+    #Propietario.Id
+    #fecha_compra
+    #area
+    #
+
+    datos=request.data
+    return Multa_Inmueble(datos)
+
+
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def ImpuestoInmueble(request):
+    #TipoFlujo.id
+    #Inmueble.Id
+    #Propietario.Id
+    #fecha_compra
+    #area
+    #
+
+    datos=request.data
+    return Impuesto_Inmueble(datos)
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
 def MuestraTasa(request):
     datos=request.data
     return Muestra_Tasa(datos)
@@ -338,6 +368,10 @@ class TipologiaViewset(MultiSerializerViewSet):
     queryset=Tipologia.objects.all()
     serializers = {
         'default': TipologiaSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'zona':['exact'],
     }
 
 class ZonaViewset(MultiSerializerViewSet):
@@ -710,18 +744,78 @@ class FlujoDetalleViewset(MultiSerializerViewSet):
       'flujo':['exact'],
       'tarea':['exact'],
     }
-#    def get_queryset(self):
-#        queryset = super().get_queryset()
-#        user = self.request.user
-#        queryset = queryset.filter(recibe_usuario=user)
-#        return queryset
+
+class IC_PeriodoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_Periodo.objects.all()
+    serializers = {
+        'default': IC_PeriodoSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'aplica':['exact'],
+    }
+
+class IC_ImpuestoCargosViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoCargos.objects.all()
+    serializers = {
+        'default': IC_ImpuestoCargosSerializer
+    }
     
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
+    
+class IC_ImpuestoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_Impuesto.objects.all()
+    serializers = {
+        'default':IC_ImpuestoSerializer
+    }
+
+
+class IC_ImpuestoDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoDetalle.objects.all()
+    serializers = {
+        'default': IC_ImpuestoDetalleSerializer
+    }
+
+
+class IC_ImpuestoCorreccionesViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoCorrecciones.objects.all()
+    serializers = {
+        'default': IC_ImpuestoCorreccionesSerializer
+    }
+
+class IC_ImpuestoCorreccionesDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoCorreccionesDetalle.objects.all()
+    serializers = {
+        'default': IC_ImpuestoCorreccionesDetalleSerializer
+    }
+
+
+class IC_ImpuestoPeriodoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoPeriodo.objects.all()
+    serializers = {
+        'default': IC_ImpuestoPeriodoSerializer
+    }
+
+class IC_ImpuestoDescuentoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoDescuento.objects.all()
+    serializers = {
+        'default': IC_ImpuestoDescuentoSerializer
+    }
+
+class IC_ImpuestoDetalleDescuentosViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoDetalleDescuentos.objects.all()
+    serializers = {
+        'default': IC_ImpuestoDetalleDescuentosSerializer
+    }
+
 
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
@@ -729,4 +823,39 @@ class FlujoDetalleViewset(MultiSerializerViewSet):
 #    serializers = {
 #        'default': Serializer
 #    }
-
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }

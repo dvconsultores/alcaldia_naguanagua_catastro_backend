@@ -82,6 +82,18 @@ router.register(r'pagoestadocuentadetalle', views.PagoEstadoCuentaDetalleViewset
 router.register(r'correlativo', views.CorrelativoViewset,basename='correlativo')
 router.register(r'flujo', views.FlujoViewset,basename='flujo')
 router.register(r'flujodetalle', views.FlujoDetalleViewset,basename='flujodetalle')
+router.register(r'ic_periodo', views.IC_PeriodoViewset,basename='ic_periodo')
+router.register(r'ic_impuestocargos', views.IC_ImpuestoCargosViewset,basename='ic_impuestocargos')
+router.register(r'ic_impuesto', views.IC_ImpuestoViewset,basename='ic_impuesto')
+router.register(r'ic_impuestodetalle', views.IC_ImpuestoDetalleViewset,basename='ic_impuestodetalle')
+router.register(r'ic_impuestocorrecciones', views.IC_ImpuestoCorreccionesViewset,basename='ic_impuestocorrecciones')
+router.register(r'ic_impuestocorreccionesdetalle', views.IC_ImpuestoCorreccionesDetalleViewset,basename='ic_impuestocorreccionesDetalle')
+router.register(r'ic_impuestoperiodo', views.IC_ImpuestoPeriodoViewset,basename='ic_impuestoperiodo')
+router.register(r'ic_impuestodescuento', views.IC_ImpuestoDescuentoViewset,basename='ic_impuestodescuento')
+router.register(r'ic_impuestodetalledescuentos', views.IC_ImpuestoDetalleDescuentosViewset,basename='ic_impuestodetalledescuentos')
+
+
+
 
 urlpatterns = [
     # Base
@@ -93,5 +105,7 @@ urlpatterns = [
     path('crearliquidacion/', views.CrearLiquidacion),
     path('crearPago/', views.CrearPago),
     path('CrearInmueblePropietario/', views.CrearInmueblePropietario),
+    path('MultaInmueble/', views.MultaInmueble),
+    path('ImpuestoInmueble/', views.ImpuestoInmueble),
     path('MuestraTasa', views.MuestraTasa),
 ]
