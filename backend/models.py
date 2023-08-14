@@ -526,16 +526,16 @@ class InmuebleValoracionTerreno(models.Model):
     
 class InmuebleValoracionConstruccion(models.Model):
     inmueblevaloracionterreno = models.ForeignKey (InmuebleValoracionTerreno, on_delete=models.PROTECT,help_text="Id inmueble_terreno asociado")
-    tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado")
+    tipologia = models.ForeignKey (Tipologia, on_delete=models.PROTECT,help_text="tipologia asociado")
     sub_utilizado = models.BooleanField(default=False, help_text="subutilizado si o no")
-    tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")    
+    tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")    
     fecha_construccion = models.DateField(blank=True,  null=True, help_text="fecha construccion")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     valor = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
     valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     def __str__(self):
-        return '%s - %s - %s' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id,self.tipologia.descripcion)
+        return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id) 
     
 class InmuebleUbicacion(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")

@@ -7,6 +7,7 @@ from rest_framework import viewsets, status, generics
 import re
 from datetime import datetime,timedelta,date
 from pyDolarVenezuela import price
+import pyBCV
 import datetime
 from django.db.models import Max,Min,Sum,Q
 
@@ -720,3 +721,11 @@ def Muestra_Tasa(request):
     tasa=precios['$bcv']
     return Response('Tasa BCV al dia: '+tasa,status=status.HTTP_200_OK)
 
+def Muestra_Tasa_New(request):
+    currency = pyBCV.Currency()
+    all_rates = currency.get_rate() # obtener todas las tasas de cambio de moneda
+    usd_rate = currency.get_rate(currency_code='USD', prettify=False) # obtener la tasa de cambio del dólar estadounidense sin símbolo de moneda
+    last_update = currency.get_rate(currency_code='Fecha') # obtener la hora de la última actualización
+    print(type(all_rates))
+
+    return Response(all_rates,status=status.HTTP_200_OK)

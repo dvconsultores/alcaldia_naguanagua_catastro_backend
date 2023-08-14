@@ -108,4 +108,5 @@ urlpatterns = [
     path('MultaInmueble/', views.MultaInmueble),
     path('ImpuestoInmueble/', views.ImpuestoInmueble),
     path('MuestraTasa', views.MuestraTasa),
+    path('MuestraTasaNew', views.MuestraTasaNew),
 ]

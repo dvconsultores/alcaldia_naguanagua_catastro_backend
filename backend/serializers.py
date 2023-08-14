@@ -588,11 +588,58 @@ class InmuebleValoracionTerrenoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
-    tipologia=TipologiaSerializer()
-    tipo=TipoInmuebleSerializer()
+    #tipologia=TipologiaSerializer()
+    #tipo=TipoInmuebleSerializer()
     class Meta:
         model = InmuebleValoracionConstruccion
-        fields = '__all__' 
+        fields = '__all__'  
+
+    uso_codigo= serializers.SerializerMethodField('loaduso_codigo')
+    def loaduso_codigo(self, obj):
+      return obj.tipologia.codigo
+
+    uso_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
+    def loaduso_descripcion(self, obj):
+      return obj.tipologia.descripcion
+    
+    tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
+    def loadtipo_descripcion(self, obj):
+      return obj.tipo.descripcion
+
+    fecha_construccion = serializers.SerializerMethodField('get_fecha_construccion')
+    def get_fecha_construccion(self, obj):
+      if obj.fecha_construccion is not None:
+          formatted_date = obj.fecha_construccion.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha_construccion.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+
+
+
+    # Define cómo manejar la asignación de claves foráneas
+   # def to_representation(self, instance):
+   #     representation = super().to_representation(instance)
+   #     representation['tipologia'] = instance.tipologia.id if instance.tipologia else None
+   #     representation['tipo'] = instance.tipo.id if instance.tipo else None
+   #     return representation
+
+    # Define cómo manejar la creación/actualización de claves foráneas
+    #def to_internal_value(self, data):
+    #    tipologia_id = data.pop('tipologia', None)
+    #    tipo_id = data.pop('tipo', None)
+    #    
+    #    validated_data = super().to_internal_value(data)
+    #    
+    #    if tipologia_id is not None:
+    #        validated_data['tipologia_id'] = tipologia_id
+    #    
+    #    if tipo_id is not None:
+    #        validated_data['tipo_id'] = tipo_id
+    #    
+    #    return validated_data
+
+
+
 
 class InmuebleUbicacionSerializer(serializers.ModelSerializer):
     class Meta:
