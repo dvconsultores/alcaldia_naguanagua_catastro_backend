@@ -823,30 +823,36 @@ class IC_ImpuestoDetalleDescuentosViewset(MultiSerializerViewSet):
     }
 
 
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
+class AE_ActividadEconomicaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=AE_ActividadEconomica.objects.all()
+    serializers = {
+        'default': AE_ActividadEconomicaSerializer
+    }
+
+class AE_ActividadEconomicaDetalleViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=AE_ActividadEconomicaDetalle.objects.all()
+    serializers = {
+        'default': AE_ActividadEconomicaDetalleSerializer
+    }
+
+
+class AE_PatenteViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=AE_Patente.objects.all()
+    serializers = {
+        'default': AE_PatenteSerializer
+    }
+
+
+class AE_Patente_ActividadEconomicaViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=AE_Patente_ActividadEconomica.objects.all()
+    serializers = {
+        'default': AE_Patente_ActividadEconomicaSerializer
+    }
+
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
 #    queryset=.objects.all()

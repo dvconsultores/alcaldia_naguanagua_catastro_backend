@@ -726,6 +726,25 @@ def Muestra_Tasa_New(request):
     all_rates = currency.get_rate() # obtener todas las tasas de cambio de moneda
     usd_rate = currency.get_rate(currency_code='USD', prettify=False) # obtener la tasa de cambio del dólar estadounidense sin símbolo de moneda
     last_update = currency.get_rate(currency_code='Fecha') # obtener la hora de la última actualización
-    print(type(all_rates))
 
-    return Response(all_rates,status=status.HTTP_200_OK)
+    rate_values = [float(value) for key, value in all_rates.items() if key != "Fecha"]
+    print(rate_values)
+    # Encontrar el valor máximo
+
+
+    rate_values = {key: float(value) for key, value in all_rates.items() if key != "Fecha"}
+
+    # Encontrar el key correspondiente al valor máximo
+    max_rate_key = max(rate_values, key=lambda key: rate_values[key])
+    max_rate_value = rate_values[max_rate_key]
+
+    print(all_rates)
+    print("El valor más alto de las tasas de cambio es:", max_rate_value)
+    print("El key correspondiente es:", max_rate_key)
+
+    result = {
+        "max_rate_key": max_rate_key,
+        "max_rate_value": max_rate_value
+    }
+
+    return Response(result,status=status.HTTP_200_OK) 

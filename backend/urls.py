@@ -91,6 +91,10 @@ router.register(r'ic_impuestocorreccionesdetalle', views.IC_ImpuestoCorrecciones
 router.register(r'ic_impuestoperiodo', views.IC_ImpuestoPeriodoViewset,basename='ic_impuestoperiodo')
 router.register(r'ic_impuestodescuento', views.IC_ImpuestoDescuentoViewset,basename='ic_impuestodescuento')
 router.register(r'ic_impuestodetalledescuentos', views.IC_ImpuestoDetalleDescuentosViewset,basename='ic_impuestodetalledescuentos')
+router.register(r'ae_actividadeconomica', views.AE_ActividadEconomicaViewset,basename='ae_actividadeconomica')
+router.register(r'ae_actividadeconomicadetalle', views.AE_ActividadEconomicaDetalleViewset,basename='ae_actividadeconomicadetalle') 
+router.register(r'ae_patente', views.AE_PatenteViewset,basename='ae_patente')
+router.register(r'ae_patente_actividadeconomica', views.AE_Patente_ActividadEconomicaViewset,basename='ae_patente_actividadeconomica') 
 
 
 

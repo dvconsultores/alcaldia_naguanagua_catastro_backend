@@ -923,6 +923,59 @@ class IC_ImpuestoDetalleDescuentosSerializer(serializers.ModelSerializer):
         model = IC_ImpuestoDetalleDescuentos
         fields = '__all__' 
 
+class AE_ActividadEconomicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AE_ActividadEconomica
+        fields = '__all__' 
 
+class AE_ActividadEconomicaDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AE_ActividadEconomicaDetalle
+        fields = '__all__'
 
+        AE_Patente
 
+class AE_PatenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AE_Patente
+        fields = '__all__'
+
+class AE_Patente_ActividadEconomicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AE_Patente_ActividadEconomica
+        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'
+
+#class Serializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = 
+#        fields = '__all__'

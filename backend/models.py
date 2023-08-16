@@ -314,8 +314,8 @@ class TipoTransaccion(models.Model):
 class Propietario(models.Model):
     tipo_documento  = models.TextField(null=False,blank =False, unique=False, help_text="Tipo de documento")
     nacionalidad  = models.TextField(null=False,blank =False, unique=False, help_text="Nacinalidad")
-    numero_documento  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de documento")
-    nombre  = models.TextField(null=False,blank =False, unique=False, help_text="Nombre")
+    numero_documento  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de documento (RIF)")
+    nombre  = models.TextField(null=False,blank =False, unique=False, help_text="Nombre o razon social")
     telefono_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de teléfono principal")
     telefono_secundario   = models.TextField(null=True,blank =True, help_text="Numero de teléfono secundario")
     email_principal  = models.TextField(null=False,blank =False, unique=False, help_text="correo 1")
@@ -753,6 +753,8 @@ class Correlativo(models.Model):
     NumeroCalculoImpuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero calculo de impuesto")
     NumeroCorreccionImpuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero correccion impuesto Catastro")
     NumeroIC_Impuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero Impuesto Catastro")
+    NumeroAE_Patente = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio")
+    NumeroAE_Patente_Generica = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio genérica")
 
 
 
@@ -903,7 +905,7 @@ class IC_ImpuestoPeriodo(models.Model):
         return '%s - %s - %s' % (self.inmueble.numero_expediente,self.periodo.periodo,self.anio)
 
 class IC_Impuesto(models.Model):
-    numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Correlativo.NumeroIC_Impuesto")
     estadocuenta = models.ForeignKey(EstadoCuenta, null=True, blank=True,on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     liquidacion = models.ForeignKey(Liquidacion, null=True, blank=True,on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
     #ActividadEconomica
@@ -921,8 +923,6 @@ class IC_Impuesto(models.Model):
     #Factor= models.DecimalField(max_digits=5, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="si es 1 es todo el año (4 periodos). Si es un periodo, el factor=0.75") 
     inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
 
-
-
 class IC_ImpuestoDetalle(models.Model):
     IC_impuesto  = models.ForeignKey(IC_Impuesto, on_delete=models.PROTECT,help_text="ID IC_Impuesto") 
     IC_ImpuestoPeriodo  = models.ForeignKey(IC_ImpuestoPeriodo,null=True,blank =True, on_delete=models.PROTECT,help_text="ID IC_ImpuestoPeriodo. Por este D al momento de pagar esta Liquidacion entonces marco el periodo en IC_ImpuestoPeriodo como cancelado") 
@@ -934,7 +934,6 @@ class IC_ImpuestoDetalle(models.Model):
     total=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="(area x alicuota_articulo41)-descuento") 
     sub_utilizado = models.BooleanField(default=False, help_text="subutilizado si o no") 
     tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")     
-
 
 # MAESTRO Configuración de descuentos por impuestos si la fecha del pago del impuesto esta contenida entra fechadesde y fecha 
 # hasta aplica es descuento, si no tiene tipologia aplica a cualquier uso, si tiene tipologia solo aplica a ese uso. 
@@ -984,8 +983,6 @@ class IC_Multa(models.Model):
     #Factor= models.DecimalField(max_digits=5, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="si es 1 es todo el año (4 periodos). Si es un periodo, el factor=0.75") 
     inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
 
-
-
 class IC_MultaDetalle(models.Model):
     IC_impuesto  = models.ForeignKey(IC_Impuesto, on_delete=models.PROTECT,help_text="ID IC_Impuesto") 
     IC_ImpuestoPeriodo  = models.ForeignKey(IC_ImpuestoPeriodo,null=True,blank =True, on_delete=models.PROTECT,help_text="ID IC_ImpuestoPeriodo. Por este D al momento de pagar esta Liquidacion entonces marco el periodo en IC_ImpuestoPeriodo como cancelado") 
@@ -997,3 +994,59 @@ class IC_MultaDetalle(models.Model):
     total=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="(area x alicuota_articulo41)-descuento") 
     sub_utilizado = models.BooleanField(default=False, help_text="subutilizado si o no") 
     tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")     
+
+################################ Impuesto Actividades Economicas
+
+
+#Maestro de tipos Actividades económicas
+class AE_ActividadEconomica(models.Model):
+    """
+    Una clase típica definiendo un modelo, derivado desde la clase Model.
+    """
+    codigo = models.TextField(null=False,blank =False, unique=False,help_text="Código de clasificación actividad económica")
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
+    def __str__(self):
+        return '%s - %s - %s' % (self.id,self.codigo,self.descripcion)
+    
+#Maestro de específico de Actividades económicas    
+class AE_ActividadEconomicaDetalle(models.Model):
+    AE_actividadeconomica = models.ForeignKey (AE_ActividadEconomica, null=True,blank =True,on_delete=models.PROTECT,help_text="Id TipoFlujo")
+    codigo = models.TextField(null=False,blank =False, unique=False,help_text="Código de clasificación actividad económica")
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
+    alicuota=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Alicuota") 
+    minimo_tributable_mensual=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="este  impuesto no puede ser superior a este % de los ingresos brutos obtenidos en el mes") 
+    minimo_tributable_anual=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="este  impuesto no puede ser superior a este % de los ingresos brutos obtenidos en el año") 
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
+    def __str__(self):
+        return '%s - %s' % (self.AE_ActividadEconomica.descripcion,self.descripcion)
+
+# Maestro de Patente
+class AE_Patente(models.Model):
+    numero = models.TextField(null=False,blank =False, unique=True, help_text="Correlativo.NumeroAE_Patente para tipo_patente T o D, Correlativo.NumeroAE_Patente_Generica para tipo_patente G")
+    propietario = models.ForeignKey(Propietario, null=True, blank=True,on_delete=models.PROTECT,help_text="ID Propietario")
+    TIPO_PATENTE = (
+        ('T', 'Temporal'),
+        ('D', 'Definitiva'),
+        ('G', 'Genérica')
+    )
+    tipo_patente= models.CharField(max_length=1, choices=TIPO_PATENTE, default='T', help_text='Tpo de patente o licencia')  
+    numero_documento_representante  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de documento (RIF)")
+    nombre_representante  = models.TextField(null=False,blank =False, unique=False, help_text="Nombre o razon social")
+    cargo_representante  = models.TextField(null=False,blank =False, unique=False, help_text="Cargo")
+    telefono_secundario   = models.TextField(null=True,blank =True, help_text="Numero de teléfono secundario")
+    periodo=models.ForeignKey(IC_Periodo, on_delete=models.PROTECT,help_text="Periodo de inscripcion")
+    horario_desde  = models.TextField(null=False,blank =False, unique=False, help_text="horario de trabajo desde formato militar")
+    horario_hasta= models.TextField(null=False,blank =False, unique=False, help_text="horario de trabajo hasta: formato militar")
+    nro_inmuebles=models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de inmuebles")
+    nro_solicitud=models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de solicitud")
+    nro_tomo=models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de tomo")
+    def __str__(self):
+        return '%s - %s - %s - %s - %s' % (self.id,self.tipo_patente,self.numero,self.propietario.numero_documento, self.propietario.nombre) 
+
+# Detalle de activiades econimicas por patente    
+class AE_Patente_ActividadEconomica(models.Model):
+    AE_patente = models.ForeignKey (AE_Patente, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_patente")
+    AE_actividadeconomicadetalle = models.ForeignKey (AE_ActividadEconomicaDetalle, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_ActividadEconomicaDetalle")
+    def __str__(self):
+        return '%s - %s - %s - %s - %s' % (self.id,self.AE_patente.tipo_patente,self.AE_patente.numero,self.AE_patente.propietario.nombre,self.AE_actividadeconomicadetalle.descripcion)
+        
