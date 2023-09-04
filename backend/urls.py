@@ -95,9 +95,8 @@ router.register(r'ae_actividadeconomica', views.AE_ActividadEconomicaViewset,bas
 router.register(r'ae_actividadeconomicadetalle', views.AE_ActividadEconomicaDetalleViewset,basename='ae_actividadeconomicadetalle') 
 router.register(r'ae_patente', views.AE_PatenteViewset,basename='ae_patente')
 router.register(r'ae_patente_actividadeconomica', views.AE_Patente_ActividadEconomicaViewset,basename='ae_patente_actividadeconomica') 
-
-
-
+router.register(r'tasainteres', views.TasaInteresViewset,basename='tasainteres') 
+router.register(r'notacredito', views.NotaCreditoViewset,basename='notacredito') 
 
 urlpatterns = [
     # Base
@@ -113,4 +112,5 @@ urlpatterns = [
     path('ImpuestoInmueble/', views.ImpuestoInmueble),
     path('MuestraTasa', views.MuestraTasa),
     path('MuestraTasaNew', views.MuestraTasaNew),
+    path('importardatosdesdeexcel', views.importardatosdesdeexcel),
 ]

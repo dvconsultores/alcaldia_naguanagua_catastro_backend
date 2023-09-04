@@ -82,13 +82,13 @@ class UrbanizacionSerializer(serializers.ModelSerializer):
     def loaddescripcion_ambito(self, obj):
       return obj.sector.ambito.descripcion
 
-    sector= serializers.SerializerMethodField('loadid_sector')
-    def loadid_sector(self, obj):
-      return obj.sector.id
+    #sector= serializers.SerializerMethodField('loadid_sector')
+    #def loadid_sector(self, obj):
+    #  return obj.sector.id
 
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
-      return obj.sector.descripcion        
+      return obj.sector.descripcion
 
 class ManzanaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -438,7 +438,13 @@ class InmuebleSerializer(serializers.ModelSerializer):
       if obj.urbanizacion:
         return obj.urbanizacion.nombre
       return None
-    
+
+    id_zona= serializers.SerializerMethodField('loadid_zona')
+    def loadid_zona(self, obj):
+      if obj.urbanizacion:
+        return obj.urbanizacion.zona.id
+      return None
+
     nombre_calle= serializers.SerializerMethodField('loadnombre_calle')
     def loadnombre_calle(self, obj):
       if obj.calle:
@@ -730,6 +736,9 @@ class BancoCuentaSerializer(serializers.ModelSerializer):
     class Meta:
         model = BancoCuenta
         fields = '__all__'  
+    banco_nombre= serializers.SerializerMethodField('loadbanco_nombre')
+    def loadbanco_nombre(self, obj):
+      return obj.banco.descripcion+'-'+obj.numero
 
 class PagoEstadoCuentaSerializer(serializers.ModelSerializer):
     liquidacion = LiquidacionSerializer()
@@ -741,6 +750,52 @@ class PagoEstadoCuentaDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = PagoEstadoCuentaDetalle
         fields = '__all__' 
+
+    banco_nombre= serializers.SerializerMethodField('loadbanco_nombre')
+    def loadbanco_nombre(self, obj):
+      if obj.bancocuenta:
+        return obj.bancocuenta.banco.descripcion
+      return None
+
+    banco_codigo= serializers.SerializerMethodField('loadbanco_codigo')
+    def loadbanco_codigo(self, obj):
+      if obj.bancocuenta:
+        return obj.bancocuenta.banco.codigo
+      return None
+    
+    banco_cuenta= serializers.SerializerMethodField('loadbanco_cuenta')
+    def loadbanco_cuenta(self, obj):
+      if obj.bancocuenta:
+        return obj.bancocuenta.numero
+      return None
+
+    tipopago_nombre= serializers.SerializerMethodField('loadtipopago_nombre')
+    def loadtipopago_nombre(self, obj):
+      if obj.tipopago:
+        return obj.tipopago.descripcion
+      return None
+
+    numero_recibo= serializers.SerializerMethodField('loadnumero_recibo')
+    def loadnumero_recibo(self, obj):
+      return obj.pagoestadocuenta.numero
+
+    numero_caja= serializers.SerializerMethodField('loadnumero_caja')
+    def loadnumero_caja(self, obj):
+      if obj.pagoestadocuenta.caja:
+        return obj.pagoestadocuenta.caja
+      return None
+
+
+   # fecha = serializers.SerializerMethodField('get_fechapago')
+   # def get_fechapago(self, obj):
+   #   if obj.fechapago is not None:
+   #       formatted_date = obj.fechapago.strftime("%Y-%m-%d") 
+   #       #formatted_date = obj.fechapago.strftime("%d/%m/%Y")
+   #       formatted_time = obj.fechapago.strftime("%I:%M %p")
+   #       #return f"{formatted_date} {formatted_time}"
+   #       return f"{formatted_date}"
+   #   return ""  
+
 
 class CorrelativoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -939,21 +994,28 @@ class AE_PatenteSerializer(serializers.ModelSerializer):
     class Meta:
         model = AE_Patente
         fields = '__all__'
+    propietario_nombre= serializers.SerializerMethodField('loadpropietario_nombre')
+    def loadpropietario_nombre(self, obj):
+      return obj.propietario.nombre
+    
+    propietario_numero= serializers.SerializerMethodField('loadpropietario_numero')
+    def loadpropietario_numero(self, obj):
+      return obj.propietario.numero_documento
 
 class AE_Patente_ActividadEconomicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = AE_Patente_ActividadEconomica
         fields = '__all__'
 
-#class Serializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = 
-#        fields = '__all__'
+class TasaInteresSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TasaInteres
+        fields = '__all__'
 
-#class Serializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = 
-#        fields = '__all__'
+class NotaCreditoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotaCredito
+        fields = '__all__'
 
 #class Serializer(serializers.ModelSerializer):
 #    class Meta:

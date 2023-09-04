@@ -6,7 +6,7 @@ from django.contrib.auth.models import *
 from rest_framework.decorators import api_view,permission_classes
 from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django_filters import rest_framework as filters
 
 class MultiSerializerViewSet(viewsets.ModelViewSet):
     serializers = { 
@@ -108,6 +108,16 @@ def MuestraTasaNew(request):
     datos=request.data
     return Muestra_Tasa_New(datos)
 
+###################################################
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def importardatosdesdeexcel(request):
+    datos=request.data
+    return importar_datos_desde_excel()
+
+###################################################
 
 class UserViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -853,18 +863,49 @@ class AE_Patente_ActividadEconomicaViewset(MultiSerializerViewSet):
         'default': AE_Patente_ActividadEconomicaSerializer
     }
 
-#class Viewset(MultiSerializerViewSet):
+class TasaInteresViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=TasaInteres.objects.all()
+    serializers = {
+        'default': TasaInteresSerializer
+    }
+
+#class NotaCreditoViewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
+#    queryset=NotaCredito.objects.all()
 #    serializers = {
-#        'default': Serializer
+#        'default': NotaCreditoSerializer
 #    }
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
+#    filter_backends = [DjangoFilterBackend]
+#    filterset_fields = {
+#      'propietario':['exact'],
+#      'saldo':['exact'],
 #    }
+
+
+class NotaCreditoFilter(filters.FilterSet):
+    saldo_gt = filters.NumberFilter(field_name='saldo', lookup_expr='gt')
+
+    class Meta:
+        model = NotaCredito
+        fields = ['propietario', 'saldo_gt']
+
+class NotaCreditoViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = NotaCredito.objects.all()
+    serializers = {
+        'default': NotaCreditoSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = NotaCreditoFilter
+
+
+
+
+
+
+
+
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
 #    queryset=.objects.all()

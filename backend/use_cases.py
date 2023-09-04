@@ -10,9 +10,17 @@ from pyDolarVenezuela import price
 import pyBCV
 import datetime
 from django.db.models import Max,Min,Sum,Q
+import pandas as pd
+import os
+import calendar
+
+# obtener la cantidad de dias que tiene un mes en un año especifico
+def obtener_cantidad_dias(year, month):
+    cantidad_dias = calendar.monthrange(year, month)[1]
+    return cantidad_dias
+
 
 # calcula los meses trascurridos ente dos fechas
-
 def meses_transcurridos(fecha_desde, fecha_hasta):
     diff = fecha_hasta.year - fecha_desde.year
     diff_months = fecha_hasta.month - fecha_desde.month
@@ -31,6 +39,7 @@ def generate_token(username,password):
                          'email':user.email,
                          'username':user.username,
                          'modulo':perfil.modulo.nombre,
+                         'caja':perfil.caja,
                          'departamento':perfil.departamento.nombre,
                          'aplica':perfil.departamento.aplica,
                          'permisos': dataPermisos
@@ -65,7 +74,7 @@ def Crear_Estado_Cuenta(request):
         correlativo=Correlativo.objects.get(id=1)
         valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
-        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
+        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(codigo=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         Cabacera=EstadoCuenta(
@@ -155,20 +164,46 @@ def Crear_Pago(request):
             liquidacion=liquidacion,
             fecha=str(date.today()),
             observaciones=request['observacion'],
-            monto=request['monto']
+            caja=request['caja'],
+            monto=request['monto'],
+            monto_cxc=request['monto_cxc']
         )
+        # evalua si se pago de mas para crear la nota de credito a favor del contribuyente
+        print(request['monto'],request['monto_cxc'])
+        monto_credito= float(request['monto'])-float(request['monto_cxc'])
+        if monto_credito>0:
+            tipopago = TipoPago.objects.get(codigo='N')
+            notacredito=NotaCredito(
+                numeronotacredito  = correlativo.NumeroNotaCredito,
+                tipopago = tipopago,
+                propietario = propietario,
+                observacion  = '',
+                fecha=str(date.today()),
+                monto=   monto_credito, 
+                saldo=    monto_credito
+            )
+            notacredito.save()
+            correlativo.NumeroNotaCredito=correlativo.NumeroNotaCredito+1
+            correlativo.save()
         Cabacera.save()
         for detalle in items:
-            tipopago = None if detalle['tipopago']==None else TipoPago.objects.get(id=detalle['tipopago'])
+            tipopago = None if detalle['tipopago']==None else TipoPago.objects.get(codigo=detalle['tipopago'])
             bancocuenta = None if detalle['bancocuenta']==None else BancoCuenta.objects.get(id=detalle['bancocuenta'])
             Detalle=PagoEstadoCuentaDetalle(
                 pagoestadocuenta=Cabacera,
                 tipopago = tipopago,
                 bancocuenta=bancocuenta,
-                monto  = detalle['monto'],
+                monto  = float(detalle['monto']),
                 fechapago =  str(date.today()),#detalle['fechapago'],
-                nro_referencia = detalle['referencia']
+                nro_referencia = detalle['nro_referencia'],
+                nro_aprobacion = detalle['nro_aprobacion'],
+                nro_lote = detalle['nro_lote']
             )
+            if detalle['tipopago']=='N':
+                notacredito=NotaCredito.objects.get(propietario = propietario,numeronotacredito=detalle['nro_referencia'])
+                notacredito.saldo=float(notacredito.saldo)-float(detalle['monto'])
+                notacredito.save()
+                print('nota de credito',float(notacredito.saldo),float(detalle['monto']),float(notacredito.saldo)-float(detalle['monto']))
             Detalle.save()
         #actualiza el correlativo de numero de pagos
         correlativo.NumeroPago=correlativo.NumeroPago+1  
@@ -268,9 +303,11 @@ def Multa_Inmueble(request):
             fecha_inscripcion = oInmueble.fecha_inscripcion
             bInscripcion=True if (((today-fecha_inscripcion).days)>90 and binscripcion_paga==False) else False
             
-            diferencia=today-fecha_compra
+            diferenciac=today-fecha_compra
+            diferenciai=today-fecha_inscripcion
+            print('fecha_inscripcion:',fecha_inscripcion,'today:',today,'diferencia:',diferenciai.days,'bInscripcion:',bInscripcion)
 
-            print('fecha_compra:',fecha_compra,'today:',today,diferencia.days,'bInscripcion:',bInscripcion,'bModifica:',bModifica)
+            print('fecha_compra:',fecha_compra,'today:',today,'diferencia:',diferenciac.days,'bModifica:',bModifica)
 
             if (bModifica or bInscripcion): # Artículo 20
                 baseCalculo = UnidadTributaria.objects.get(habilitado=True)
@@ -278,7 +315,7 @@ def Multa_Inmueble(request):
                 if bInscripcion:
                     fechaVencidaI=fecha_inscripcion+ datetime.timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
                     mesesVencidosI = meses_transcurridos(fechaVencidaI, today)
-                    print("Meses Vencidos:", mesesVencidosI)
+                    print("Meses Vencidos Inscripcion:", mesesVencidosI)
                     #Artículo 99
                     MultaMinInscripcionUni=0 * baseCalculoBs  #Si no maneja una multa mínima, coloque 0 !!!!! No implementado!!!
                     alicuotaMultaInscripcionUni=0.011111111
@@ -292,7 +329,7 @@ def Multa_Inmueble(request):
                 if bModifica:
                     fechaVencidaM=fecha_compra+ datetime.timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
                     mesesVencidosM= meses_transcurridos(fechaVencidaM, today)
-                    print("Meses mesesVencidos:", mesesVencidosM)
+                    print("Meses Vencidos Modificacion:", mesesVencidosM)
                     #Artículo 101
                     MultaMinModificaUni=0 * baseCalculoBs #Si no maneja una multa mínima, coloque 0 !!!!! No implementado!!!
                     alicuotaMultaModificaUni=0.033
@@ -317,10 +354,12 @@ def Multa_Inmueble(request):
                             moraFraccionada=alicuotaMoraInscripcionUni/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
                             mora=moraFraccionada*mesesVencidosI*metrosCuadrados
                             item = {
+                                'codigo':'IC_MIU',
                                 'aplica':'Multa Inscripcion Uni  Art.99',
                                 #'tipologia':dato.tipologia.id,
                                 #'sub_utilizado':dato.sub_utilizado,
                                 #'tipo':dato.tipo.id,
+                                'Uso':dato.tipologia.descripcion,
                                 'tipo':dato.tipo.descripcion,
                                 'Unifamiliar':dato.tipo.tipo,
                                 #'fecha_construccion':dato.fecha_construccion,
@@ -346,10 +385,12 @@ def Multa_Inmueble(request):
                             moraFraccionada=alicuotaMoraModificaUni/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
                             mora=moraFraccionada*mesesVencidosM*metrosCuadrados
                             item = {
+                                'codigo':'IC_MMU',
                                 'aplica':'Multa Modifica Uni Art.101',
                                 #'tipologia':dato.tipologia.id,
                                 #'sub_utilizado':dato.sub_utilizado,
                                 #'tipo':dato.tipo.id,
+                                'Uso':dato.tipologia.descripcion,
                                 'tipo':dato.tipo.descripcion,
                                 'Unifamiliar':dato.tipo.tipo,
                                 #'fecha_construccion':dato.fecha_construccion,
@@ -377,10 +418,12 @@ def Multa_Inmueble(request):
                             moraFraccionada=alicuotaMoraInscripcionMULTI/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
                             mora=moraFraccionada*mesesVencidosI*metrosCuadrados
                             item = {
+                                'codigo':'IC_MMU',
                                 'aplica':'Multa Inscripcion MULTI  Art.99',
                                 #'tipologia':dato.tipologia.id,
                                 #'sub_utilizado':dato.sub_utilizado,
                                 #'tipo':dato.tipo.id,
+                                'Uso':dato.tipologia.descripcion,
                                 'tipo':dato.tipo.descripcion,
                                 'Unifamiliar':dato.tipo.tipo,
                                 #'fecha_construccion':dato.fecha_construccion,
@@ -406,8 +449,9 @@ def Multa_Inmueble(request):
                             moraFraccionada=alicuotaMoraModificaMULTI/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
                             mora=moraFraccionada*mesesVencidosM*metrosCuadrados
                             item = {
+                                'codigo':'IC_MIM',
                                 'aplica':'Multa Modifica MULTI  Art.101',
-                                #'tipologia':dato.tipologia.id,
+                                'Uso':dato.tipologia.descripcion,
                                 #'sub_utilizado':dato.sub_utilizado,
                                 #'tipo':dato.tipo.id,
                                 'tipo':dato.tipo.descripcion,
@@ -428,29 +472,29 @@ def Multa_Inmueble(request):
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
                             }
                             data.append(item)
-                cabecera = {
-                    'aplica':'Multa Modifica MULTI  Art.101',
-                    #'tipologia':dato.tipologia.id,
-                    #'sub_utilizado':dato.sub_utilizado,
-                    #'tipo':dato.tipo.id,
-                    'tipo':dato.tipo.descripcion,
-                    'Unifamiliar':dato.tipo.tipo,
-                    #'fecha_construccion':dato.fecha_construccion,
-                                '(a) area':dato.area,
-                                '(b) multa Art.101':alicuotaMultaModificaMULTI,
-                                '(c) multa Petro (a * b)':multa,
-                                '(d) BASE FISCAL BS':baseCalculoBs, 
-                                'MULTA Bs A PAGAR (c * d)':multa*baseCalculoBs,
-                                '(e) mora Art.101':alicuotaMoraModificaMULTI,
-                                '(f) moraFraccionada (e / 12)':moraFraccionada,
-                                'fecha compra ':fecha_compra,
-                                'fecha vencida':fechaVencidaM,
-                                'fecha hoy    ':today,
-                                '(h) meses vencido':mesesVencidosM,
-                                '(g) mora Petro (f * h * a)':mora,
-                                'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
-                }
-                data.append(item)
+                #cabecera = {
+                #    'aplica':'Multa Modifica MULTI  Art.101',
+                #    #'tipologia':dato.tipologia.id,
+                #    #'sub_utilizado':dato.sub_utilizado,
+                #    #'tipo':dato.tipo.id,
+                #    'tipo':dato.tipo.descripcion,
+                #    'Unifamiliar':dato.tipo.tipo,
+                #    #'fecha_construccion':dato.fecha_construccion,
+                #                '(a) area':dato.area,
+                #                '(b) multa Art.101':alicuotaMultaModificaMULTI,
+                #                '(c) multa Petro (a * b)':multa,
+                #                '(d) BASE FISCAL BS':baseCalculoBs, 
+                #                'MULTA Bs A PAGAR (c * d)':multa*baseCalculoBs,
+                #                '(e) mora Art.101':alicuotaMoraModificaMULTI,
+                #                '(f) moraFraccionada (e / 12)':moraFraccionada,
+                #                'fecha compra ':fecha_compra,
+                #                'fecha vencida':fechaVencidaM,
+                #                'fecha hoy    ':today,
+                #                '(h) meses vencido':mesesVencidosM,
+                #                '(g) mora Petro (f * h * a)':mora,
+                #                'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
+                #}
+                #data.append(item)
             return Response(data, status=status.HTTP_200_OK)
         return Response('Insert OK', status=status.HTTP_200_OK)
     else:
@@ -479,8 +523,31 @@ def Impuesto_Inmueble(request):
         data = []
         aDetalle = []
         aDescuento = []
+        aInteres = []
         if (request['inmueble']):
+
+            ## esto contruye la tabla de periodos por inmueble para mantener el historico
+            # esto permite saber si esta pendientes por cancelar
+            ############## inicio
+            today = date.today()
             oInmueble = Inmueble.objects.get(id=request['inmueble'])
+            Zona = Urbanizacion.objects.get(id=oInmueble.urbanizacion.id)
+            oPeriodo = IC_Periodo.objects.filter(aplica='C')
+            ano_fin=today.year
+            dAnio=oInmueble.anio
+            while dAnio<=ano_fin:
+                for aPeriodo in oPeriodo:
+                    existe=IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble,periodo=aPeriodo,anio=dAnio).count()
+                    if existe == 0: # si no existe, crea el periodo
+                        ic_impuestoperiodo=IC_ImpuestoPeriodo(
+                            inmueble=oInmueble,
+                            periodo=aPeriodo,
+                            anio=dAnio
+                        )
+                        ic_impuestoperiodo.save()
+                dAnio=dAnio+1
+            ############# fin
+
             #Periodos Pendientes por Cobrar al Inmueble
             oImpuestoPeriodo = IC_ImpuestoPeriodo.objects.filter(inmueble=request['inmueble']).order_by('anio', 'periodo')
             if oImpuestoPeriodo:
@@ -497,32 +564,32 @@ def Impuesto_Inmueble(request):
 
                 terreno=InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
                 ocupacion=InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno.id)
-                ZonaInmueble=oInmueble.zona
+                ZonaInmueble=Zona.zona
                 oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
                 #Ubicar la fecha de compra
                 oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble=request['inmueble'])
                 fechaCompra=oPropietario.fecha_compra
-                today = date.today()
                 diferencia=today-fechaCompra
                 print(fechaCompra,today,diferencia.days)
                 # valida si aplica descuentos por pronto pago.
                 oDescuento=0 # Bandera que valida si aplica descuento o no
-                if (diferencia.days<=90):
+                #if (diferencia.days<=90):
                 #if (diferencia.days<=90 and minimo_ano==today.year):
-                    try:
-                        oDescuento=IC_ImpuestoDescuento.objects.filter(habilitado=True,aplica='C')
-                    except:
-                        oDescuento=0
+                try:
+                    oDescuento=IC_ImpuestoDescuento.objects.filter(habilitado=True,aplica='C')
+                except:
+                    oDescuento=0
                 bMulta=True
                 oCargos=IC_ImpuestoCargos.objects.filter(habilitado=True,aplica='C')
                 fMulta=float(oCargos.get(codigo='multa').porcentaje)
                 fRecargo=float(oCargos.get(codigo='recargo').porcentaje)
-                fInteres=float(oCargos.get(codigo='interes').porcentaje)
+                tBaseMultaRecargoInteres=0
                 tMulta=0
                 tRecargo=0
                 tInteres=0
                 tTotal=0
+                tTotalMora=0
                 while minimo_ano<=maximo_ano:
                     #para los años menores al actual, toma los periodos pendientes segun el historico
                     PeriodosCxc=oImpuestoPeriodo.filter(anio=minimo_ano).order_by('periodo')
@@ -540,7 +607,6 @@ def Impuesto_Inmueble(request):
                             #partir de la fecha en que comience cada uno de los trimestres subsiguientes al primero. Los trimestres
                             #comenzarán a contarse desde el 1 ° de enero de cada año.
                             fDiasGracia=tPeriodo.get(periodo=aPeriodo.periodo.periodo)
-
                             # Para el año en curso, evaluamos si dentro del rango de periodos va a cancelar, 
                             # existe un periodo que sumando los dias de gracia al inicio del periodo, la fecha de pago esta contenida
                             if today>= fDiasGracia.fechadesde and  \
@@ -549,7 +615,6 @@ def Impuesto_Inmueble(request):
                                 print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                 bMulta=False
                             else:
-
                                 if today<= fDiasGracia.fechadesde and  \
                                     today <= fDiasGracia.fechadesde+datetime.timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual es menor a las fechas del modelo (periodos proximos)
@@ -561,26 +626,40 @@ def Impuesto_Inmueble(request):
                         for dato in ocupacion:
                             #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                             #posesión por 5 años o más por el mismo propietario
-
-                            if dato.tipologia.codigo=='17' and oInmueble.zona.codigo=='1':
+                            if dato.tipologia.codigo=='17' and ZonaInmueble.codigo=='1':
                                 mesesTrascurridos = meses_transcurridos(fechaCompra, today)
                                 if mesesTrascurridos>=60: # tiene 5 años de antiguedad
                                     Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
                                 else:
-                                    # si no se comple aplico Otros Usos=5
+                                    # si no se cumple aplico Otros Usos=5
                                     Alicuota=float(oTipologia.get(codigo='15').tarifa)
                             else:
                                 Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
                             Monto=float(dato.area)*(Alicuota*iAlicuota)*baseCalculoBs
                             mDescuento=0
-                            if oDescuento and minimo_ano==today.year:
+                            if oDescuento: # and minimo_ano==today.year:
                                 # Valida que aplique descuento solamente con el año actual
                                 try:
                                     pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,))
-                                    registros_validos = pDescuento.filter(fechadesde__month__lte=today.month,
-                                            fechahasta__month__gte=today.month,
-                                            fechadesde__day__lte=today.day,
-                                            fechahasta__day__gte=today.day)
+                                    #registros_validos = pDescuento.filter(
+                                    #    fechadesde__year__lte=today.year,
+                                    #    fechahasta__year__gte=today.year,
+                                    #    fechadesde__month__lte=today.month,
+                                    #    fechahasta__month__gte=today.month,
+                                    #    fechadesde__day__lte=today.day,
+                                    #    fechahasta__day__gte=today.day)
+                                    print('descuento',pDescuento)
+                                    print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
+                                    registros_validos = pDescuento.filter(
+                                        fechadesde__year__lte=minimo_ano,
+                                        fechahasta__year__gte=minimo_ano,
+                                        fechadesde__month__lte=aPeriodo.periodo.fechadesde.month,
+                                        fechahasta__month__gte=aPeriodo.periodo.fechahasta.month,
+                                        fechadesde__day__lte=aPeriodo.periodo.fechadesde.day,
+                                        fechahasta__day__gte=aPeriodo.periodo.fechahasta.day) 
+                                    #print('registros_validos',registros_validos)  
+                                                                
+
                                     mDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                 except:
                                     mDescuento=0
@@ -597,9 +676,10 @@ def Impuesto_Inmueble(request):
                                         'IC_impuestoperiodo':aPeriodo.id,
                                         'uso_id':dato.tipologia.id,
                                         'uso_descripcion':dato.tipologia.descripcion,
+                                        'anio': minimo_ano,
+                                        'periodo': aPeriodo.periodo.periodo,
                                     }
                                     aDescuento.append(ImpuestoDetalleDescuentos)
-
                                     #print('ImpuestoDetalleDescuentos',ImpuestoDetalleDescuentos)                                
                             Total=float(Monto-(Monto*(mDescuento/100)))
 
@@ -624,16 +704,41 @@ def Impuesto_Inmueble(request):
                             aDetalle.append(ImpuestoDetalle)
                             tTotal=tTotal+Total
                             if bMulta:
+                                tTotalMora=tTotalMora+Total
+                                tBaseMultaRecargoInteres=tBaseMultaRecargoInteres+Total
                                 tMulta=tMulta+(Total*(fMulta/100))
                                 tRecargo=tRecargo+(Total*(fRecargo/100))
-                                tInteres=tInteres+(Total*(fInteres/100))
+                        #EndFor ocupacion
+                    #EndFor PeriodosCxc
+                    if tTotalMora: #minimo_ano==today.year:
+                        oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
+                        tTotalMora=(tTotalMora/12)
+                        for aTasa in oTasaInteres:
+                            if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
+                            #if (aTasa.mes<=5 and minimo_ano==today.year) or minimo_ano!=today.year:
+                                cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
+                                tasa_porcentaje=float(aTasa.tasa/100)
+                                monto=((tTotalMora*tasa_porcentaje)/360)*cantidad_dias
+                                ImpuestoInteresMoratorio={
+                                        'anio':aTasa.anio,
+                                        'mes':aTasa.mes,
+                                        'tasa':tasa_porcentaje*100,
+                                        'dias':cantidad_dias,
+                                        'moramensual':tTotalMora,
+                                        'interesmensual':monto,
+                                    }
+                                aInteres.append(ImpuestoInteresMoratorio)
+                                tInteres=tInteres+monto
+                            #end If
+                        # end For oTasaInteres                    
+                        tTotalMora=0
                     minimo_ano=minimo_ano+1
-                print('tMulta',tMulta)
+                #EndWhile
                 correlativo=Correlativo.objects.get(id=1)
                 numero=correlativo.NumeroIC_Impuesto
                 Impuesto={
                     'numero':numero,
-                    'zona':oInmueble.zona.id,
+                    'zona':ZonaInmueble.id,
                     'basecalculobs':baseCalculoBs,
                     'inmueble':oInmueble.id,
                     'subtotal':tTotal,
@@ -642,13 +747,14 @@ def Impuesto_Inmueble(request):
                     'interes':tInteres,
                     'fmulta':fMulta,
                     'frecargo':fRecargo,
-                    'finteres':fInteres,
                     'total':tTotal+tMulta+tRecargo+tInteres,
+                    'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
                 }
                 datos={
                     'cabacera':Impuesto,
                     'detalle':aDetalle,
                     'descuento':aDescuento,
+                    'interes':aInteres,
                 }
                 data.append(datos)
             return Response(data, status=status.HTTP_200_OK)
@@ -731,7 +837,6 @@ def Muestra_Tasa_New(request):
     print(rate_values)
     # Encontrar el valor máximo
 
-
     rate_values = {key: float(value) for key, value in all_rates.items() if key != "Fecha"}
 
     # Encontrar el key correspondiente al valor máximo
@@ -748,3 +853,24 @@ def Muestra_Tasa_New(request):
     }
 
     return Response(result,status=status.HTTP_200_OK) 
+
+
+
+
+def importar_datos_desde_excel():
+    directorio_script = os.path.dirname(os.path.abspath(__file__))
+    print('directorio_script',directorio_script)
+    ruta_archivo_excel = os.path.join(directorio_script, 'tasa.xlsx')
+    print('ruta_archivo_excel',directorio_script)
+    datos_excel = pd.read_excel(ruta_archivo_excel)
+
+    for index, row in datos_excel.iterrows():
+        anio = row['anio']
+        mes = row['mes']
+        tasa = row['tasa']
+        
+        # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+        TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+
+    print("Datos importados exitosamente.")
+    return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
