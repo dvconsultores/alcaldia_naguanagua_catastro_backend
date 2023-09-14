@@ -592,10 +592,41 @@ class InmuebleValoracionTerrenoSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmuebleValoracionTerreno
         fields = '__all__'
+        
+    uso_codigo= serializers.SerializerMethodField('loaduso_codigo')
+    def loaduso_codigo(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.codigo
+        return None
+
+    uso_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
+    def loaduso_descripcion(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.descripcion
+        return None
+    
+    uso_valor= serializers.SerializerMethodField('loaduso_valor')
+    def loaduso_valor(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.tarifa
+        return None
+ 
+    uso_total= serializers.SerializerMethodField('loaduso_total')
+    def loaduso_total(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.tarifa*obj.area
+        return None
+
+
+    tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
+    def loadtipo_descripcion(self, obj):
+        if obj.tipo:
+          return obj.tipo.descripcion
+        return None
+
+    
 
 class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
-    #tipologia=TipologiaSerializer()
-    #tipo=TipoInmuebleSerializer()
     class Meta:
         model = InmuebleValoracionConstruccion
         fields = '__all__'  
@@ -608,6 +639,14 @@ class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
     def loaduso_descripcion(self, obj):
       return obj.tipologia.descripcion
     
+    uso_valor= serializers.SerializerMethodField('loaduso_valor')
+    def loaduso_valor(self, obj):
+      return obj.tipologia.tarifa
+ 
+    uso_total= serializers.SerializerMethodField('loaduso_total')
+    def loaduso_total(self, obj):
+      return obj.tipologia.tarifa*obj.area
+
     tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
     def loadtipo_descripcion(self, obj):
       return obj.tipo.descripcion

@@ -113,4 +113,7 @@ urlpatterns = [
     path('MuestraTasa', views.MuestraTasa),
     path('MuestraTasaNew', views.MuestraTasaNew),
     path('importardatosdesdeexcel', views.importardatosdesdeexcel),
+    path('subir-archivo-excel2/', views.subir_archivo_excel),
+
+
 ]

@@ -8,6 +8,37 @@ from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
 
+
+import os
+import openpyxl
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+@csrf_exempt
+@require_POST
+def subir_archivo_excel(request):
+    archivo_excel = request.FILES['archivoExcel']
+
+    # Verifica si el archivo es un archivo Excel válido
+    if archivo_excel.name.endswith(('.xls', '.xlsx')):
+        # Define la ubicación donde deseas guardar el archivo Excel
+        ubicacion_archivo = os.path.join('media', 'archivos_excel', archivo_excel.name)
+
+        # Guarda el archivo Excel en la ubicación especificada
+        with open(ubicacion_archivo, 'wb') as archivo_destino:
+            for chunk in archivo_excel.chunks():
+                archivo_destino.write(chunk)
+
+        # Ejemplo de procesamiento del archivo Excel (puede variar según tus necesidades)
+        workbook = openpyxl.load_workbook(ubicacion_archivo)
+        # Procesa el archivo Excel aquí, por ejemplo, lee hojas de trabajo y realiza operaciones
+
+        return JsonResponse({'mensaje': 'Archivo Excel subido y procesado correctamente.'})
+    else:
+        return JsonResponse({'error': 'Formato de archivo no válido.'}, status=400)
+
+
 class MultiSerializerViewSet(viewsets.ModelViewSet):
     serializers = { 
         'default': None,

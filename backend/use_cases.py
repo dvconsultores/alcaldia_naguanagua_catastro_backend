@@ -13,6 +13,9 @@ from django.db.models import Max,Min,Sum,Q
 import pandas as pd
 import os
 import calendar
+from decimal import Decimal
+import math  # Importa la biblioteca math
+from django.db import IntegrityError
 
 # obtener la cantidad de dias que tiene un mes en un año especifico
 def obtener_cantidad_dias(year, month):
@@ -564,6 +567,33 @@ def Impuesto_Inmueble(request):
 
                 terreno=InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
                 ocupacion=InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno.id)
+                print('antes',ocupacion)
+                
+                total_area_terreno = terreno.area
+                total_area_construcion = ocupacion.aggregate(Sum('area'))['area__sum']
+
+                print('total_area_construcion',total_area_construcion,'total_area_terreno',total_area_terreno)
+                if total_area_construcion < total_area_terreno:
+                    sumar_terreno=True
+
+                    # Crear una nueva instancia de InmuebleValoracionConstruccion
+                    nuevo_objeto_construccion = ocupacion(
+                        # Configura los campos de acuerdo a tus necesidades
+                        tipologia=terreno.tipologia,
+                        tipo=terreno.tipo,
+                        area=terreno.area,
+                        aplica=terreno.aplica,
+                    )
+
+                    # Asignar la relación con el objeto terreno
+                    nuevo_objeto_construccion.ocupacion = terreno
+
+                    # Guardar el nuevo objeto en la base de datos
+                    nuevo_objeto_construccion.save()
+
+                    # Agregar el nuevo objeto a la lista ocupacion
+                print('despues',ocupacion)
+
                 ZonaInmueble=Zona.zona
                 oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
@@ -676,6 +706,7 @@ def Impuesto_Inmueble(request):
                                         'IC_impuestoperiodo':aPeriodo.id,
                                         'uso_id':dato.tipologia.id,
                                         'uso_descripcion':dato.tipologia.descripcion,
+                                        'apica':dato.aplica,
                                         'anio': minimo_ano,
                                         'periodo': aPeriodo.periodo.periodo,
                                     }
@@ -690,6 +721,7 @@ def Impuesto_Inmueble(request):
                                 'multa':bMulta,
                                 'uso_id':dato.tipologia.id,
                                 'uso_descripcion':dato.tipologia.descripcion,
+                                'apica':dato.aplica,
                                 'tipo':dato.tipo.id,
                                 'tipo_descripcion':dato.tipo.descripcion,
                                 'area_m2':dato.area,
@@ -858,19 +890,341 @@ def Muestra_Tasa_New(request):
 
 
 def importar_datos_desde_excel():
-    directorio_script = os.path.dirname(os.path.abspath(__file__))
-    print('directorio_script',directorio_script)
-    ruta_archivo_excel = os.path.join(directorio_script, 'tasa.xlsx')
-    print('ruta_archivo_excel',directorio_script)
-    datos_excel = pd.read_excel(ruta_archivo_excel)
+    importar='inmueble'
 
-    for index, row in datos_excel.iterrows():
-        anio = row['anio']
-        mes = row['mes']
-        tasa = row['tasa']
-        
-        # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
-        TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+    if importar=='tasas':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/tasa.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel)
+        for index, row in datos_excel.iterrows():
+            anio = row['anio']
+            mes = row['mes']
+            tasa = row['tasa']
+            print(row)
+            
+            # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+            TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+        print("Datos importados exitosamente.")
+    if importar=='ambito':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='ambito')
+        for index, row in datos_excel.iterrows():
+            codigo = row['id_ambito']
+            descripcion = row['nombre']
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                ambito, creado = Ambito.objects.get_or_create(
+                    codigo=codigo,
+                    defaults={
+                        'descripcion': descripcion,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("Ambito importados exitosamente.")
+    if importar=='sector':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='sector')
+        for index, row in datos_excel.iterrows():
+            ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
+            codigo = row['id_sector']
+            descripcion = row['nombre'] #if not '' else 'falta nombre '+str(row['id_sector'])
+            clasificacion = row['clasificacion']
+            area = row['area'] if not math.isnan(row['area']) else Decimal('0')
+            perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
+            #print(ambito,descripcion,row)
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                sector, creado = Sector.objects.get_or_create(
+                    codigo=codigo,
+                    ambito=ambito,
+                    defaults={
+                        'descripcion': descripcion,
+                        'clasificacion': clasificacion,
+                        'area': Decimal(area),
+                        'perimetro': Decimal(perimetro),
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} y ámbito {ambito} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                print(ambito,descripcion,row)
+        print("Sector importados exitosamente.")  
+    if importar=='manzana':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='manzana')
+        for index, row in datos_excel.iterrows():
+            ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
+            sector=Sector.objects.get(codigo=row['id_sector'],ambito=ambito) # integridad con ambito
+            codigo = row['id_manzana']
+            area = row['area'] if not math.isnan(row['area']) else Decimal('0')
+            perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
+            print(row)
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                manzana, creado = Manzana.objects.get_or_create(
+                    codigo=codigo,
+                    sector=sector,
+                    defaults={
+                        'area': Decimal(area),
+                        'perimetro': Decimal(perimetro),
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} y sector {sector} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("manzana importados exitosamente.")
+    if importar=='parcela':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='parcela')
+        for index, row in datos_excel.iterrows():
+            ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
+            sector=Sector.objects.get(codigo=row['id_sector'],ambito=ambito) # integridad con sector
+            manzana=Manzana.objects.get(codigo=row['id_manzana'],sector=sector) # integridad con manzana
+            codigo = row['id_parcela']
+            area = row['area'] if not math.isnan(row['area']) else Decimal('0')
+            perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
+            print(row)
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                parcela, creado = Parcela.objects.get_or_create(
+                    codigo=codigo,
+                    manzana=manzana,
+                    defaults={
+                        'area': Decimal(area),
+                        'perimetro': Decimal(perimetro),
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} y sector {sector} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("parcela importados exitosamente.")  
+    if importar=='sub-parcela':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='sub_parcela')
+        for index, row in datos_excel.iterrows():
+            ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
+            sector=Sector.objects.get(codigo=row['id_sector'],ambito=ambito) # integridad con sector
+            manzana=Manzana.objects.get(codigo=row['id_manzana'],sector=sector) # integridad con manzana
+            parcela=Parcela.objects.get(codigo=row['id_parcela'],manzana=manzana) # integridad con parcela
+            codigo = row['id_sub_parcela']
+            area = row['area'] if not math.isnan(row['area']) else Decimal('0')
+            perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
+            print(row)
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                subparcela, creado = SubParcela.objects.get_or_create(
+                    codigo=codigo,
+                    parcela=parcela,
+                    defaults={
+                        'area': Decimal(area),
+                        'perimetro': Decimal(perimetro),
+                    }
+                )
+                
+                if not creado:
+                    print(f"El registro con código {codigo} y sector {sector} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("SubParcela importados exitosamente.")  
+    if importar=='barrios': #Urbanizacion
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='barrioss')
+        for index, row in datos_excel.iterrows():
+            ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
+            sector=Sector.objects.get(codigo=row['id_sector'],ambito=ambito) # integridad con ambito
+            codigo = row['id_urb_barrio']
+            #print(row)
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                urbanizacion, creado = Urbanizacion.objects.get_or_create(
+                    codigo=codigo,
+                    sector=sector,
+                    defaults={
+                        'nombre': row['nombre'],
+                    }
+                )
+                if not creado:
+                    True
+                    print(f"El registro con código {codigo} y sector {sector} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("barrios importados exitosamente.")
+    if importar=='contribuyente':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='persona')
+        for index, row in datos_excel.iterrows():
+            numero_documento = row['id_persona']
+            nombre = row['nombre']
+            telefono_principal = row['telefono']
+            direccion = row['direccion']
+            telefono_secundario = row['telefono2']
+            email_principal = row['correo']
+            emaill_secundario = row['correo2']
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                ambito, creado = Propietario.objects.get_or_create(
+                    numero_documento=numero_documento,
+                    defaults={
+                        'nombre': nombre,
+                        'telefono_principal':telefono_principal,
+                        'direccion':direccion,
+                        'telefono_secundario':telefono_secundario,
+                        'email_principal':email_principal,
+                        'emaill_secundario':emaill_secundario,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {numero_documento} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("Persona/contribuyente importados exitosamente.")
+    if importar=='conj_resinden':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='conj_resinden')
+        for index, row in datos_excel.iterrows():
+            urbanizacion=Urbanizacion.objects.get(codigo=row['id_urb_barrio']) # integridad con urbanizacion
+            codigo = row['id_conj_residencial']
+            nombre = row['nombre']
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = ConjuntoResidencial.objects.get_or_create(
+                    codigo=codigo,
+                    urbanizacion=urbanizacion,
+                    defaults={
+                        'nombre': nombre,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("conj_resinden importados exitosamente.")
 
-    print("Datos importados exitosamente.")
+    if importar=='edificio':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='edificio')
+        for index, row in datos_excel.iterrows():
+            try:
+                conjuntoresidencial=ConjuntoResidencial.objects.get(codigo=row['id_conj_residencial']) # integridad con urbanizacion
+                codigo = row['id_edificio']
+                nombre = row['nombre']
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    creado = Edificio.objects.get_or_create(
+                        codigo=codigo,
+                        conjuntoresidencial=conjuntoresidencial,
+                        defaults={
+                            'nombre': nombre,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    # Maneja cualquier error de integridad si es necesario
+                    print(f"Error de integridad al crear el registro: {e}")
+            except ConjuntoResidencial.DoesNotExist:
+                print("Conjunto residencial  no existe.")
+        print("edificio importados exitosamente.")
+    if importar=='torre':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='torre')
+        for index, row in datos_excel.iterrows():
+            try:
+                conjuntoresidencial=ConjuntoResidencial.objects.get(codigo=row['id_conj_residencial']) # integridad con urbanizacion
+                codigo = row['id_torre']
+                nombre = row['nombre']
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    creado = Torre.objects.get_or_create(
+                        codigo=codigo,
+                        conjuntoresidencial=conjuntoresidencial,
+                        defaults={
+                            'nombre': nombre,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    # Maneja cualquier error de integridad si es necesario
+                    print(f"Error de integridad al crear el registro: {e}")
+            except ConjuntoResidencial.DoesNotExist:
+                print("Conjunto residencial  no existe.")
+        print("Torre importados exitosamente.")
+    if importar=='avenida':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='avenida')
+        for index,row in datos_excel.iterrows():
+            codigo = row['id_avenida']
+            nombre = row['nombre']
+            tipo = int(row['id_tipo_avenida'])
+            print(row)
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = Avenida.objects.get_or_create(
+                    codigo=codigo,
+                    defaults={
+                        'tipo': tipo,
+                        'nombre':nombre,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        print("avenida importados exitosamente.")
+
+    if importar=='inmueble':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='inmueble')
+        for index, row in datos_excel.iterrows():
+            strZona= row['id_zona2004']
+            if not math.isnan(strZona):
+                parte_entera = int(strZona)
+            else:
+                parte_entera = 0 
+
+            if  len(str(row['id_inmueble']))<6: 
+
+                try:
+                    zona=Zona.objects.get(codigo=parte_entera) # integridad con urbanizacion
+                    numero_expediente = row['id_inmueble']
+                    #zona = row['id_zona2004']
+                    try:
+                        # Intenta obtener un registro existente o crear uno nuevo si no existe
+                        creado = Inmueble.objects.get_or_create(
+                            numero_expediente=numero_expediente,
+                            defaults={
+                                'zona': zona,
+                            }
+                        )
+                        if not creado:
+                            print(f"El registro con código {numero_expediente} ya existe y no se creó uno nuevo.")
+                        else:
+                            print(f"El registro con código {numero_expediente} SE CREO.")
+
+                    except IntegrityError as e:
+                        # Maneja cualquier error de integridad si es necesario
+                        print(f"Error de integridad al crear el registro: {e}")
+                except Zona.DoesNotExist:
+                    print("Zona no existe.")
+ 
+        print("edificio importados exitosamente.")
+
+
+
+
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 

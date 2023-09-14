@@ -11,6 +11,8 @@ from django.utils.html import strip_tags
 from decimal import Decimal
 from django.utils import timezone
 
+
+
 def immuebles_path(instance, filename):
     return "immueble_{0}/imgs/{1}".format(instance.id, filename)
 
@@ -92,19 +94,25 @@ class Sector(models.Model):
         ('E', 'E'),
     )
     ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,help_text="ambito asociado")
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del Sector")
+    codigo = models.TextField(null=False,blank =False, help_text="Codigo del Sector")
     descripcion = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del Sector")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Descripcion del Sector")
     clasificacion= models.CharField(max_length=1, choices=CLASIFICACION, default='A', help_text='clasificacion del Sector')
     def __str__(self):
-        return '%s - %s - %s' % (self.id,self.codigo, self.descripcion)
-    
+        return '%s - %s - %s' % (self.ambito.codigo,self.codigo, self.descripcion)
+
+    class Meta:
+        unique_together = ('ambito', 'codigo')
+        ordering = ['ambito','codigo']
+
+
 class Calle(models.Model):
     TIPO = (
-        ('1', 'Colateral'),
-        ('2', 'Via'),
-        ('3', 'Doble Via')
+        ('1', 'Una Via'),
+        ('2', 'Doble Via'),
+        ('3', 'Colateral'),
+        ('4', 'Arterial')
     )
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la calle")
     nombre = models.TextField(null=False,blank =False, unique=False, help_text="Nombre de la calle")
@@ -114,12 +122,13 @@ class Calle(models.Model):
     
 class Avenida(models.Model):
     TIPO = (
-        ('1', 'Colateral'),
-        ('2', 'Via'),
-        ('3', 'Doble Via')
+        ('1', 'Una Via'),
+        ('2', 'Doble Via'),
+        ('3', 'Colateral'),
+        ('4', 'Arterial')
     )
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la avenida")
-    nombre = models.TextField(null=False,blank =False, unique=False, help_text="Nombre de la avenida")
+    nombre = models.TextField(null=False,blank =False, help_text="Nombre de la avenida")
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='tipo de avenida')
     def __str__(self):
         return '%s - %s' % (self.codigo, self.nombre)
@@ -135,16 +144,21 @@ class Urbanizacion(models.Model):
         ('P', 'Publica'),
         ('R', 'Privada'),
     )
+    codigo = models.TextField(null=True,blank =True, help_text="Codigo de la avenida")
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
-    nombre = models.TextField(null=False,blank =False, unique=False, help_text="Nombre de la urbanizacion")
+    nombre = models.TextField(null=False,blank =False, help_text="Nombre de la urbanizacion")
     tipo= models.CharField(max_length=1, choices=TIPO, default='P', help_text='tipo de la urbanizacion')
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
+
     def __str__(self):
-        return '%s - %s - %s' % (self.id,self.tipo, self.nombre)
-    
+        return '%s - %s - %s' % (self.sector.codigo,self.sector.ambito.codigo,self.codigo)
+    class Meta:
+        unique_together = ('sector', 'codigo')
+        ordering = ['sector','codigo']
+
 class Manzana(models.Model):
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la Manzana")
+    codigo = models.TextField(null=False,blank =False, help_text="Codigo de la Manzana")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la manzana")
     via_norte=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana norte",related_name='manzana_via_norte')
@@ -152,44 +166,65 @@ class Manzana(models.Model):
     via_este=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana este",related_name='manzana_via_este')
     via_oeste=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana oeste",related_name='manzana_via_oeste')
     def __str__(self):
-        return '%s' % (self.codigo)
+        return '%s - %s - %s' % (self.sector.codigo,self.sector.ambito.codigo,self.codigo)
     
+    class Meta:
+        unique_together = ('sector', 'codigo')
+        ordering = ['sector','codigo']
+   
 class Parcela(models.Model):
     manzana=models.ForeignKey(Manzana,on_delete=models.PROTECT,help_text="Manzana asociado")
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la Parcela")
+    codigo = models.TextField(null=False,blank =False, help_text="Codigo de la Parcela")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la Parcela")
     def __str__(self):
-        return '%s' % (self.codigo)
-    
+        return '%s - %s - %s - %s' % (self.manzana.codigo,self.manzana.sector.codigo,self.manzana.sector.ambito.codigo,self.codigo)
+    class Meta:
+        unique_together = ('manzana', 'codigo')
+        ordering = ['manzana','codigo']
+
 class SubParcela(models.Model):
     parcela=models.ForeignKey(Parcela,on_delete=models.PROTECT,help_text="Parcela asociado")
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la SubParcela")
+    codigo = models.TextField(null=False,blank =False, help_text="Codigo de la SubParcela")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la SubParcela")
     def __str__(self):
-        return '%s' % (self.codigo)
+        return '%s - %s - %s - %s - %s' % (self.parcela.codigo,self.parcela.manzana.codigo,self.parcela.manzana.sector.codigo,self.parcela.manzana.sector.ambito.codigo,self.codigo)
+    class Meta:
+        unique_together = ('parcela', 'codigo')
+        ordering = ['parcela','codigo']
 
 class ConjuntoResidencial(models.Model):
-    urbanizacion = models.ForeignKey(Urbanizacion,on_delete=models.PROTECT,help_text="Urbanizacion asociada")
-    nombre = models.TextField(null=False,blank =False, unique=True, help_text="nombre del conjunto residencial")
+    urbanizacion = models.ForeignKey(Urbanizacion,on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
+    codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo ConjuntoResidencial")
+    nombre = models.TextField(null=False,blank =False, help_text="nombre del conjunto residencial")
     def __str__(self):
         return '%s' % (self.nombre)
-    
+    class Meta:
+        unique_together = ('urbanizacion', 'codigo')
+        ordering = ['urbanizacion','codigo']
+
+
 class Edificio(models.Model):
-    urbanizacion = models.ForeignKey(Urbanizacion,on_delete=models.PROTECT,help_text="Urbanizacion asociada")
-    conjunto_residencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
-    nombre = models.TextField(null=False,blank =False, unique=True, help_text="nombre del conjunto residencial")
+    conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
+    codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Edificio")
+    nombre = models.TextField(null=False,blank =False, help_text="nombre del Edificio")
     def __str__(self):
         return '%s' % (self.nombre)
+    class Meta:
+        unique_together = ('conjuntoresidencial', 'codigo')
+        ordering = ['conjuntoresidencial','codigo']
     
 class Torre(models.Model):
-    urbanizacion = models.ForeignKey(Urbanizacion,on_delete=models.PROTECT,help_text="Urbanizacion asociada")
-    conjunto_residencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
-    nombre = models.TextField(null=False,blank =False, unique=True, help_text="nombre del conjunto residencial")
+    conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
+    codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Torre")
+    nombre = models.TextField(null=False,blank =False, help_text="nombre de la Torre")
     def __str__(self):
         return '%s' % (self.nombre)
-    
+    class Meta:
+        unique_together = ('conjuntoresidencial', 'codigo')
+        ordering = ['conjuntoresidencial','codigo']
+
 class TipoInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo de inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de inmueble")
@@ -316,14 +351,15 @@ class TipoTransaccion(models.Model):
     
 # Maestro de Propietarios/Contribuyentes
 class Propietario(models.Model):
-    tipo_documento  = models.TextField(null=False,blank =False, unique=False, help_text="Tipo de documento")
-    nacionalidad  = models.TextField(null=False,blank =False, unique=False, help_text="Nacinalidad")
+    tipo_documento  = models.TextField(null=False,blank =False,default='R',  help_text="Tipo de documento: R=RIF")
+    nacionalidad  = models.TextField(null=False,blank =False, default='V', help_text="Nacinalidad")
     numero_documento  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de documento (RIF)")
     nombre  = models.TextField(null=False,blank =False, unique=False, help_text="Nombre o razon social")
     telefono_principal  = models.TextField(null=False,blank =False, unique=False, help_text="Numero de teléfono principal")
     telefono_secundario   = models.TextField(null=True,blank =True, help_text="Numero de teléfono secundario")
     email_principal  = models.TextField(null=False,blank =False, unique=False, help_text="correo 1")
     emaill_secundario  = models.TextField(null=True,blank =True, help_text="correo 2")
+    direccion = models.TextField(null=True,blank =True, help_text="Direccion")
     def __str__(self):
         return '%s - %s - %s' % (self.id,self.numero_documento, self.nombre)
 
@@ -541,6 +577,8 @@ class InmuebleValoracionTerreno(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado")
+    tipo=models.ForeignKey(TipoInmueble, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")    
+
     fines_fiscales	= models.ForeignKey (FinesFiscales,null=True,blank =True, on_delete=models.PROTECT,help_text="fines_fiscales asociado")
     valor_unitario = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor_unitario")
     area_factor_ajuste =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 del factor de ajuste")
@@ -548,6 +586,8 @@ class InmuebleValoracionTerreno(models.Model):
     valor_ajustado = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Ajustado")
     valor_total = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Total")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
+    aplica= models.CharField(max_length=1, default='T', help_text='TERRENO')
+
     def __str__(self):
         return '%s - %s' % (self.inmueble.id, self.observaciones)
     
@@ -561,6 +601,7 @@ class InmuebleValoracionConstruccion(models.Model):
     valor = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
     valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
+    aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
 
     history = HistoricalRecords()
 
