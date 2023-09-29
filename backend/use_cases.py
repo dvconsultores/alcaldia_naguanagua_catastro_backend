@@ -292,6 +292,14 @@ def Crear_Inmueble_Propietario(request):
 def Multa_Inmueble(request):
     if (request):
         data = []
+        data_IC_MIU = []
+        data_IC_MMU = []
+        data_IC_MIM = []
+        data_IC_MMM = []
+        total_IC_MIU = 0
+        total_IC_MMU = 0
+        total_IC_MIM = 0
+        total_IC_MMM = 0
         if (request['inmueble']):
             today = date.today()
             #Ubicar la fecha de compra
@@ -380,7 +388,8 @@ def Multa_Inmueble(request):
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
                             }
-                            data.append(item)
+                            total_IC_MIU=total_IC_MIU+(mora*baseCalculoBs)
+                            data_IC_MIU.append(item)
                         if bModifica:
                             multa=metrosCuadrados*alicuotaMultaModificaUni
                             if MultaMinModificaUni: # Aca valida si es diferente de 0 osea que tendrá un mínimo, de lo contrario la multa es la calculada segun los m2
@@ -411,7 +420,8 @@ def Multa_Inmueble(request):
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
                             }
-                            data.append(item)
+                            total_IC_MMU=total_IC_MMU+(mora*baseCalculoBs)
+                            data_IC_MMU.append(item)
 
                     else: #MULTIfamiliar
                         if bInscripcion:
@@ -421,7 +431,7 @@ def Multa_Inmueble(request):
                             moraFraccionada=alicuotaMoraInscripcionMULTI/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
                             mora=moraFraccionada*mesesVencidosI*metrosCuadrados
                             item = {
-                                'codigo':'IC_MMU',
+                                'codigo':'IC_MIM',
                                 'aplica':'Multa Inscripcion MULTI  Art.99',
                                 #'tipologia':dato.tipologia.id,
                                 #'sub_utilizado':dato.sub_utilizado,
@@ -444,7 +454,8 @@ def Multa_Inmueble(request):
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
                             }
-                            data.append(item)
+                            total_IC_MIM=total_IC_MIM+(mora*baseCalculoBs)
+                            data_IC_MIM.append(item)
                         if bModifica:
                             multa=metrosCuadrados*alicuotaMultaModificaMULTI
                             if MultaMinModificaMULTI: # Aca valida si es diferente de 0 osea que tendrá un mínimo, de lo contrario la multa es la calculada segun los m2
@@ -452,7 +463,7 @@ def Multa_Inmueble(request):
                             moraFraccionada=alicuotaMoraModificaMULTI/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
                             mora=moraFraccionada*mesesVencidosM*metrosCuadrados
                             item = {
-                                'codigo':'IC_MIM',
+                                'codigo':'IC_MMM',
                                 'aplica':'Multa Modifica MULTI  Art.101',
                                 'Uso':dato.tipologia.descripcion,
                                 #'sub_utilizado':dato.sub_utilizado,
@@ -474,30 +485,21 @@ def Multa_Inmueble(request):
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
                             }
-                            data.append(item)
-                #cabecera = {
-                #    'aplica':'Multa Modifica MULTI  Art.101',
-                #    #'tipologia':dato.tipologia.id,
-                #    #'sub_utilizado':dato.sub_utilizado,
-                #    #'tipo':dato.tipo.id,
-                #    'tipo':dato.tipo.descripcion,
-                #    'Unifamiliar':dato.tipo.tipo,
-                #    #'fecha_construccion':dato.fecha_construccion,
-                #                '(a) area':dato.area,
-                #                '(b) multa Art.101':alicuotaMultaModificaMULTI,
-                #                '(c) multa Petro (a * b)':multa,
-                #                '(d) BASE FISCAL BS':baseCalculoBs, 
-                #                'MULTA Bs A PAGAR (c * d)':multa*baseCalculoBs,
-                #                '(e) mora Art.101':alicuotaMoraModificaMULTI,
-                #                '(f) moraFraccionada (e / 12)':moraFraccionada,
-                #                'fecha compra ':fecha_compra,
-                #                'fecha vencida':fechaVencidaM,
-                #                'fecha hoy    ':today,
-                #                '(h) meses vencido':mesesVencidosM,
-                #                '(g) mora Petro (f * h * a)':mora,
-                #                'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
-                #}
-                #data.append(item)
+                            total_IC_MMM=total_IC_MMM+(mora*baseCalculoBs)
+                            data_IC_MMM.append(item)
+
+                datos={
+                    'basefiscalmulta':baseCalculoBs,
+                    'cabecera_IC_MIU':total_IC_MIU,
+                    'cabecera_IC_MMU':total_IC_MMU,
+                    'cabecera_IC_MIM':total_IC_MIM,
+                    'cabecera_IC_MMM':total_IC_MMM,
+                    'data_IC_MIU':data_IC_MIU,
+                    'data_IC_MMU':data_IC_MMU,
+                    'data_IC_MIM':data_IC_MIM,
+                    'data_IC_MMM':data_IC_MMM,
+                }
+                data.append(datos)
             return Response(data, status=status.HTTP_200_OK)
         return Response('Insert OK', status=status.HTTP_200_OK)
     else:
@@ -889,8 +891,10 @@ def Muestra_Tasa_New(request):
 
 
 
-def importar_datos_desde_excel():
-    importar='inmueble'
+def importar_datos_desde_excel(pestana):
+
+    print('Backend procesando: ',pestana)
+    importar=pestana
 
     if importar=='tasas':
         ruta_archivo_excel = os.path.join('media', 'archivos_excel/tasa.xlsx')
@@ -1112,7 +1116,6 @@ def importar_datos_desde_excel():
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
         print("conj_resinden importados exitosamente.")
-
     if importar=='edificio':
         ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='edificio')
@@ -1195,20 +1198,86 @@ def importar_datos_desde_excel():
             if not math.isnan(strZona):
                 parte_entera = int(strZona)
             else:
-                parte_entera = 0 
+                parte_entera = 99 
 
-            if  len(str(row['id_inmueble']))<6: 
+            if  len(str(row['id_inmueble']))<6 and row['id_inmueble'] !=0: 
+                print(int(row['id_urb_barrio']) if not math.isnan(row['id_urb_barrio']) else '',int(row['id_conj_residencial']) if not math.isnan(row['id_conj_residencial']) else '')
 
                 try:
-                    zona=Zona.objects.get(codigo=parte_entera) # integridad con urbanizacion
+                    zona=Zona.objects.get(codigo=parte_entera) # integridad con zona
+                    try:
+                        ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
+                    except Ambito.DoesNotExist:
+                        ambito=None
+                    try:
+                        sector=Sector.objects.get(codigo=int(row['id_sector']) if not math.isnan(row['id_sector']) else '',ambito=ambito) # integridad con sector 
+                    except Sector.DoesNotExist:
+                        sector=None
+                    try:
+                        manzana=Manzana.objects.get(codigo=int(row['id_manzana']) if not math.isnan(row['id_manzana']) else '',sector=sector) # integridad con manzana
+                    except Manzana.DoesNotExist:
+                        manzana=None
+                    try:
+                        parcela=Parcela.objects.get(codigo=int(row['id_parcela']) if not math.isnan(row['id_parcela']) else '' ,manzana=manzana) # integridad con parcela
+                    except Parcela.DoesNotExist:
+                        parcela=None
+                    try:
+                        subparcela=SubParcela.objects.get(codigo=int(row['id_sub_parcela']) if not math.isnan(row['id_sub_parcela']) else '' ,parcela=parcela) # integridad con sector
+                    except SubParcela.DoesNotExist:
+                        subparcela=None
+                    try:
+                        urbanizacion=Urbanizacion.objects.get(codigo= int(row['id_urb_barrio']) if not math.isnan(row['id_urb_barrio']) else '' ,sector=sector) # integridad con sector
+                    except Urbanizacion.DoesNotExist:
+                        urbanizacion=None
+                    try:
+                        conjunto_residencial=ConjuntoResidencial.objects.get(codigo=int(row['id_conj_residencial']) if not math.isnan(row['id_conj_residencial']) else '' ) # integridad con conjunto_residencial
+                    except ConjuntoResidencial.DoesNotExist:
+                        conjunto_residencial=None
+                    ## ojo le quito el fltro de urbanizacion porque no esab bien el dato en la hoja de inmuebles
+
+                    try:
+                        edificio=Edificio.objects.get(codigo=int(row['id_edificio']) if not math.isnan(row['id_edificio']) else ' ' ,conjuntoresidencial=conjunto_residencial) # integridad con sector
+                    except Edificio.DoesNotExist:
+                        edificio=None
+                    try:
+                        torre=Torre.objects.get(codigo=int(row['id_torre']) if not math.isnan(row['id_torre']) else ' ' , conjuntoresidencial=conjunto_residencial) # integridad con sector
+                    except Torre.DoesNotExist:
+                        torre=None
+                    try:
+                        avenida=Avenida.objects.get(codigo= int(row['id_avenida']) if not math.isnan(row['id_avenida']) else '') # integridad con sector
+                    except Avenida.DoesNotExist:
+                        avenida=None
                     numero_expediente = row['id_inmueble']
-                    #zona = row['id_zona2004']
+                    # Cadena de fecha y hora en el formato original
+                    cadena_fecha_hora = row['fecha_inscripcion']
+
+                    # Extrae la parte de la cadena que contiene la fecha
+                    partes = cadena_fecha_hora.split(' ')
+                    fecha_original = partes[0]
+
                     try:
                         # Intenta obtener un registro existente o crear uno nuevo si no existe
                         creado = Inmueble.objects.get_or_create(
                             numero_expediente=numero_expediente,
+                            ambito=ambito,
+                            sector=sector,
+                            manzana=manzana,
+                            parcela=parcela,
+                            subparcela=subparcela,
+                            urbanizacion=urbanizacion,
+                            conjunto_residencial=conjunto_residencial,
+                            edificio=edificio,
+                            torre=torre,
+                            avenida=avenida,
                             defaults={
+                                'fecha_inscripcion':fecha_original,
                                 'zona': zona,
+                                'numero_piso':row['piso'],
+                                'numero_civico':row['nro_civico'],
+                                'referencia':row['referencia'],
+                                'observaciones':row['observaciones'],
+                                'direccion':row['direccion'],
+                                'telefono':row['telefono'],
                             }
                         )
                         if not creado:
@@ -1221,10 +1290,59 @@ def importar_datos_desde_excel():
                         print(f"Error de integridad al crear el registro: {e}")
                 except Zona.DoesNotExist:
                     print("Zona no existe.")
+                except Ambito.DoesNotExist:
+                    print("Ambito no existe.")
+                except Sector.DoesNotExist:
+                    print("Sector no existe.")
+                except Manzana.DoesNotExist:
+                    print("Manzana no existe.")
+                except Parcela.DoesNotExist:
+                    print("Parcela no existe.")
+                except SubParcela.DoesNotExist:
+                    print("SubParcela no existe.")                   
+                except Urbanizacion.DoesNotExist:
+                    print("Urbanizacion no existe.")
+                except ConjuntoResidencial.DoesNotExist:
+                    print("ConjuntoResidencial no existe.")
+                except Edificio.DoesNotExist:
+                    print("Edificio no existe.")
+                except Torre.DoesNotExist:
+                    print("Torre no existe.")
+                except Avenida.DoesNotExist:
+                    print("Avenida no existe.")
+
+
+        print("inmueble importados exitosamente.")
+
+    if importar=='propietario':
+        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='propietario')
+        for index, row in datos_excel.iterrows():
+            if  len(str(row['id_inmueble']))<6: 
+                try:
+                    inmueble=Inmueble.objects.get(numero_expediente=row['id_inmueble']) # integridad con inmueble
+                    propietario=Propietario.objects.get(numero_documento=row['id_persona']) # integridad con propietario
+                    try:
+                        # Intenta obtener un registro existente o crear uno nuevo si no existe
+                        creado = InmueblePropietarios.objects.get_or_create(
+                            inmueble=inmueble,
+                            propietario=propietario,
+                            defaults={
+                                'fecha_compra': inmueble.fecha_inscripcion,
+                            }
+                        )
+                        if not creado:
+                            print(f"El registro con código {inmueble} ya existe y no se creó uno nuevo.")
+                        else:
+                            print(f"El registro con código {inmueble} SE CREO.")
+
+                    except IntegrityError as e:
+                        # Maneja cualquier error de integridad si es necesario
+                        print(f"Error de integridad al crear el registro: {e}")
+                except Zona.DoesNotExist:
+                    print("Zona no existe.")
  
-        print("edificio importados exitosamente.")
-
-
+        print("propietario importados exitosamente.")
 
 
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 

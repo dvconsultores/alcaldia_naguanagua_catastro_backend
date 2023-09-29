@@ -109,19 +109,28 @@ class ManzanaSerializer(serializers.ModelSerializer):
     
     descripcion_via_norte= serializers.SerializerMethodField('loaddescripcion_via_norte')
     def loaddescripcion_via_norte(self, obj):
-      return obj.via_norte.nombre
+      if obj.via_norte:
+        return obj.via_norte.nombre
+      return None
     
     descripcion_via_sur= serializers.SerializerMethodField('loaddescripcion_via_sur')
     def loaddescripcion_via_sur(self, obj):
-      return obj.via_sur.nombre
-    
+      if obj.via_sur:
+        return obj.via_sur.nombre
+      return None
+
+
     descripcion_via_este= serializers.SerializerMethodField('loaddescripcion_via_este')
     def loaddescripcion_via_este(self, obj):
-      return obj.via_este.nombre
+      if obj.via_este:
+        return obj.via_este.nombre
+      return None
     
     descripcion_via_oeste= serializers.SerializerMethodField('loaddescripcion_via_oeste')
     def loaddescripcion_via_oeste(self, obj):
-      return obj.via_oeste.nombre
+      if obj.via_oeste:
+        return obj.via_oeste.nombre
+      return None
 
 class ParcelaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -223,27 +232,27 @@ class EdificioSerializer(serializers.ModelSerializer):
 
     ambito= serializers.SerializerMethodField('loadid_ambito')
     def loadid_ambito(self, obj):
-      return obj.urbanizacion.sector.ambito.id
+      return obj.conjuntoresidencial.urbanizacion.sector.ambito.id
     
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.urbanizacion.sector.ambito.descripcion
+      return obj.conjuntoresidencial.urbanizacion.sector.ambito.descripcion
 
     sector= serializers.SerializerMethodField('loadid_sector')
     def loadid_sector(self, obj):
-      return obj.urbanizacion.sector.id
+      return obj.conjuntoresidencial.urbanizacion.sector.id
 
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
-      return obj.urbanizacion.sector.descripcion   
+      return obj.conjuntoresidencial.urbanizacion.sector.descripcion   
 
     nombre_urbanizacion= serializers.SerializerMethodField('loadnombre_urbanizacion')
     def loadnombre_urbanizacion(self, obj):
-      return obj.urbanizacion.nombre 
+      return obj.conjuntoresidencial.urbanizacion.nombre 
     
     nombre_conjuntoresidencial= serializers.SerializerMethodField('loadnombre_conjuntoresidencial')
     def loadnombre_conjuntoresidencial(self, obj):
-      return obj.conjunto_residencial.nombre   
+      return obj.conjuntoresidencial.nombre   
       
 class TorreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -252,27 +261,27 @@ class TorreSerializer(serializers.ModelSerializer):
 
     ambito= serializers.SerializerMethodField('loadid_ambito')
     def loadid_ambito(self, obj):
-      return obj.urbanizacion.sector.ambito.id
+      return obj.conjuntoresidencial.urbanizacion.sector.ambito.id
 
     descripcion_ambito= serializers.SerializerMethodField('loaddescripcion_ambito')
     def loaddescripcion_ambito(self, obj):
-      return obj.urbanizacion.sector.ambito.descripcion
+      return obj.conjuntoresidencial.urbanizacion.sector.ambito.descripcion
 
     sector= serializers.SerializerMethodField('loadid_sector')
     def loadid_sector(self, obj):
-      return obj.urbanizacion.sector.id
+      return obj.conjuntoresidencial.urbanizacion.sector.id
 
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
-      return obj.urbanizacion.sector.descripcion   
+      return obj.conjuntoresidencial.urbanizacion.sector.descripcion   
 
     nombre_urbanizacion= serializers.SerializerMethodField('loadnombre_urbanizacion')
     def loadnombre_urbanizacion(self, obj):
-      return obj.urbanizacion.nombre 
+      return obj.conjuntoresidencial.urbanizacion.nombre 
     
     nombre_conjuntoresidencial= serializers.SerializerMethodField('loadnombre_conjuntoresidencial')
     def loadnombre_conjuntoresidencial(self, obj):
-      return obj.conjunto_residencial.nombre
+      return obj.conjuntoresidencial.nombre
     
 class PropietarioSerializer(serializers.ModelSerializer):
     class Meta:
