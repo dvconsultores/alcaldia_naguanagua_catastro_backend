@@ -892,24 +892,45 @@ def Muestra_Tasa_New(request):
 
 
 def importar_datos_desde_excel(pestana):
-
     print('Backend procesando: ',pestana)
     importar=pestana
-
+    excel_document=ExcelDocument.objects.get()
     if importar=='tasas':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/tasa.xlsx')
-        datos_excel = pd.read_excel(ruta_archivo_excel)
+        # esto se cambia porque hay problemas al acesar al archivo en fisico, se cambia para que se cargue en un modelo.
+        # tambien sa debe colocar en elmismo excel pero otra pestaña.
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/tasa.xlsx')
+        #datos_excel = pd.read_excel(ruta_archivo_excel)
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='tasa')       
         for index, row in datos_excel.iterrows():
             anio = row['anio']
             mes = row['mes']
             tasa = row['tasa']
-            print(row)
-            
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = TasaInteres.objects.get_or_create(
+                    defaults={
+                        'anio' : anio,
+                        'mes'  : mes,
+                        'tasa' : tasa,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con anio {anio} y mes {mes} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=mes, error=e)
             # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
-            TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+            #TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
         print("Datos importados exitosamente.")
     if importar=='ambito':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        # metodo anterior que se leia desde un directorio, se cambia por metodo de lectura desde la carga en un modelo ya,
+        # que falla cuando se puclica en nube, lovcal si funciona
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='ambito')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='ambito')
         for index, row in datos_excel.iterrows():
             codigo = row['id_ambito']
@@ -927,9 +948,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("Ambito importados exitosamente.")
     if importar=='sector':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='sector')
         for index, row in datos_excel.iterrows():
             ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
@@ -956,10 +979,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
-                print(ambito,descripcion,row)
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("Sector importados exitosamente.")  
     if importar=='manzana':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='manzana')
         for index, row in datos_excel.iterrows():
             ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
@@ -967,7 +991,6 @@ def importar_datos_desde_excel(pestana):
             codigo = row['id_manzana']
             area = row['area'] if not math.isnan(row['area']) else Decimal('0')
             perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
-            print(row)
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 manzana, creado = Manzana.objects.get_or_create(
@@ -983,9 +1006,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("manzana importados exitosamente.")
     if importar=='parcela':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='parcela')
         for index, row in datos_excel.iterrows():
             ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
@@ -994,7 +1019,6 @@ def importar_datos_desde_excel(pestana):
             codigo = row['id_parcela']
             area = row['area'] if not math.isnan(row['area']) else Decimal('0')
             perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
-            print(row)
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 parcela, creado = Parcela.objects.get_or_create(
@@ -1010,9 +1034,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("parcela importados exitosamente.")  
     if importar=='sub-parcela':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='sub_parcela')
         for index, row in datos_excel.iterrows():
             ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
@@ -1022,7 +1048,6 @@ def importar_datos_desde_excel(pestana):
             codigo = row['id_sub_parcela']
             area = row['area'] if not math.isnan(row['area']) else Decimal('0')
             perimetro = row['perimetro'] if not math.isnan(row['perimetro']) else Decimal('0')
-            print(row)
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 subparcela, creado = SubParcela.objects.get_or_create(
@@ -1036,18 +1061,20 @@ def importar_datos_desde_excel(pestana):
                 
                 if not creado:
                     print(f"El registro con código {codigo} y sector {sector} ya existe y no se creó uno nuevo.")
+                    
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("SubParcela importados exitosamente.")  
     if importar=='barrios': #Urbanizacion
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='barrioss')
         for index, row in datos_excel.iterrows():
             ambito=Ambito.objects.get(codigo=row['id_ambito']) # integridad con ambito
             sector=Sector.objects.get(codigo=row['id_sector'],ambito=ambito) # integridad con ambito
             codigo = row['id_urb_barrio']
-            #print(row)
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 urbanizacion, creado = Urbanizacion.objects.get_or_create(
@@ -1063,9 +1090,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("barrios importados exitosamente.")
     if importar=='contribuyente':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='persona')
         for index, row in datos_excel.iterrows():
             numero_documento = row['id_persona']
@@ -1093,9 +1122,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("Persona/contribuyente importados exitosamente.")
     if importar=='conj_resinden':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='conj_resinden')
         for index, row in datos_excel.iterrows():
             urbanizacion=Urbanizacion.objects.get(codigo=row['id_urb_barrio']) # integridad con urbanizacion
@@ -1115,9 +1146,11 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_documento, error=e)
         print("conj_resinden importados exitosamente.")
     if importar=='edificio':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='edificio')
         for index, row in datos_excel.iterrows():
             try:
@@ -1138,11 +1171,13 @@ def importar_datos_desde_excel(pestana):
                 except IntegrityError as e:
                     # Maneja cualquier error de integridad si es necesario
                     print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
             except ConjuntoResidencial.DoesNotExist:
                 print("Conjunto residencial  no existe.")
         print("edificio importados exitosamente.")
     if importar=='torre':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='torre')
         for index, row in datos_excel.iterrows():
             try:
@@ -1163,17 +1198,18 @@ def importar_datos_desde_excel(pestana):
                 except IntegrityError as e:
                     # Maneja cualquier error de integridad si es necesario
                     print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
             except ConjuntoResidencial.DoesNotExist:
                 print("Conjunto residencial  no existe.")
         print("Torre importados exitosamente.")
     if importar=='avenida':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='avenida')
         for index,row in datos_excel.iterrows():
             codigo = row['id_avenida']
             nombre = row['nombre']
             tipo = int(row['id_tipo_avenida'])
-            print(row)
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 creado = Avenida.objects.get_or_create(
@@ -1188,10 +1224,35 @@ def importar_datos_desde_excel(pestana):
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
                 print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
         print("avenida importados exitosamente.")
-
+    if importar=='calle':
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='via')
+        for index,row in datos_excel.iterrows():
+            codigo = row['id_via']
+            nombre = row['nombre']
+            tipo = int(row['id_tipo_via'])
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = Calle.objects.get_or_create(
+                    codigo=codigo,
+                    defaults={
+                        'tipo': tipo,
+                        'nombre':nombre,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
+        print("calle importados exitosamente.")
     if importar=='inmueble':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='inmueble')
         for index, row in datos_excel.iterrows():
             strZona= row['id_zona2004']
@@ -1201,7 +1262,7 @@ def importar_datos_desde_excel(pestana):
                 parte_entera = 99 
 
             if  len(str(row['id_inmueble']))<6 and row['id_inmueble'] !=0: 
-                print(int(row['id_urb_barrio']) if not math.isnan(row['id_urb_barrio']) else '',int(row['id_conj_residencial']) if not math.isnan(row['id_conj_residencial']) else '')
+                #print(int(row['id_urb_barrio']) if not math.isnan(row['id_urb_barrio']) else '',int(row['id_conj_residencial']) if not math.isnan(row['id_conj_residencial']) else '')
 
                 try:
                     zona=Zona.objects.get(codigo=parte_entera) # integridad con zona
@@ -1226,7 +1287,16 @@ def importar_datos_desde_excel(pestana):
                     except SubParcela.DoesNotExist:
                         subparcela=None
                     try:
-                        urbanizacion=Urbanizacion.objects.get(codigo= int(row['id_urb_barrio']) if not math.isnan(row['id_urb_barrio']) else '' ,sector=sector) # integridad con sector
+                        id_urb_barrio = row['id_urb_barrio']
+
+                        # Comprobar si id_urb_barrio es numérico y no es NaN
+                        if isinstance(id_urb_barrio, (int, float)) and not math.isnan(id_urb_barrio):
+                            id_urb_barrio = int(id_urb_barrio)
+                        else:
+                            id_urb_barrio = None  # O puedes asignar otro valor predeterminado si es apropiado
+
+
+                        urbanizacion=Urbanizacion.objects.get(codigo= id_urb_barrio,sector=sector) # integridad con sector
                     except Urbanizacion.DoesNotExist:
                         urbanizacion=None
                     try:
@@ -1248,12 +1318,18 @@ def importar_datos_desde_excel(pestana):
                     except Avenida.DoesNotExist:
                         avenida=None
                     numero_expediente = row['id_inmueble']
-                    # Cadena de fecha y hora en el formato original
-                    cadena_fecha_hora = row['fecha_inscripcion']
+                    fecha_inscripcion = row['fecha_inscripcion']
 
-                    # Extrae la parte de la cadena que contiene la fecha
-                    partes = cadena_fecha_hora.split(' ')
-                    fecha_original = partes[0]
+                    if isinstance(fecha_inscripcion, str) and len(fecha_inscripcion) > 0:
+                        print('fechaaaa',row['fecha_inscripcion'])
+                    # Cadena de fecha y hora en el formato original
+                        cadena_fecha_hora = row['fecha_inscripcion']
+
+                        # Extrae la parte de la cadena que contiene la fecha
+                        partes = cadena_fecha_hora.split(' ')
+                        fecha_original = partes[0]
+                    else:
+                        fecha_original=None
 
                     try:
                         # Intenta obtener un registro existente o crear uno nuevo si no existe
@@ -1288,6 +1364,7 @@ def importar_datos_desde_excel(pestana):
                     except IntegrityError as e:
                         # Maneja cualquier error de integridad si es necesario
                         print(f"Error de integridad al crear el registro: {e}")
+                        ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
                 except Zona.DoesNotExist:
                     print("Zona no existe.")
                 except Ambito.DoesNotExist:
@@ -1313,9 +1390,9 @@ def importar_datos_desde_excel(pestana):
 
 
         print("inmueble importados exitosamente.")
-
     if importar=='propietario':
-        ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')
+        ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='propietario')
         for index, row in datos_excel.iterrows():
             if  len(str(row['id_inmueble']))<6: 
@@ -1339,9 +1416,14 @@ def importar_datos_desde_excel(pestana):
                     except IntegrityError as e:
                         # Maneja cualquier error de integridad si es necesario
                         print(f"Error de integridad al crear el registro: {e}")
-                except Zona.DoesNotExist:
-                    print("Zona no existe.")
- 
+                        ExcelDocumentLOG.objects.create(pestana=importar, codigo=inmueble, error=e)
+                except Inmueble.DoesNotExist:
+                    print("Inmueble no existe.")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=inmueble, error="Inmueble no existe.")
+                except Propietario.DoesNotExist:
+                    print("Propietario no existe.")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=propietario, error="Propietario no existe.")
+
         print("propietario importados exitosamente.")
 
 

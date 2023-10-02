@@ -1065,15 +1065,15 @@ class NotaCreditoSerializer(serializers.ModelSerializer):
         model = NotaCredito
         fields = '__all__'
 
-#class Serializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = 
-#        fields = '__all__'
+class ExcelDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExcelDocument
+        fields = '__all__'
 
-#class Serializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = 
-#        fields = '__all__'
+class ExcelDocumentLOGSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExcelDocumentLOG
+        fields = '__all__'
 
 #class Serializer(serializers.ModelSerializer):
 #    class Meta:

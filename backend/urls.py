@@ -97,6 +97,9 @@ router.register(r'ae_patente', views.AE_PatenteViewset,basename='ae_patente')
 router.register(r'ae_patente_actividadeconomica', views.AE_Patente_ActividadEconomicaViewset,basename='ae_patente_actividadeconomica') 
 router.register(r'tasainteres', views.TasaInteresViewset,basename='tasainteres') 
 router.register(r'notacredito', views.NotaCreditoViewset,basename='notacredito') 
+router.register(r'ExcelDocument', views.ExcelDocumentViewset,basename='exceldocument') 
+router.register(r'ExcelDocumentLOG', views.ExcelDocumentLOGViewset,basename='exceldocumentLOG') 
+
 
 urlpatterns = [
     # Base
@@ -114,6 +117,6 @@ urlpatterns = [
     path('MuestraTasaNew', views.MuestraTasaNew),
     path('importardatosdesdeexcel', views.importardatosdesdeexcel),
     path('subir-archivo-excel2/', views.subir_archivo_excel),
-
+    path('upload_excel/', views.upload_excel),
 
 ]

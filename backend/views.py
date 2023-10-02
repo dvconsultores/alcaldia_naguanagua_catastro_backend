@@ -14,6 +14,8 @@ import openpyxl
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.shortcuts import render
+from .models import ExcelDocument
 
 @csrf_exempt
 @require_POST
@@ -37,6 +39,17 @@ def subir_archivo_excel(request):
         return JsonResponse({'mensaje': 'Archivo Excel subido y procesado correctamente.'})
     else:
         return JsonResponse({'error': 'Formato de archivo no válido.'}, status=400)
+
+@csrf_exempt
+@require_POST
+def upload_excel(request):
+    if request.method == 'POST':
+        title = request.POST['title']
+        excel_file = request.FILES['excel_file']
+        document = ExcelDocument(title=title, excel_file=excel_file)
+        document.save()
+        return JsonResponse({'message': 'Excel file uploaded successfully'})
+    return JsonResponse({'message': 'No file uploaded'}, status=400)
 
 
 class MultiSerializerViewSet(viewsets.ModelViewSet):
@@ -932,9 +945,19 @@ class NotaCreditoViewset(MultiSerializerViewSet):
 
 
 
+class ExcelDocumentViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=ExcelDocument.objects.all()
+    serializers = {
+        'default': ExcelDocumentSerializer
+    }
 
-
-
+class ExcelDocumentLOGViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=ExcelDocumentLOG.objects.all()
+    serializers = {
+        'default': ExcelDocumentLOGSerializer
+    }
 
 
 #class Viewset(MultiSerializerViewSet):

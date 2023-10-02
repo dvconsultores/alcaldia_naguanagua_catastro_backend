@@ -92,7 +92,7 @@ class Sector(models.Model):
         ('B', 'B'),
         ('C', 'C'),
         ('D', 'D'),
-        ('E', 'E'),
+        ('E', 'E')
     )
     ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,help_text="ambito asociado")
     codigo = models.TextField(null=False,blank =False, help_text="Codigo del Sector")
@@ -1154,6 +1154,23 @@ class NotaCredito(models.Model):
     fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha creacion")
     monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito")     
     saldo=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="saldo de la nota de credito")    
+    def save(self, *args, **kwargs):
+        self.fecha = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class ExcelDocument(models.Model):
+    title = models.CharField(max_length=255)
+    excel_file = models.FileField(upload_to='excel_files/')
+
+    def __str__(self):
+        return self.title
+
+class ExcelDocumentLOG(models.Model):
+    pestana = models.CharField(max_length=255, help_text="Pestaña del archivo de excel")
+    codigo = models.CharField(max_length=255, help_text="id del registro con error")
+    error = models.CharField(max_length=255, help_text="codigo del error")
+    fecha = models.DateTimeField(blank=False, help_text="Fecha registro error")
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs)
