@@ -1335,7 +1335,7 @@ def importar_datos_desde_excel(pestana):
                         # Intenta obtener un registro existente o crear uno nuevo si no existe
                         creado = Inmueble.objects.get_or_create(
                             numero_expediente=numero_expediente,
-                            ambito=ambito,
+                            ambito=ambito, 
                             sector=sector,
                             manzana=manzana,
                             parcela=parcela,
