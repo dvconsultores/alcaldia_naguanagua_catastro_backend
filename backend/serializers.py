@@ -448,11 +448,18 @@ class InmuebleSerializer(serializers.ModelSerializer):
         return obj.urbanizacion.nombre
       return None
 
-    id_zona= serializers.SerializerMethodField('loadid_zona')
-    def loadid_zona(self, obj):
-      if obj.urbanizacion:
-        return obj.urbanizacion.zona.id
-      return None
+    #id_zona= serializers.SerializerMethodField('loadid_zona')
+    #def loadid_zona(self, obj):
+    #  if obj.zona:
+    #    return obj.zona.id
+    #  return None
+
+
+    #id_zona= serializers.SerializerMethodField('loadid_zona')  activar cuando se valide la zona desde la urbanzacion
+    #def loadid_zona(self, obj):
+    #  if obj.urbanizacion:
+    #    return obj.urbanizacion.zona.id
+    #  return None
 
     nombre_calle= serializers.SerializerMethodField('loadnombre_calle')
     def loadnombre_calle(self, obj):

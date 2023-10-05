@@ -63,7 +63,7 @@ router.register(r'inmueble_valoracion_terreno', views.InmuebleValoracionTerrenoV
 router.register(r'inmueble_valoracion_construccion', views.InmuebleValoracionConstruccionViewset,basename='inmueble_valoracion_construccion')
 router.register(r'inmueble_ubicacion', views.InmuebleUbicacionViewset,basename='inmueble_ubicacion')
 router.register(r'inmueble_faltante', views.InmuebleFaltanteViewset,basename='inmueble_faltante')
-router.register(r'propietario', views.PropietarioViewset,basename='propietario')
+router.register(r'propietario/', views.PropietarioViewset,basename='propietario')
 router.register(r'tasabcv', views.TasaBCVViewset,basename='tasabcv')
 router.register(r'unidadtributaria', views.UnidadTributariaViewset,basename='unidadtributaria')
 router.register(r'moneda', views.MonedaViewset,basename='moneda')
@@ -118,5 +118,7 @@ urlpatterns = [
     path('importardatosdesdeexcel', views.importardatosdesdeexcel),
     path('subir-archivo-excel2/', views.subir_archivo_excel),
     path('upload_excel/', views.upload_excel),
+    path('filtrar_propietarios/', views.filtrar_propietarios, name='filtrar_propietarios'),
+    path('filtrar_inmuebles/', views.filtrar_inmuebles, name='filtrar_inmuebles'),
 
 ]

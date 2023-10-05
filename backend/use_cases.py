@@ -895,6 +895,45 @@ def importar_datos_desde_excel(pestana):
     print('Backend procesando: ',pestana)
     importar=pestana
     excel_document=ExcelDocument.objects.get()
+    if importar=='vaciar':
+        NotaCredito.objects.all().delete()
+        AE_Patente.objects.all().delete()
+        FlujoDetalle.objects.all().delete()
+        Flujo.objects.all().delete()
+        PagoEstadoCuentaDetalle.objects.all().delete()
+        PagoEstadoCuenta.objects.all().delete()
+        LiquidacionDetalle.objects.all().delete()
+        Liquidacion.objects.all().delete()
+        EstadoCuentaDetalle.objects.all().delete()
+        EstadoCuenta.objects.all().delete()
+        Propietario.objects.all().delete()
+        InmueblePropietarios.objects.all().delete()
+        ################ eliminar inmueble inicio
+        IC_ImpuestoPeriodo.objects.all().delete()
+        InmueblePropiedad.objects.all().delete()
+        InmuebleConstruccion.objects.all().delete()
+        InmuebleFaltante.objects.all().delete()
+        InmuebleTerrenoUso.objects.all().delete()
+        InmuebleTerreno.objects.all().delete()
+        InmuebleUbicacion.objects.all().delete()
+        InmuebleValoracionConstruccion.objects.all().delete()
+        InmuebleValoracionTerreno.objects.all().delete()
+        Inmueble.objects.all().delete()
+        ################# fin
+        SubParcela.objects.all().delete()
+        Parcela.objects.all().delete() 
+        Manzana.objects.all().delete() 
+        Calle.objects.all().delete()
+        Avenida.objects.all().delete()
+        Torre.objects.all().delete()
+        Edificio.objects.all().delete()
+        ConjuntoResidencial.objects.all().delete()
+        Urbanizacion.objects.all().delete()
+        Sector.objects.all().delete() 
+        Ambito.objects.all().delete()
+        
+
+
     if importar=='tasas':
         # esto se cambia porque hay problemas al acesar al archivo en fisico, se cambia para que se cargue en un modelo.
         # tambien sa debe colocar en elmismo excel pero otra pestaña.

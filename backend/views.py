@@ -9,6 +9,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
 
 
+
+
 import os
 import openpyxl
 from django.http import JsonResponse
@@ -296,12 +298,90 @@ class TorreViewset(MultiSerializerViewSet):
         'default': TorreSerializer
     }
 
+
 class PropietarioViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
-    queryset=Propietario.objects.all()
+    queryset = Propietario.objects.all()
     serializers = {
         'default': PropietarioSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'numero_documento':['exact'],
+    }
+#++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+@csrf_exempt
+def filtrar_propietarios(request):
+    numero_documento = request.GET.get('numero_documento', None)
+
+    #if numero_documento:
+    propietarios_filtrados = Propietario.objects.filter(numero_documento=numero_documento)
+    #else:
+    #    propietarios_filtrados = Propietario.objects.all()
+
+    # Convierte los resultados a JSON
+    data = [{'id': prop.id, 
+             'numero_documento': prop.numero_documento, 
+             'nombre': prop.nombre,
+             'tipo_documento': prop.tipo_documento,
+             'nacionalidad': prop.nacionalidad,
+             'telefono_principal': prop.telefono_principal,
+             'telefono_secundario': prop.telefono_secundario,
+             'email_principal': prop.email_principal,
+             'emaill_secundario': prop.emaill_secundario,
+             'direccion': prop.direccion
+             } for prop in propietarios_filtrados]
+
+    return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def filtrar_inmuebles(request):
+    numero_expediente = request.GET.get('numero_expediente', None)
+
+    #if numero_expediente:
+    inmuebles_filtrados = Inmueble.objects.filter(numero_expediente=numero_expediente)
+    #else:
+    #    inmuebles_filtrados = Inmueble.objects.all()
+
+    # Convierte los resultados a JSON
+
+    data = [{'id': prop.id, 
+            'numero_expediente': prop.numero_expediente,
+            'fecha_inscripcion': prop.fecha_inscripcion,
+            'tipo': prop.tipo,
+            'status': prop.status,
+            #'ambito': prop.ambito,
+            #'sector': prop.sector,
+            #'manzana': prop.manzana,
+            #'parcela': prop.parcela,
+            #'subparcela': prop.subparcela,
+            #'nivel': prop.nivel,
+            #'unidad': prop.unidad,
+            #'urbanizacion': prop.urbanizacion,
+            #'calle': prop.calle,
+            #'conjunto_residencial': prop.conjunto_residencial,
+            #'edificio': prop.edificio,
+            #'avenida': prop.avenida,
+            #'torre': prop.torre,
+            'numero_civico': prop.numero_civico,
+            'numero_casa': prop.numero_casa,
+            'numero_piso': prop.numero_piso,
+            'telefono': prop.telefono,
+            #'zona': prop.zona,
+            'direccion': prop.direccion, 
+            'referencia': prop.referencia,
+            'observaciones': prop.observaciones,
+            'inscripcion_paga': prop.inscripcion_paga,
+            'habilitado': prop.habilitado,
+            'periodo': prop.periodo,
+            'anio ': prop.anio
+           } for prop in inmuebles_filtrados]
+
+    return JsonResponse(data, safe=False)
+
+
 
 class TipoInmuebleViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -447,6 +527,7 @@ class InmuebleViewset(MultiSerializerViewSet):
     serializers = {
         'default': InmuebleSerializer
     }
+
 
 class InmueblePropiedadViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
