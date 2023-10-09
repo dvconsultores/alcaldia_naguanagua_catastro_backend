@@ -375,7 +375,7 @@ def filtrar_inmuebles(request):
             'observaciones': prop.observaciones,
             'inscripcion_paga': prop.inscripcion_paga,
             'habilitado': prop.habilitado,
-            'periodo': prop.periodo,
+            #'periodo': prop.periodo,
             'anio ': prop.anio
            } for prop in inmuebles_filtrados]
 

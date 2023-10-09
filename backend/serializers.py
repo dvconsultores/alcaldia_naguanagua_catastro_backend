@@ -383,6 +383,11 @@ class ZonaSerializer(serializers.ModelSerializer):
         model = Zona
         fields = '__all__'
 
+class IC_PeriodoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_Periodo
+        fields = '__all__' 
+
 class InmuebleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inmueble
@@ -495,7 +500,13 @@ class InmuebleSerializer(serializers.ModelSerializer):
       if obj.zona:
         return obj.zona.descripcion
       return None
-    
+
+    codigo_periodo= serializers.SerializerMethodField('loadcodigo_periodo')
+    def loadcodigo_periodo(self, obj):
+      if obj.periodo:
+        return obj.periodo.periodo
+      return None
+
 class InmueblePropietariosSerializer(serializers.ModelSerializer):
     inmueble = InmuebleSerializer()
     propietario = PropietarioSerializer()
@@ -986,10 +997,7 @@ class FlujoDetalleSerializer(serializers.ModelSerializer):
           return obj.inicio_proceso_usuario.username
       return None
     
-class IC_PeriodoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IC_Periodo
-        fields = '__all__' 
+
 
 class IC_ImpuestoCargosSerializer(serializers.ModelSerializer):
     class Meta:

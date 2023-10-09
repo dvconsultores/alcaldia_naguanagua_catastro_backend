@@ -413,7 +413,7 @@ class Inmueble(models.Model):
     periodo=models.ForeignKey(IC_Periodo, null=True,blank =True,on_delete=models.PROTECT,help_text="Periodo que adeuda")
     anio = models.PositiveIntegerField(null=True, blank=True,  help_text="Año que adeuda")
 
-    history = HistoricalRecords()
+    #history = HistoricalRecords()
     
     def __str__(self):
         return '%s - %s' % (self.id,self.numero_expediente)
@@ -604,7 +604,7 @@ class InmuebleValoracionConstruccion(models.Model):
     valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
 
-    history = HistoricalRecords()
+    #history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
@@ -1171,6 +1171,9 @@ class ExcelDocumentLOG(models.Model):
     codigo = models.CharField(max_length=255, help_text="id del registro con error")
     error = models.CharField(max_length=255, help_text="codigo del error")
     fecha = models.DateTimeField(blank=False, help_text="Fecha registro error")
+    def __str__(self):
+        return '%s - %s - %s - %s' % (self.pestana,self.codigo,self.error,self.fecha)
+
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs)

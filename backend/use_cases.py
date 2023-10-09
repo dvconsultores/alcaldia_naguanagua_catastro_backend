@@ -536,10 +536,18 @@ def Impuesto_Inmueble(request):
             ############## inicio
             today = date.today()
             oInmueble = Inmueble.objects.get(id=request['inmueble'])
-            Zona = Urbanizacion.objects.get(id=oInmueble.urbanizacion.id)
+            #Zona = Urbanizacion.objects.get(id=oInmueble.urbanizacion.id)
+            Zona = oInmueble
             oPeriodo = IC_Periodo.objects.filter(aplica='C')
             ano_fin=today.year
-            dAnio=oInmueble.anio
+            print('oInmueble.anio:',oInmueble.anio)
+            if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
+                oInmueble.anio=oInmueble.fecha_inscripcion.year
+                oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
+                oInmueble.save()
+                dAnio=oInmueble.anio
+                print('creadooo')
+            dAnio=oInmueble.anio 
             while dAnio<=ano_fin:
                 for aPeriodo in oPeriodo:
                     existe=IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble,periodo=aPeriodo,anio=dAnio).count()
@@ -567,33 +575,36 @@ def Impuesto_Inmueble(request):
                 tPeriodo= IC_Periodo.objects.filter(aplica='C')
                 CountPeriodo= tPeriodo.count()
 
-                terreno=InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
-                ocupacion=InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno.id)
-                print('antes',ocupacion)
-                
+                terreno = InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
+                ocupacion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
+
+                print('antes', ocupacion)
+
                 total_area_terreno = terreno.area
-                total_area_construcion = ocupacion.aggregate(Sum('area'))['area__sum']
+                total_area_construccion = ocupacion.aggregate(Sum('area'))['area__sum']
 
-                print('total_area_construcion',total_area_construcion,'total_area_terreno',total_area_terreno)
-                if total_area_construcion < total_area_terreno:
-                    sumar_terreno=True
+                print('total_area_construccion', total_area_construccion, 'total_area_terreno', total_area_terreno)
 
-                    # Crear una nueva instancia de InmuebleValoracionConstruccion
-                    nuevo_objeto_construccion = ocupacion(
-                        # Configura los campos de acuerdo a tus necesidades
+                if total_area_construccion < total_area_terreno:
+                    sumar_terreno = True
+
+                    # Crear una nueva instancia de InmuebleValoracionConstruccion sin guardar en la base de datos
+                    nuevo_objeto_construccion = InmuebleValoracionConstruccion(
                         tipologia=terreno.tipologia,
                         tipo=terreno.tipo,
                         area=terreno.area,
                         aplica=terreno.aplica,
+                        inmueblevaloracionterreno=terreno  # Asignar la relación con el objeto terreno
                     )
 
-                    # Asignar la relación con el objeto terreno
-                    nuevo_objeto_construccion.ocupacion = terreno
+                    # Agregar el nuevo objeto a la variable "ocupacion"
+                    ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
+                    ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
 
-                    # Guardar el nuevo objeto en la base de datos
-                    nuevo_objeto_construccion.save()
+                # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
 
-                    # Agregar el nuevo objeto a la lista ocupacion
+
+
                 print('despues',ocupacion)
 
                 ZonaInmueble=Zona.zona
@@ -894,6 +905,7 @@ def Muestra_Tasa_New(request):
 def importar_datos_desde_excel(pestana):
     print('Backend procesando: ',pestana)
     importar=pestana
+    ExcelDocumentLOG.objects.all().delete()
     excel_document=ExcelDocument.objects.get()
     if importar=='vaciar':
         NotaCredito.objects.all().delete()
@@ -918,19 +930,21 @@ def importar_datos_desde_excel(pestana):
         InmuebleUbicacion.objects.all().delete()
         InmuebleValoracionConstruccion.objects.all().delete()
         InmuebleValoracionTerreno.objects.all().delete()
+
         Inmueble.objects.all().delete()
         ################# fin
-        SubParcela.objects.all().delete()
-        Parcela.objects.all().delete() 
-        Manzana.objects.all().delete() 
-        Calle.objects.all().delete()
-        Avenida.objects.all().delete()
-        Torre.objects.all().delete()
-        Edificio.objects.all().delete()
-        ConjuntoResidencial.objects.all().delete()
-        Urbanizacion.objects.all().delete()
-        Sector.objects.all().delete() 
-        Ambito.objects.all().delete()
+        #SubParcela.objects.all().delete()
+        #Parcela.objects.all().delete() 
+        #Manzana.objects.all().delete() 
+        #Calle.objects.all().delete()
+        #Avenida.objects.all().delete()
+        #Torre.objects.all().delete()
+        #Edificio.objects.all().delete()
+        #ConjuntoResidencial.objects.all().delete()
+        #Urbanizacion.objects.all().delete()
+        #Sector.objects.all().delete() 
+        #Ambito.objects.all().delete()
+        #ExcelDocumentLOG.objects.all().delete()
         
 
 
@@ -1298,7 +1312,7 @@ def importar_datos_desde_excel(pestana):
             if not math.isnan(strZona):
                 parte_entera = int(strZona)
             else:
-                parte_entera = 99 
+                parte_entera = 99
 
             if  len(str(row['id_inmueble']))<6 and row['id_inmueble'] !=0: 
                 #print(int(row['id_urb_barrio']) if not math.isnan(row['id_urb_barrio']) else '',int(row['id_conj_residencial']) if not math.isnan(row['id_conj_residencial']) else '')
@@ -1360,7 +1374,6 @@ def importar_datos_desde_excel(pestana):
                     fecha_inscripcion = row['fecha_inscripcion']
 
                     if isinstance(fecha_inscripcion, str) and len(fecha_inscripcion) > 0:
-                        print('fechaaaa',row['fecha_inscripcion'])
                     # Cadena de fecha y hora en el formato original
                         cadena_fecha_hora = row['fecha_inscripcion']
 
@@ -1372,7 +1385,7 @@ def importar_datos_desde_excel(pestana):
 
                     try:
                         # Intenta obtener un registro existente o crear uno nuevo si no existe
-                        creado = Inmueble.objects.get_or_create(
+                        inmueble, creado = Inmueble.objects.get_or_create(
                             numero_expediente=numero_expediente,
                             ambito=ambito, 
                             sector=sector,
@@ -1395,6 +1408,12 @@ def importar_datos_desde_excel(pestana):
                                 'telefono':row['telefono'],
                             }
                         )
+                        InmueblePropiedad(inmueble=inmueble).save()
+                        InmuebleTerreno(inmueble=inmueble).save()
+                        InmuebleConstruccion(inmueble=inmueble).save()
+                        InmuebleValoracionTerreno(inmueble=inmueble).save()
+                        InmuebleUbicacion(inmueble=inmueble).save()
+                        InmuebleFaltante(inmueble=inmueble).save()
                         if not creado:
                             print(f"El registro con código {numero_expediente} ya existe y no se creó uno nuevo.")
                         else:
@@ -1458,12 +1477,171 @@ def importar_datos_desde_excel(pestana):
                         ExcelDocumentLOG.objects.create(pestana=importar, codigo=inmueble, error=e)
                 except Inmueble.DoesNotExist:
                     print("Inmueble no existe.")
-                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=inmueble, error="Inmueble no existe.")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=row['id_inmueble'], error="Inmueble no existe.")
                 except Propietario.DoesNotExist:
                     print("Propietario no existe.")
-                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=propietario, error="Propietario no existe.")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=row['id_persona'], error="Propietario no existe.")
 
         print("propietario importados exitosamente.")
+    if importar=='ult_pago':
+        periodoId=0
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='ult_pago')
+        for index, row in datos_excel.iterrows():
+            today = date.today()
+            if not math.isnan(row['expediente']):
+                numero_expediente = int((row['expediente']))
+            else:
+                numero_expediente = 0
+            anio = int((row['age']))
+            periodoId = int((row['mes']))
+            if periodoId==4 and anio<today.year:
+                periodoId=1
+                anio=anio+1
+            try:
+                periodo=IC_Periodo.objects.get(periodo=periodoId,aplica='C')
+                inmueble=Inmueble.objects.get(numero_expediente=numero_expediente)
+                print('anio',anio,'periodo',periodo)
+                inmueble.anio=anio
+                inmueble.periodo=periodo
+                inmueble.save()
+
+            except Inmueble.DoesNotExist:
+                print(f"No existe el numero de expediente {numero_expediente}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe expediente')
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
+        print("Ultimo pagos actualizados exitosamente.")  
+    if importar=='tipologia':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='tipologia')
+        for index, row in datos_excel.iterrows():
+            strZona= row['zona']
+            if not math.isnan(strZona):
+                parte_entera = int(strZona)
+            else:
+                parte_entera = 99 
+
+            zona=Zona.objects.get(codigo=parte_entera) 
+            codigo = row['codigo']
+            descripcion = row['descripcion']
+            tarifa = row['tarifa']
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                tipologia, creado = Tipologia.objects.get_or_create(
+                    codigo=codigo,
+                    defaults={
+                        'descripcion': descripcion,
+                        'zona': zona,
+                        'tarifa': tarifa,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {codigo} ya existe y no se creó uno nuevo.")
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=codigo, error=e)
+        print("Ambito importados exitosamente.")
+    if importar=='val_terreno':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='val_terreno')
+        for index, row in datos_excel.iterrows():
+            if not math.isnan(row['id_inmueble']):
+                numero_expediente = int((row['id_inmueble']))
+            else:
+                numero_expediente = 0
+            if not math.isnan(row['tipologia']):
+                tipologiaId = int(row['tipologia'])
+            else:
+                tipologiaId = 0
+
+            tipologia = Tipologia.objects.get(codigo=tipologiaId)
+            if tipologia.descripcion=='RESIDENCIAL' :
+                tipoinmuebleId=1
+            if tipologia.descripcion=='COMERCIAL' :
+                tipoinmuebleId=2
+            if tipologia.descripcion=='INDUSTRIAL' : 
+                tipoinmuebleId=3
+            tipoinmueble=TipoInmueble.objects.get(codigo=tipoinmuebleId)       
+            area = int((row['area']))
+            try:
+                print('numero_expediente',numero_expediente)
+                inmueble=Inmueble.objects.get(numero_expediente=numero_expediente)
+                inmueblevaloracionterreno=InmuebleValoracionTerreno.objects.get(inmueble=inmueble.id)
+                inmueblevaloracionterreno.tipologia=tipologia
+                inmueblevaloracionterreno.area=area
+                inmueblevaloracionterreno.tipo=tipoinmueble
+                inmueblevaloracionterreno.save()
+
+            except InmuebleValoracionTerreno.DoesNotExist:
+                print(f"No existe el numero de expediente {numero_expediente}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe InmuebleValoracionTerreno')
+            except Inmueble.DoesNotExist:
+                print(f"No existe el INMUEBLE numero de expediente {numero_expediente}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe INMUEBLE')
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
+        print("val_terreno actualizados exitosamente.")  
+    if importar=='val_construccion':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='val_construccion')
+        for index, row in datos_excel.iterrows():
+            if not math.isnan(row['id_inmueble']):
+                numero_expediente = int((row['id_inmueble']))
+            else:
+                numero_expediente = 0
+            if not math.isnan(row['tipologia']):
+                tipologiaId = int(row['tipologia'])
+            else:
+                tipologiaId = 0
+            tipologia = Tipologia.objects.get(codigo=tipologiaId)
+            if tipologia.descripcion=='RESIDENCIAL' :
+                tipoinmuebleId=1
+            if tipologia.descripcion=='COMERCIAL' :
+                tipoinmuebleId=2
+            if tipologia.descripcion=='INDUSTRIAL' :
+                tipoinmuebleId=3
+            tipoinmueble=TipoInmueble.objects.get(codigo=tipoinmuebleId)
+
+            area = int((row['area']))
+
+            try:
+                print('numero_expediente',numero_expediente)
+                inmueble=Inmueble.objects.get(numero_expediente=numero_expediente)
+                inmueblevaloracionterreno=InmuebleValoracionTerreno.objects.get(inmueble=inmueble.id)
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    creado = InmuebleValoracionConstruccion.objects.get_or_create(
+                        inmueblevaloracionterreno=inmueblevaloracionterreno,
+                        defaults={
+                            'tipologia': tipologia,
+                            'area': area,
+                            'tipo':tipoinmueble,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con código {numero_expediente} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    # Maneja cualquier error de integridad si es necesario
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
+            except InmuebleValoracionTerreno.DoesNotExist:
+                print(f"No existe el numero de expediente {numero_expediente}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe InmuebleValoracionTerreno')
+            except Inmueble.DoesNotExist:
+                print(f"No existe el INMUEBLE numero de expediente {numero_expediente}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe INMUEBLE')
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
+        print("val_terreno actualizados exitosamente.")
+
 
 
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
