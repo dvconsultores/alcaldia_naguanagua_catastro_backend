@@ -1495,9 +1495,11 @@ def importar_datos_desde_excel(pestana):
                 numero_expediente = 0
             anio = int((row['age']))
             periodoId = int((row['mes']))
-            if periodoId==4 and anio<today.year:
+            if periodoId==4:
                 periodoId=1
                 anio=anio+1
+            else:
+                periodoId=periodoId+1
             try:
                 periodo=IC_Periodo.objects.get(periodo=periodoId,aplica='C')
                 inmueble=Inmueble.objects.get(numero_expediente=numero_expediente)
