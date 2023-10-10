@@ -907,6 +907,16 @@ def importar_datos_desde_excel(pestana):
     importar=pestana
     ExcelDocumentLOG.objects.all().delete()
     excel_document=ExcelDocument.objects.get()
+    if importar=='Iniciar':
+        # asignar al control de correlativos el ultimo numero de expediemte importado
+        inmueble = Inmueble.objects.all()
+        ultimo_numero_expediente = inmueble.aggregate(Max('numero_expediente'))['numero_expediente_max']
+        correlativo=Correlativo.objects.get(id=1)
+        correlativo.ExpedienteCatastro=ultimo_numero_expediente+1
+        correlativo.save()
+
+        NotaCredito.objects.all().delete()
+        
     if importar=='vaciar':
         NotaCredito.objects.all().delete()
         AE_Patente.objects.all().delete()
@@ -945,9 +955,6 @@ def importar_datos_desde_excel(pestana):
         #Sector.objects.all().delete() 
         #Ambito.objects.all().delete()
         #ExcelDocumentLOG.objects.all().delete()
-        
-
-
     if importar=='tasas':
         # esto se cambia porque hay problemas al acesar al archivo en fisico, se cambia para que se cargue en un modelo.
         # tambien sa debe colocar en elmismo excel pero otra pestaña.
@@ -1159,7 +1166,7 @@ def importar_datos_desde_excel(pestana):
             emaill_secundario = row['correo2']
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
-                ambito, creado = Propietario.objects.get_or_create(
+                creado = Propietario.objects.get_or_create(
                     numero_documento=numero_documento,
                     defaults={
                         'nombre': nombre,
@@ -1643,7 +1650,5 @@ def importar_datos_desde_excel(pestana):
                 print(f"Error de integridad al crear el registro: {e}")
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
         print("val_terreno actualizados exitosamente.")
-
-
 
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
