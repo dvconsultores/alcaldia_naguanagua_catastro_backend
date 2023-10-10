@@ -1515,7 +1515,6 @@ def importar_datos_desde_excel(pestana):
                     ExcelDocumentLOG.objects.create(pestana=importar, codigo=row['id_persona'], error="Propietario no existe.")
 
         print("propietario importados exitosamente.")
-
     if importar=='ult_pago':
         periodoId=0
         ruta_archivo_excel = excel_document.excel_file.path

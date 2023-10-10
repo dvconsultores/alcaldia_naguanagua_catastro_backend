@@ -48,6 +48,7 @@ def upload_excel(request):
     if request.method == 'POST':
         title = request.POST['title']
         excel_file = request.FILES['excel_file']
+        ExcelDocument.objects.all().delete()
         document = ExcelDocument(title=title, excel_file=excel_file)
         document.save()
         return JsonResponse({'message': 'Excel file uploaded successfully'})
