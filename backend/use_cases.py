@@ -16,6 +16,7 @@ import calendar
 from decimal import Decimal
 import math  # Importa la biblioteca math
 from django.db import IntegrityError
+from django.http import JsonResponse
 
 # obtener la cantidad de dias que tiene un mes en un año especifico
 def obtener_cantidad_dias(year, month):
@@ -1161,9 +1162,9 @@ def importar_datos_desde_excel(pestana):
             nombre = row['nombre']
             telefono_principal = row['telefono']
             direccion = row['direccion']
-            telefono_secundario = row['telefono2']
+            #telefono_secundario = row['fax']
             email_principal = row['correo']
-            emaill_secundario = row['correo2']
+            #emaill_secundario = row['correo2']
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 creado = Propietario.objects.get_or_create(
@@ -1172,9 +1173,9 @@ def importar_datos_desde_excel(pestana):
                         'nombre': nombre,
                         'telefono_principal':telefono_principal,
                         'direccion':direccion,
-                        'telefono_secundario':telefono_secundario,
+                        #'telefono_secundario':telefono_secundario,
                         'email_principal':email_principal,
-                        'emaill_secundario':emaill_secundario,
+                        #'emaill_secundario':emaill_secundario,
                     }
                 )
                 if not creado:
@@ -1425,6 +1426,13 @@ def importar_datos_desde_excel(pestana):
                             print(f"El registro con código {numero_expediente} ya existe y no se creó uno nuevo.")
                         else:
                             print(f"El registro con código {numero_expediente} SE CREO.")
+                            #response_data = {
+                            #    'id': numero_expediente
+                            #}
+
+                            ## Devolver la respuesta como JSON
+                            ##return JsonResponse(response_data)
+                            
 
                     except IntegrityError as e:
                         # Maneja cualquier error de integridad si es necesario
@@ -1490,6 +1498,7 @@ def importar_datos_desde_excel(pestana):
                     ExcelDocumentLOG.objects.create(pestana=importar, codigo=row['id_persona'], error="Propietario no existe.")
 
         print("propietario importados exitosamente.")
+
     if importar=='ult_pago':
         periodoId=0
         ruta_archivo_excel = excel_document.excel_file.path
@@ -1514,6 +1523,12 @@ def importar_datos_desde_excel(pestana):
                 inmueble.anio=anio
                 inmueble.periodo=periodo
                 inmueble.save()
+                #response_data = {
+                #    'id': numero_expediente
+                #}
+
+                ## Devolver la respuesta como JSON
+                #return JsonResponse(response_data)
 
             except Inmueble.DoesNotExist:
                 print(f"No existe el numero de expediente {numero_expediente}")
