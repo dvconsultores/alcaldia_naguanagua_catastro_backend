@@ -908,16 +908,7 @@ def importar_datos_desde_excel(pestana):
     importar=pestana
     ExcelDocumentLOG.objects.all().delete()
     excel_document=ExcelDocument.objects.get()
-    if importar=='Iniciar':
-        # asignar al control de correlativos el ultimo numero de expediemte importado
-        inmueble = Inmueble.objects.all()
-        ultimo_numero_expediente = inmueble.aggregate(Max('numero_expediente'))['numero_expediente_max']
-        correlativo=Correlativo.objects.get(id=1)
-        correlativo.ExpedienteCatastro=ultimo_numero_expediente+1
-        correlativo.save()
-
-        NotaCredito.objects.all().delete()
-        
+       
     if importar=='vaciar':
         NotaCredito.objects.all().delete()
         AE_Patente.objects.all().delete()
@@ -1460,7 +1451,12 @@ def importar_datos_desde_excel(pestana):
                     print("Torre no existe.")
                 except Avenida.DoesNotExist:
                     print("Avenida no existe.")
-
+        # asignar al control de correlativos el ultimo numero de expediemte importado
+        inmueble = Inmueble.objects.all()
+        ultimo_numero_expediente = inmueble.aggregate(Max('numero_expediente'))['numero_expediente_max']
+        correlativo=Correlativo.objects.get(id=1)
+        correlativo.ExpedienteCatastro=ultimo_numero_expediente+1
+        correlativo.save()
 
         print("inmueble importados exitosamente.")
     if importar=='propietario':
