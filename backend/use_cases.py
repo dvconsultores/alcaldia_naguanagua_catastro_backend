@@ -18,6 +18,7 @@ import math  # Importa la biblioteca math
 from django.db import IntegrityError
 from django.http import JsonResponse
 
+
 # obtener la cantidad de dias que tiene un mes en un año especifico
 def obtener_cantidad_dias(year, month):
     cantidad_dias = calendar.monthrange(year, month)[1]
@@ -906,9 +907,16 @@ def Muestra_Tasa_New(request):
 def importar_datos_desde_excel(pestana):
     print('Backend procesando: ',pestana)
     importar=pestana
-    ExcelDocumentLOG.objects.all().delete()
+    ExcelDocumentLOG.objects.filter(codigo=importar).delete()
     excel_document=ExcelDocument.objects.get()
-       
+    if importar=='inicio':
+        # asignar al control de correlativos el ultimo numero de expediemte importado
+        max_numero_expediente = Inmueble.objects.exclude(numero_expediente__isnull=True).exclude(numero_expediente='').filter(numero_expediente__regex=r'^\d+$').aggregate(max_numero_expediente=Max('numero_expediente'))['max_numero_expediente']
+
+        print(max_numero_expediente)
+        #correlativo=Correlativo.objects.get(id=1)
+        #correlativo.ExpedienteCatastro=int(max_numero_expediente)+1
+        #correlativo.save()           
     if importar=='vaciar':
         NotaCredito.objects.all().delete()
         print('NotaCredito')
@@ -974,7 +982,7 @@ def importar_datos_desde_excel(pestana):
         #ruta_archivo_excel = os.path.join('media', 'archivos_excel/tasa.xlsx')
         #datos_excel = pd.read_excel(ruta_archivo_excel)
         ruta_archivo_excel = excel_document.excel_file.path
-        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='tasa')       
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='tasa_interes')
         for index, row in datos_excel.iterrows():
             anio = row['anio']
             mes = row['mes']
@@ -1436,8 +1444,9 @@ def importar_datos_desde_excel(pestana):
                         InmuebleFaltante(inmueble=inmueble).save()
                         if not creado:
                             print(f"El registro con código {numero_expediente} ya existe y no se creó uno nuevo.")
-                        else:
-                            print(f"El registro con código {numero_expediente} SE CREO.")
+                            ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='Expediente ya existe.')
+                        #else:
+                            #print(f"El registro con código {numero_expediente} SE CREO.")
                             #response_data = {
                             #    'id': numero_expediente
                             #}
@@ -1452,6 +1461,7 @@ def importar_datos_desde_excel(pestana):
                         ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
                 except Zona.DoesNotExist:
                     print("Zona no existe.")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error="Zona no existe.")
                 except Ambito.DoesNotExist:
                     print("Ambito no existe.")
                 except Sector.DoesNotExist:
@@ -1473,11 +1483,10 @@ def importar_datos_desde_excel(pestana):
                 except Avenida.DoesNotExist:
                     print("Avenida no existe.")
         # asignar al control de correlativos el ultimo numero de expediemte importado
-        inmueble = Inmueble.objects.all()
-        ultimo_numero_expediente = inmueble.aggregate(Max('numero_expediente'))['numero_expediente_max']
-        correlativo=Correlativo.objects.get(id=1)
-        correlativo.ExpedienteCatastro=ultimo_numero_expediente+1
-        correlativo.save()
+        #max_numero_expediente = Inmueble.objects.all().aggregate(max_numero_expediente=Max('numero_expediente'))['max_numero_expediente']
+        #correlativo=Correlativo.objects.get(id=1)
+        #correlativo.ExpedienteCatastro=int(max_numero_expediente)+1
+        #correlativo.save()
 
         print("inmueble importados exitosamente.")
     if importar=='propietario':
