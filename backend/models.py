@@ -78,7 +78,7 @@ class Permiso(models.Model):
     def __str__(self):
         return '%s (Permiso: %s-%s-%s-%s - Leer:%s Borrar:%s Actualizar:%s Escribir:%s)' % (self.perfil.usuario.username, self.modulo.es_menu, self.modulo.menu, self.modulo.titulo, self.modulo.nombre, self.leer, self.borrar, self.actualizar, self.escribir)
     class Meta:
-         ordering = ['modulo__menu', '-modulo__es_menu', '-modulo__titulo']
+         ordering = ['perfil__usuario__username','modulo__menu', '-modulo__es_menu', '-modulo__titulo']
 
 class Ambito(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del ambito")
@@ -718,15 +718,19 @@ class TipoFlujo(models.Model):
     vencimiento = models.PositiveIntegerField(null=True, blank=True,  help_text="dias vencimiento pra validar el estado de cuenta")
     APLICA = (
         ('C', 'Inmuebles Urbanos'),
+        ('I', 'Catastro'),
         ('A', 'Actividades económicas'),
         ('V', 'Vehiculos'),
         ('P', 'Propaganda y publicidad'),
         ('X', 'Todos')
     )
-    aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
+    aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')
+    carandai = models.BooleanField(default=True, help_text="genera flujo?")
+ 
+
     
     def __str__(self):
-        return '%s - %s - %s - %s' % (self.id,self.codigo,self.descripcion,self.vencimiento)
+        return '%s - %s - %s - %s - %s' % (self.id,self.codigo,self.descripcion,self.aplica,self.vencimiento)
     
 class TipoFlujoDetalle(models.Model):
     tipoflujo = models.ForeignKey (TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Id TipoFlujo")
@@ -748,6 +752,7 @@ class EstadoCuenta(models.Model):
     fecha_compra = models.DateField(null=True,blank =True, help_text="Fecha de compra del inmueble (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
+    ReportePdf = models.FileField(upload_to='EstadoCuenta/',help_text="PDF EstadoCuenta", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
@@ -775,6 +780,7 @@ class Liquidacion(models.Model):
     fecha_compra = models.DateField(null=True,blank =True, help_text="Fecha de compra del inmueble (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
+    ReportePdf = models.FileField(upload_to='PreFactura/',help_text="PDF PreFactura", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     
@@ -812,7 +818,10 @@ class BancoCuenta(models.Model):
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='Tipo de Cuenta')
     def __str__(self):
         return '%s - %s - %s' % (self.banco.descripcion,self.numero,self.tipo)
-
+class MotivoAnulacionPago(models.Model):
+    descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion del motivo")
+    def __str__(self):
+        return '%s' % (self.descripcion)
 
 #Maestro de recibo Pago
 class PagoEstadoCuenta(models.Model):
@@ -823,6 +832,12 @@ class PagoEstadoCuenta(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     monto  = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="total pagado")
     monto_cxc = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto de la factura, la diferencia de lo pagado de mas se usa para crear la nota de crédito")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    anula_usuario = models.TextField(null=True,blank =True, help_text="usuario que anula")
+    anula_fecha = models.DateTimeField(blank=True, null=True,help_text="Fecha Anulacion")
+    anula_observaciones = models.TextField(null=True,blank =True, help_text="observaciones por la anulacion")
+    motivoanulacionpago = models.ForeignKey(MotivoAnulacionPago,null=True,blank =True, on_delete=models.PROTECT,help_text="ID MotivoAnulacionPago")
+    ReportePdf = models.FileField(upload_to='PagoEstadoCuenta/',help_text="PDF PagoEstadoCuenta", null=True,blank =True)
     def __str__(self):
         return '%s - %s' % (self.numero,self.liquidacion)
     def save(self, *args, **kwargs):
@@ -1153,7 +1168,9 @@ class NotaCredito(models.Model):
     observacion  = models.TextField(null=True,blank =True, help_text="observacion")
     fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha creacion")
     monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito")     
-    saldo=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="saldo de la nota de credito")    
+    saldo=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="saldo de la nota de credito")
+    pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta,null=True,blank =True, on_delete=models.PROTECT,help_text="Id Pago Liquidacion")
+      
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs)

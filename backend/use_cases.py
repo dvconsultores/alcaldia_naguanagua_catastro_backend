@@ -43,6 +43,8 @@ def generate_token(username,password):
                          'user_id': user.pk,
                          'email':user.email,
                          'username':user.username,
+                         'nombre':user.first_name,
+                         'apellido':user.last_name,
                          'modulo':perfil.modulo.nombre,
                          'caja':perfil.caja,
                          'departamento':perfil.departamento.nombre,
@@ -107,9 +109,18 @@ def Crear_Estado_Cuenta(request):
             Detalle.save()
         correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
         correlativo.save()
-        return Response('Insert EstadoCuenta OK', status=status.HTTP_200_OK)
+        result = {
+        "documento": Cabacera.numero,
+        "id": Cabacera.id
+
+        }
+        return Response(result, status=status.HTTP_200_OK)
     else:
-        return Response('Insert EstadoCuenta NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        result = {
+        "documento": 'Insert EstadoCuenta NOT Ok'
+ 
+        }
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
     
 def Crear_Liquidacion(request):
     if (request):
@@ -147,18 +158,28 @@ def Crear_Liquidacion(request):
             # actualizamos 
         correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
         correlativo.save()
+        result = {
+        "documento": Cabacera.numero,
+        "id": Cabacera.id,
+        "idedocuenta":Cabacera.estadocuenta.numero
+        }
 
         #marco el estado de cuenta para que no aparezca denuevo en las listas de estados de cuenta disponibles
         # con eso validamos que no se genere dos liquidaciones con el mismo estado de cuenta.
         estadocuenta.habilitado=False
         estadocuenta.save()
-        return Response('Insert Liquidacion OK', status=status.HTTP_200_OK)
+        return Response(result, status=status.HTTP_200_OK)
     else:
-        return Response('Insert Liquidacion NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        result = {
+        "documento": 'Insert Pre-Factura NOT Ok'
+ 
+        }
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
 
 def Crear_Pago(request):
     if (request):
+        notacredito=[]
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
         propietario = Propietario.objects.get(id=request['propietario'])
@@ -173,6 +194,7 @@ def Crear_Pago(request):
             monto=request['monto'],
             monto_cxc=request['monto_cxc']
         )
+        Cabacera.save() 
         # evalua si se pago de mas para crear la nota de credito a favor del contribuyente
         print(request['monto'],request['monto_cxc'])
         monto_credito= float(request['monto'])-float(request['monto_cxc'])
@@ -180,26 +202,28 @@ def Crear_Pago(request):
             tipopago = TipoPago.objects.get(codigo='N')
             notacredito=NotaCredito(
                 numeronotacredito  = correlativo.NumeroNotaCredito,
-                tipopago = tipopago,
+                tipopago =  tipopago,
                 propietario = propietario,
                 observacion  = '',
                 fecha=str(date.today()),
                 monto=   monto_credito, 
-                saldo=    monto_credito
+                saldo=    monto_credito,
+                pagoestadocuenta=Cabacera
             )
             notacredito.save()
             correlativo.NumeroNotaCredito=correlativo.NumeroNotaCredito+1
             correlativo.save()
-        Cabacera.save()
+        
         for detalle in items:
-            tipopago = None if detalle['tipopago']==None else TipoPago.objects.get(codigo=detalle['tipopago'])
+            tipopago =    None if detalle['tipopago']==   None else TipoPago.objects.get(codigo=detalle['tipopago'])
             bancocuenta = None if detalle['bancocuenta']==None else BancoCuenta.objects.get(id=detalle['bancocuenta'])
             Detalle=PagoEstadoCuentaDetalle(
                 pagoestadocuenta=Cabacera,
                 tipopago = tipopago,
                 bancocuenta=bancocuenta,
                 monto  = float(detalle['monto']),
-                fechapago =  str(date.today()),#detalle['fechapago'],
+                #fechapago =  str(date.today()),#detalle['fechapago'],
+                fechapago =  detalle['fechapago'],
                 nro_referencia = detalle['nro_referencia'],
                 nro_aprobacion = detalle['nro_aprobacion'],
                 nro_lote = detalle['nro_lote']
@@ -213,7 +237,7 @@ def Crear_Pago(request):
         #actualiza el correlativo de numero de pagos
         correlativo.NumeroPago=correlativo.NumeroPago+1  
         # solo aplica cuando la peticion viene de catastro y es una de esas 3 opciones
-        if liquidacion.tipoflujo.codigo in ['1', '2', '3']:
+        if liquidacion.tipoflujo.carandai:
             #solo aplica cuanbdo es inscripcion, el inmueble se debe crear nuevo
             if liquidacion.tipoflujo.codigo=='1':
                 #crear inmuebles
@@ -266,10 +290,15 @@ def Crear_Pago(request):
         #marca la liquidacion como procesada
         liquidacion.habilitado=False
         liquidacion.save()
-
-        return Response('Insert Pago OK', status=status.HTTP_200_OK)
+        result = {
+        "documento": Cabacera.numero,
+        "id": Cabacera.id }
+        return Response(result, status=status.HTTP_200_OK)
     else:
-        return Response('Insert Pago NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        result = {
+        "documento": 'Insert Pago NOT Ok'
+        }
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
 def Crear_Inmueble_Propietario(request):
     if (request):
@@ -365,7 +394,7 @@ def Multa_Inmueble(request):
                             if MultaMinInscripcionUni: # Aca valida si es diferente de 0 osea que tendrá un mínimo, de lo contrario la multa es la calculada segun los m2
                                 multa=multa if multa>MultaMinInscripcionUni else MultaMinInscripcionUni
                             moraFraccionada=alicuotaMoraInscripcionUni/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
-                            mora=moraFraccionada*mesesVencidosI*metrosCuadrados
+                            mora=moraFraccionada*mesesVencidosI#*metrosCuadrados
                             item = {
                                 'codigo':'IC_MIU',
                                 'aplica':'Multa Inscripcion Uni  Art.99',
@@ -389,15 +418,16 @@ def Multa_Inmueble(request):
                                 '(h) meses vencido':mesesVencidosI,
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
+                                'TOTA Bs a PAGAR:':(mora+multa)*baseCalculoBs,
                             }
-                            total_IC_MIU=total_IC_MIU+(mora*baseCalculoBs)
+                            total_IC_MIU=total_IC_MIU+((mora+multa)*baseCalculoBs)
                             data_IC_MIU.append(item)
                         if bModifica:
                             multa=metrosCuadrados*alicuotaMultaModificaUni
                             if MultaMinModificaUni: # Aca valida si es diferente de 0 osea que tendrá un mínimo, de lo contrario la multa es la calculada segun los m2
                                 multa=multa if multa>MultaMinModificaUni else MultaMinModificaUni
                             moraFraccionada=alicuotaMoraModificaUni/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
-                            mora=moraFraccionada*mesesVencidosM*metrosCuadrados
+                            mora=moraFraccionada*mesesVencidosM#*metrosCuadrados
                             item = {
                                 'codigo':'IC_MMU',
                                 'aplica':'Multa Modifica Uni Art.101',
@@ -421,8 +451,9 @@ def Multa_Inmueble(request):
                                 '(h) meses vencido':mesesVencidosM,
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
+                                'TOTA Bs a PAGAR:':(mora+multa)*baseCalculoBs,
                             }
-                            total_IC_MMU=total_IC_MMU+(mora*baseCalculoBs)
+                            total_IC_MMU=total_IC_MMU+((mora+multa)*baseCalculoBs)
                             data_IC_MMU.append(item)
 
                     else: #MULTIfamiliar
@@ -431,7 +462,7 @@ def Multa_Inmueble(request):
                             if MultaMinInscripcionMULTI: # Aca valida si es diferente de 0 osea que tendrá un mínimo, de lo contrario la multa es la calculada segun los m2
                                 multa=multa if multa>MultaMinInscripcionMULTI else MultaMinInscripcionMULTI
                             moraFraccionada=alicuotaMoraInscripcionMULTI/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
-                            mora=moraFraccionada*mesesVencidosI*metrosCuadrados
+                            mora=moraFraccionada*mesesVencidosI#*metrosCuadrados
                             item = {
                                 'codigo':'IC_MIM',
                                 'aplica':'Multa Inscripcion MULTI  Art.99',
@@ -455,15 +486,16 @@ def Multa_Inmueble(request):
                                 '(h) meses vencido':mesesVencidosI,
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
+                                'TOTA Bs a PAGAR:':(mora+multa)*baseCalculoBs,
                             }
-                            total_IC_MIM=total_IC_MIM+(mora*baseCalculoBs)
+                            total_IC_MIM=total_IC_MIM+((mora+multa)*baseCalculoBs)
                             data_IC_MIM.append(item)
                         if bModifica:
                             multa=metrosCuadrados*alicuotaMultaModificaMULTI
                             if MultaMinModificaMULTI: # Aca valida si es diferente de 0 osea que tendrá un mínimo, de lo contrario la multa es la calculada segun los m2
                                 multa=multa if multa>MultaMinModificaMULTI else MultaMinModificaMULTI
                             moraFraccionada=alicuotaMoraModificaMULTI/12  # determinar la fraccion, Ya que la multa se calcula por mes en mora y este el multipica por la multa/12
-                            mora=moraFraccionada*mesesVencidosM*metrosCuadrados
+                            mora=moraFraccionada*mesesVencidosM#*metrosCuadrados
                             item = {
                                 'codigo':'IC_MMM',
                                 'aplica':'Multa Modifica MULTI  Art.101',
@@ -486,8 +518,9 @@ def Multa_Inmueble(request):
                                 '(h) meses vencido':mesesVencidosM,
                                 '(g) mora Petro (f * h * a)':mora,
                                 'MORA  Bs A PAGAR (g * d)':mora*baseCalculoBs,
+                                'TOTA Bs a PAGAR:':(mora+multa)*baseCalculoBs,
                             }
-                            total_IC_MMM=total_IC_MMM+(mora*baseCalculoBs)
+                            total_IC_MMM=total_IC_MMM+((mora+multa)*baseCalculoBs)
                             data_IC_MMM.append(item)
 
                 datos={
@@ -548,9 +581,18 @@ def Impuesto_Inmueble(request):
                 oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
                 oInmueble.save()
                 dAnio=oInmueble.anio
+                dPeriodo=oInmueble.periodo.periodo 
                 print('creadooo')
-            dAnio=oInmueble.anio 
-            while dAnio<=ano_fin:
+            dAnio=oInmueble.anio        # Año qe iica la deuda
+            dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
+            primero=True
+            print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+            while dAnio<=ano_fin: # crea la cxc de periodos pendientes
+                if primero:
+                    oPeriodo = IC_Periodo.objects.filter(aplica='C',periodo__gte=dPeriodo)
+                    primero=False
+                else:
+                    oPeriodo = IC_Periodo.objects.filter(aplica='C')
                 for aPeriodo in oPeriodo:
                     existe=IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble,periodo=aPeriodo,anio=dAnio).count()
                     if existe == 0: # si no existe, crea el periodo
@@ -580,30 +622,31 @@ def Impuesto_Inmueble(request):
                 terreno = InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
                 ocupacion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
 
-                print('antes', ocupacion)
+                if terreno: # hay inmuebles que NO TIENEN TERRENO, PARA ESE CASO NO ENTRA, SOLO TOMA LA CONTRUCCION
+                    print('antes', ocupacion)
 
-                total_area_terreno = terreno.area
-                total_area_construccion = ocupacion.aggregate(Sum('area'))['area__sum']
+                    total_area_terreno = terreno.area
+                    total_area_construccion = ocupacion.aggregate(Sum('area'))['area__sum']
 
-                print('total_area_construccion', total_area_construccion, 'total_area_terreno', total_area_terreno)
+                    print('total_area_construccion', total_area_construccion, 'total_area_terreno', total_area_terreno)
 
-                if total_area_construccion < total_area_terreno:
-                    sumar_terreno = True
+                    if total_area_construccion < total_area_terreno:
+                        sumar_terreno = True
 
-                    # Crear una nueva instancia de InmuebleValoracionConstruccion sin guardar en la base de datos
-                    nuevo_objeto_construccion = InmuebleValoracionConstruccion(
-                        tipologia=terreno.tipologia,
-                        tipo=terreno.tipo,
-                        area=terreno.area,
-                        aplica=terreno.aplica,
-                        inmueblevaloracionterreno=terreno  # Asignar la relación con el objeto terreno
-                    )
+                        # Crear una nueva instancia de InmuebleValoracionConstruccion sin guardar en la base de datos
+                        nuevo_objeto_construccion = InmuebleValoracionConstruccion(
+                            tipologia=terreno.tipologia,
+                            tipo=terreno.tipo,
+                            area=terreno.area,
+                            aplica=terreno.aplica,
+                            inmueblevaloracionterreno=terreno  # Asignar la relación con el objeto terreno
+                        )
 
-                    # Agregar el nuevo objeto a la variable "ocupacion"
-                    ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
-                    ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
+                        # Agregar el nuevo objeto a la variable "ocupacion"
+                        ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
+                        ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
 
-                # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
+                    # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
 
 
 
@@ -758,6 +801,11 @@ def Impuesto_Inmueble(request):
                         #EndFor ocupacion
                     #EndFor PeriodosCxc
                     if tTotalMora: #minimo_ano==today.year:
+                        #if dPeriodo==1:
+                        #    tasaPeriodo=1
+                        #else:
+                        #    tasaPeriodo=dPeriodo*3
+                        #oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano, mes__gte=tasaPeriodo).order_by('mes')
                         oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
                         tTotalMora=(tTotalMora/12)
                         for aTasa in oTasaInteres:
@@ -783,6 +831,7 @@ def Impuesto_Inmueble(request):
                 #EndWhile
                 correlativo=Correlativo.objects.get(id=1)
                 numero=correlativo.NumeroIC_Impuesto
+
                 Impuesto={
                     'numero':numero,
                     'zona':ZonaInmueble.id,
@@ -796,6 +845,7 @@ def Impuesto_Inmueble(request):
                     'frecargo':fRecargo,
                     'total':tTotal+tMulta+tRecargo+tInteres,
                     'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
+                    'flujo':Flujo.objects.filter(inmueble=oInmueble,estado='1').count() ,
                 }
                 datos={
                     'cabacera':Impuesto,
@@ -1692,3 +1742,39 @@ def importar_datos_desde_excel(pestana):
         print("val_terreno actualizados exitosamente.")
 
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
+
+def Crear_Perfil(request):
+    #Para crear nuevos usuarios para el sistema de la alcaldia desde uno ya existente
+    # primero: se crea el usuario desde el admin de django
+    # segundo: se crear el perfil desde el admin de django
+    # tercero: se ejecuta esta API pasando el usuario origen y el usuario destino
+    if (request): 
+        UsuarioOrigen=User.objects.get(username=request['origen'])
+        UsuarioDestino=User.objects.get(username=request['destino'])
+        PerfilOrigen=Perfil.objects.get(usuario=UsuarioOrigen)
+        PerfilDestino=Perfil.objects.get(usuario=UsuarioDestino)
+        PermisoOrigen=Permiso.objects.filter(perfil=PerfilOrigen)
+        for item in PermisoOrigen:
+            try:
+                 # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = Permiso.objects.get_or_create(
+                    perfil=PerfilDestino,
+                    modulo=item.modulo,
+                    defaults={
+                    'leer': item.leer,
+                    'escribir': item.escribir,
+                    'borrar': item.borrar,
+                    'actualizar': item.actualizar,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con código {PerfilDestino} ya existe y no se creó uno nuevo.")
+                else:
+                    print(f"El registro con código {PerfilDestino} SE CREO.")
+
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+        return Response('Insert PERFIL OK', status=status.HTTP_200_OK)
+    else:
+        return Response('Insert PERFIL NOT Ok', status=status.HTTP_400_BAD_REQUEST)

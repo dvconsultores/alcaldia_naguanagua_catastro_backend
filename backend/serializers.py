@@ -755,7 +755,7 @@ class TipoFlujoSerializer(serializers.ModelSerializer):
         fields = '__all__' 
 
 class TipoFlujoDetalleSerializer(serializers.ModelSerializer):
-    tasamulta = TasaMultaSerializer()
+    #tasamulta = TasaMultaSerializer()
     class Meta:
         model = TipoFlujoDetalle
         fields = '__all__'
@@ -851,7 +851,12 @@ class PagoEstadoCuentaDetalleSerializer(serializers.ModelSerializer):
         return obj.pagoestadocuenta.caja
       return None
 
-
+    fecha_recibo= serializers.SerializerMethodField('loadfecha_recibo')
+    def loadfecha_recibo(self, obj):
+      if obj.pagoestadocuenta.fecha:
+        return obj.pagoestadocuenta.fecha
+      return None
+    
    # fecha = serializers.SerializerMethodField('get_fechapago')
    # def get_fechapago(self, obj):
    #   if obj.fechapago is not None:

@@ -110,6 +110,7 @@ urlpatterns = [
     path('crearestadocuenta/', views.CrearEstadoCuenta),
     path('crearliquidacion/', views.CrearLiquidacion),
     path('crearPago/', views.CrearPago),
+    path('crearperfil/', views.CrearPerfl),
     path('CrearInmueblePropietario/', views.CrearInmueblePropietario),
     path('MultaInmueble/', views.MultaInmueble),
     path('ImpuestoInmueble/', views.ImpuestoInmueble),

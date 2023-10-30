@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view,permission_classes
 from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
+from django.db.models import Q
 
 
 
@@ -115,29 +116,21 @@ def CrearInmueblePropietario(request):
 @csrf_exempt
 @permission_classes([IsAuthenticated])
 def MultaInmueble(request):
-    #TipoFlujo.id
-    #Inmueble.Id
-    #Propietario.Id
-    #fecha_compra
-    #area
-    #
-
     datos=request.data
     return Multa_Inmueble(datos)
-
 
 
 @api_view(["POST"])
 @csrf_exempt
 @permission_classes([IsAuthenticated])
-def ImpuestoInmueble(request):
-    #TipoFlujo.id
-    #Inmueble.Id
-    #Propietario.Id
-    #fecha_compra
-    #area
-    #
+def CrearPerfl(request):
+    datos=request.data
+    return Crear_Perfil(datos)
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def ImpuestoInmueble(request):
     datos=request.data
     return Impuesto_Inmueble(datos)
 
@@ -317,7 +310,10 @@ def filtrar_propietarios(request):
     numero_documento = request.GET.get('numero_documento', None)
 
     #if numero_documento:
-    propietarios_filtrados = Propietario.objects.filter(numero_documento=numero_documento)
+    #propietarios_filtrados = Propietario.objects.filter(numero_documento__contains=numero_documento)
+    propietarios_filtrados = Propietario.objects.filter(
+    Q(numero_documento__contains=numero_documento) | Q(nombre__contains=numero_documento)
+)
     #else:
     #    propietarios_filtrados = Propietario.objects.all()
 
@@ -819,6 +815,10 @@ class LiquidacionDetalleViewset(MultiSerializerViewSet):
     queryset=LiquidacionDetalle.objects.all()
     serializers = {
         'default': LiquidacionDetalleSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'liquidacion_id':['exact'],
     }
 
 class TipoPagoViewset(MultiSerializerViewSet):
