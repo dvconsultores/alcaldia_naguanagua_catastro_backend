@@ -49,7 +49,7 @@ def upload_excel(request):
     if request.method == 'POST':
         title = request.POST['title']
         excel_file = request.FILES['excel_file']
-        ExcelDocument.objects.all().delete()
+        ExcelDocument.objects.filter(title=title,).delete()
         document = ExcelDocument(title=title, excel_file=excel_file)
         document.save()
         return JsonResponse({'message': 'Excel file uploaded successfully'})
@@ -155,7 +155,7 @@ def MuestraTasaNew(request):
 @permission_classes([IsAuthenticated])
 def importardatosdesdeexcel(request):
     datos=request.data
-    return importar_datos_desde_excel(datos['archivoExcel'])
+    return importar_datos_desde_excel(datos['archivoExcel'],datos['opcion'])
 
 ###################################################
 
@@ -1041,6 +1041,31 @@ class ExcelDocumentLOGViewset(MultiSerializerViewSet):
         'default': ExcelDocumentLOGSerializer
     }
 
+
+class CorridasBancariasViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=CorridasBancarias.objects.all()
+    serializers = {
+        'default': CorridasBancariasSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'bancocuenta':['exact'],
+      'situado':['exact'],
+    }
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
+
+#class Viewset(MultiSerializerViewSet):
+#    permission_classes = [IsAuthenticated]
+#    queryset=.objects.all()
+#    serializers = {
+#        'default': Serializer
+#    }
 
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]

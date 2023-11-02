@@ -1095,10 +1095,10 @@ class ExcelDocumentLOGSerializer(serializers.ModelSerializer):
         model = ExcelDocumentLOG
         fields = '__all__'
 
-#class Serializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = 
-#        fields = '__all__'
+class CorridasBancariasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CorridasBancarias
+        fields = '__all__'
 
 #class Serializer(serializers.ModelSerializer):
 #    class Meta:

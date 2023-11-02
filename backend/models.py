@@ -754,7 +754,7 @@ class EstadoCuenta(models.Model):
     tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     ReportePdf = models.FileField(upload_to='EstadoCuenta/',help_text="PDF EstadoCuenta", null=True,blank =True)
     def __str__(self):
-        return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
+        return '%s - %s - %s - %s' % (self.id,self.numero,self.propietario.nombre,self.tipoflujo)
     
 class EstadoCuentaDetalle(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
@@ -811,6 +811,7 @@ class Banco(models.Model):
 class BancoCuenta(models.Model):
     banco = models.ForeignKey(Banco, on_delete=models.PROTECT,help_text="ID Banco")
     numero  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Cuenta")
+    codigocuenta  = models.TextField(null=True,blank =True, help_text="codigo de Cuenta")
     TIPO = (
         ('1', 'Corriente'),
         ('2', 'Ahorro'),
@@ -818,6 +819,7 @@ class BancoCuenta(models.Model):
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='Tipo de Cuenta')
     def __str__(self):
         return '%s - %s - %s' % (self.banco.descripcion,self.numero,self.tipo)
+    
 class MotivoAnulacionPago(models.Model):
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion del motivo")
     def __str__(self):
@@ -839,7 +841,7 @@ class PagoEstadoCuenta(models.Model):
     motivoanulacionpago = models.ForeignKey(MotivoAnulacionPago,null=True,blank =True, on_delete=models.PROTECT,help_text="ID MotivoAnulacionPago")
     ReportePdf = models.FileField(upload_to='PagoEstadoCuenta/',help_text="PDF PagoEstadoCuenta", null=True,blank =True)
     def __str__(self):
-        return '%s - %s' % (self.numero,self.liquidacion)
+        return '%s - %s - %s' % (self.id,self.numero,self.liquidacion)
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs) 
@@ -1194,3 +1196,29 @@ class ExcelDocumentLOG(models.Model):
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs)
+
+
+
+class CorridasBancarias(models.Model):
+    """
+    CorridasBancaria
+    """
+    bancocuenta = models.ForeignKey(BancoCuenta, on_delete=models.PROTECT,help_text="ID Banco")
+    fecha = models.DateField(blank=False,null=False, help_text="Fecha creacion")
+    referencia = models.TextField(null=False,blank =False, help_text="referencia")
+    descripcion = models.TextField(null=False,blank =False, help_text="descripcion")
+    monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito") 
+    SITUADO = (
+    ('R', 'Situado Regional'),
+    ('N', 'Situado Nacional'),
+    ('I', 'Interes'),
+    ('D', 'Deposito'),
+    ('T', 'Transferencia')
+    )
+    situado= models.CharField(max_length=1, choices=SITUADO, default='T', help_text='Tipo de transaccion') 
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.bancocuenta.codigocuenta,self.fecha,self.referencia,self.descripcion,self.monto,self.situado)
+    class Meta:
+        unique_together = ('bancocuenta', 'fecha','referencia','monto')
+        ordering = ['bancocuenta','fecha','referencia','monto'] 
+

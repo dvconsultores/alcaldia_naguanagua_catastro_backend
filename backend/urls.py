@@ -99,6 +99,7 @@ router.register(r'tasainteres', views.TasaInteresViewset,basename='tasainteres')
 router.register(r'notacredito', views.NotaCreditoViewset,basename='notacredito') 
 router.register(r'ExcelDocument', views.ExcelDocumentViewset,basename='exceldocument') 
 router.register(r'ExcelDocumentLOG', views.ExcelDocumentLOGViewset,basename='exceldocumentLOG') 
+router.register(r'corridasbancarias', views.CorridasBancariasViewset,basename='corridasbancarias') 
 
 
 urlpatterns = [

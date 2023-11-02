@@ -8,7 +8,7 @@ import re
 from datetime import datetime,timedelta,date
 from pyDolarVenezuela import price
 import pyBCV
-import datetime
+#import datetime
 from django.db.models import Max,Min,Sum,Q
 import pandas as pd
 import os
@@ -587,6 +587,9 @@ def Impuesto_Inmueble(request):
             dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
             primero=True
             print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+
+            IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
+                                                     #por que este dato lo puede cambiar hacienda con acceso.borrar=true
             while dAnio<=ano_fin: # crea la cxc de periodos pendientes
                 if primero:
                     oPeriodo = IC_Periodo.objects.filter(aplica='C',periodo__gte=dPeriodo)
@@ -954,11 +957,11 @@ def Muestra_Tasa_New(request):
 
 
 
-def importar_datos_desde_excel(pestana):
+def importar_datos_desde_excel(archivo,pestana):
     print('Backend procesando: ',pestana)
     importar=pestana
     ExcelDocumentLOG.objects.filter(codigo=importar).delete()
-    excel_document=ExcelDocument.objects.get()
+    excel_document=ExcelDocument.objects.get(title=archivo)
     if importar=='inicio':
         # asignar al control de correlativos el ultimo numero de expediemte importado
         max_numero_expediente = Inmueble.objects.exclude(numero_expediente__isnull=True).exclude(numero_expediente='').filter(numero_expediente__regex=r'^\d+$').aggregate(max_numero_expediente=Max('numero_expediente'))['max_numero_expediente']
@@ -1740,6 +1743,275 @@ def importar_datos_desde_excel(pestana):
                 print(f"Error de integridad al crear el registro: {e}")
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
         print("val_terreno actualizados exitosamente.")
+#***************************************************************************************** CorridaBancaria.xlsx
+    if importar=='cien':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='cien')
+        for index, row in datos_excel.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='12')
+            fecha = row['Fecha Efec.']
+            referencia = row['Descripción Movimiento']
+            descripcion = row['Descripción Movimiento']
+            
+            monto = row['Abono']
+
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' 
+            if row['Situado Regional']==14:
+                situado = 'R'
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                    bancocuenta=bancocuenta,
+                    fecha=fecha,
+                    referencia=referencia,
+                    descripcion=descripcion,
+                    monto=monto, 
+                    defaults={
+                        'situado': situado,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con anio {referencia} y mes {monto} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+            # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+            #TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+        print("Datos importados exitosamente.")
+    
+    if importar=='bancaribe':
+        # este banco NO tiene nombre de columnas y se lee  apartir de la linea 2
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, header=None, skiprows=1,sheet_name='bancaribe')
+        for index, row in datos_excel.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='17')
+            fecha = row[0]
+            referencia = row[1]
+            descripcion = row[2]           
+            monto = row[4] 
+            print(fecha)
+            print(referencia)
+            print(descripcion)
+            print(monto)
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' # este banco NO maneja situados, todas son transferencias
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                corridabancaria,creado = CorridasBancarias.objects.get_or_create(
+                    bancocuenta=bancocuenta,
+                    fecha=fecha,
+                    referencia=referencia,
+                    descripcion=descripcion,
+                    monto=monto, 
+                    defaults={
+                        'situado': situado,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+        print("Datos importados exitosamente.")
+    if importar=='banesco':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='banesco')
+        filas_filtradas = datos_excel[datos_excel['Descripción'].str.contains("TRF")] # solo carga las transferencias
+
+        for index, row in filas_filtradas.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='16')
+            fecha = row['Fecha']
+            referencia = row['Referencia']
+            descripcion = row['Descripción']
+            monto = row['Monto']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' 
+            # este banco NO maneja situados
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                    bancocuenta=bancocuenta,
+                    fecha=fecha,
+                    referencia=referencia,
+                    descripcion=descripcion,
+                    monto=monto, 
+                    defaults={
+                        'situado': situado,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+            # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+            #TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+        print("Datos importados exitosamente.")
+    if importar=='bfc':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='bfc')
+        filas_filtradas = datos_excel[~datos_excel['Descripción'].str.contains("AB.LOTE")] # esos son puntos de venta, se excluyen
+        for index, row in filas_filtradas.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='3')
+            fecha = row['Fecha Efectiva']
+            fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
+            fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
+            referencia = row['Referencia']
+            descripcion = row['Descripción']
+            monto = row['Monto']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T'
+            if row['Situado Nacional']==14:
+                situado = 'N'
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                    bancocuenta=bancocuenta,
+                    fecha=fecha_formateada,
+                    referencia=referencia,
+                    descripcion=descripcion,
+                    monto=monto, 
+                    defaults={
+                        'situado': situado,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+            # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+            #TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+        print("Datos importados exitosamente.")
+    if importar=='bnc':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='bnc')
+        for index, row in datos_excel.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='51')
+            fecha = row['Fecha']
+            fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
+            fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
+            referencia = row['Referencia']
+            descripcion = row['Referencia']
+            monto = row['Haber']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' # este banco NO maneja situado
+            #if row['Situado Nacional']==14:
+            #    situado = 'N'
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                    bancocuenta=bancocuenta,
+                    fecha=fecha_formateada,
+                    referencia=referencia,
+                    descripcion=descripcion,
+                    monto=monto, 
+                    defaults={
+                        'situado': situado,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+            # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+            #TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+        print("Datos importados exitosamente.")
+    if importar=='venezuela':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='venezuela')
+        for index, row in datos_excel.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='50')
+            fecha = row['fecha']
+            fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
+            fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
+            referencia = row['referencia']
+            descripcion = row['concepto']
+            monto = row['monto']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' # este banco NO maneja situado
+            #if row['Situado Nacional']==14:
+            #    situado = 'N'
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                    bancocuenta=bancocuenta,
+                    fecha=fecha_formateada,
+                    referencia=referencia,
+                    descripcion=descripcion,
+                    monto=monto, 
+                    defaults={
+                        'situado': situado,
+                    }
+                )
+                if not creado:
+                    print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+            # Crea un nuevo objeto TasaInteres y guárdalo en la base de datos
+            #TasaInteres.objects.create(anio=anio, mes=mes, tasa=tasa)
+        print("Datos importados exitosamente.")
+       
+        
+    
+
 
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
 
