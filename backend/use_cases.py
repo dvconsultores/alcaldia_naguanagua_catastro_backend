@@ -5,10 +5,8 @@ from knox.models import AuthToken
 from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
 import re
-from datetime import datetime,timedelta,date
 from pyDolarVenezuela import price
 import pyBCV
-#import datetime
 from django.db.models import Max,Min,Sum,Q
 import pandas as pd
 import os
@@ -17,6 +15,7 @@ from decimal import Decimal
 import math  # Importa la biblioteca math
 from django.db import IntegrityError
 from django.http import JsonResponse
+from datetime import datetime, timedelta, date
 
 
 # obtener la cantidad de dias que tiene un mes en un año especifico
@@ -355,7 +354,9 @@ def Multa_Inmueble(request):
                 baseCalculo = UnidadTributaria.objects.get(habilitado=True)
                 baseCalculoBs= float(baseCalculo.monto)
                 if bInscripcion:
-                    fechaVencidaI=fecha_inscripcion+ datetime.timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
+                    #fechaVencidaI=fecha_inscripcion+ datetime.timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
+                    fechaVencidaI=fecha_inscripcion+ timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
+
                     mesesVencidosI = meses_transcurridos(fechaVencidaI, today)
                     print("Meses Vencidos Inscripcion:", mesesVencidosI)
                     #Artículo 99
@@ -369,7 +370,7 @@ def Multa_Inmueble(request):
 
 
                 if bModifica:
-                    fechaVencidaM=fecha_compra+ datetime.timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
+                    fechaVencidaM=fecha_compra+ timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
                     mesesVencidosM= meses_transcurridos(fechaVencidaM, today)
                     print("Meses Vencidos Modificacion:", mesesVencidosM)
                     #Artículo 101
@@ -701,13 +702,13 @@ def Impuesto_Inmueble(request):
                             # Para el año en curso, evaluamos si dentro del rango de periodos va a cancelar, 
                             # existe un periodo que sumando los dias de gracia al inicio del periodo, la fecha de pago esta contenida
                             if today>= fDiasGracia.fechadesde and  \
-                            today <= fDiasGracia.fechadesde+datetime.timedelta(days=fDiasGracia.dias_gracia) :
+                            today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                 # La fecha actual está entre las fechas del modelo
                                 print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                 bMulta=False
                             else:
                                 if today<= fDiasGracia.fechadesde and  \
-                                    today <= fDiasGracia.fechadesde+datetime.timedelta(days=fDiasGracia.dias_gracia) :
+                                    today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual es menor a las fechas del modelo (periodos proximos)
                                     print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
                                     bMulta=False
@@ -967,9 +968,9 @@ def importar_datos_desde_excel(archivo,pestana):
         max_numero_expediente = Inmueble.objects.exclude(numero_expediente__isnull=True).exclude(numero_expediente='').filter(numero_expediente__regex=r'^\d+$').aggregate(max_numero_expediente=Max('numero_expediente'))['max_numero_expediente']
 
         print(max_numero_expediente)
-        #correlativo=Correlativo.objects.get(id=1)
-        #correlativo.ExpedienteCatastro=int(max_numero_expediente)+1
-        #correlativo.save()           
+        correlativo=Correlativo.objects.get(id=1)
+        correlativo.ExpedienteCatastro=int(max_numero_expediente)+1
+        correlativo.save()           
     if importar=='vaciar':
         NotaCredito.objects.all().delete()
         print('NotaCredito')
@@ -2050,3 +2051,51 @@ def Crear_Perfil(request):
         return Response('Insert PERFIL OK', status=status.HTTP_200_OK)
     else:
         return Response('Insert PERFIL NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+
+def Crear_Patente(request):
+    if (request):
+        items=request['detalle']
+        correlativo=Correlativo.objects.get(id=1)
+        valor_petro=UnidadTributaria.objects.get(habilitado=True).monto
+        valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
+        tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(codigo=request['flujo'])
+        inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
+        propietario = Propietario.objects.get(id=request['propietario'])
+        Cabacera=EstadoCuenta(
+            numero=correlativo.NumeroEstadoCuenta,
+            tipoflujo=tipoflujo,
+            inmueble=inmueble,
+            fecha=str(date.today()),
+            propietario=propietario,
+            observaciones=request['observacion'],
+            valor_petro=valor_petro,
+            valor_tasa_bs=valor_tasabcv,
+            monto_total=request['monto_total']
+        )
+        Cabacera.save()
+        for detalle in items:
+            tasa_multa_id = TasaMulta.objects.get(id=detalle['tasa_multa_id'])
+
+            Detalle=EstadoCuentaDetalle(
+                estadocuenta=Cabacera,
+                tasamulta=tasa_multa_id,               
+                monto_unidad_tributaria=detalle['monto_unidad_tributaria'],
+                monto_tasa=detalle['calculo'],
+                cantidad=detalle['cantidad']                     
+            )
+            Detalle.save()
+        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
+        correlativo.save()
+        result = {
+        "documento": Cabacera.numero,
+        "id": Cabacera.id
+
+        }
+        return Response(result, status=status.HTTP_200_OK)
+    else:
+        result = {
+        "documento": 'Insert EstadoCuenta NOT Ok'
+ 
+        }
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
+ 

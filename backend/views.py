@@ -84,6 +84,14 @@ def SignUp(request):
 def ChangePassword(request):
     return change_password(request.user,request.data["password"])
 
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def CrearPatente(request):
+    datos=request.data
+    return Crear_Patente(datos)
+
 @api_view(["POST"])
 @csrf_exempt
 @permission_classes([IsAuthenticated])
@@ -378,6 +386,50 @@ def filtrar_inmuebles(request):
 
     return JsonResponse(data, safe=False)
 
+@csrf_exempt
+def filtrar_patentes(request):
+    numero_expediente = request.GET.get('numero_expediente', None)
+
+    #if numero_expediente:
+    inmuebles_filtrados = Inmueble.objects.filter(numero_expediente=numero_expediente)
+    #else:
+    #    inmuebles_filtrados = Inmueble.objects.all()
+
+    # Convierte los resultados a JSON
+
+    data = [{'id': prop.id, 
+            'numero_expediente': prop.numero_expediente,
+            'fecha_inscripcion': prop.fecha_inscripcion,
+            'tipo': prop.tipo,
+            'status': prop.status,
+            #'ambito': prop.ambito,
+            #'sector': prop.sector,
+            #'manzana': prop.manzana,
+            #'parcela': prop.parcela,
+            #'subparcela': prop.subparcela,
+            #'nivel': prop.nivel,
+            #'unidad': prop.unidad,
+            #'urbanizacion': prop.urbanizacion,
+            #'calle': prop.calle,
+            #'conjunto_residencial': prop.conjunto_residencial,
+            #'edificio': prop.edificio,
+            #'avenida': prop.avenida,
+            #'torre': prop.torre,
+            'numero_civico': prop.numero_civico,
+            'numero_casa': prop.numero_casa,
+            'numero_piso': prop.numero_piso,
+            'telefono': prop.telefono,
+            #'zona': prop.zona,
+            'direccion': prop.direccion, 
+            'referencia': prop.referencia,
+            'observaciones': prop.observaciones,
+            'inscripcion_paga': prop.inscripcion_paga,
+            'habilitado': prop.habilitado,
+            #'periodo': prop.periodo,
+            'anio ': prop.anio
+           } for prop in inmuebles_filtrados]
+
+    return JsonResponse(data, safe=False)
 
 
 class TipoInmuebleViewset(MultiSerializerViewSet):

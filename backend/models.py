@@ -1215,10 +1215,15 @@ class CorridasBancarias(models.Model):
     ('D', 'Deposito'),
     ('T', 'Transferencia')
     )
-    situado= models.CharField(max_length=1, choices=SITUADO, default='T', help_text='Tipo de transaccion') 
+    situado= models.CharField(max_length=1, choices=SITUADO, default='T', help_text='Tipo de transaccion')
+    fechacreacion = models.DateTimeField(null=True,blank =True,  help_text="Fecha registro error")
+
     def __str__(self):
         return '%s - %s - %s - %s - %s - %s' % (self.bancocuenta.codigocuenta,self.fecha,self.referencia,self.descripcion,self.monto,self.situado)
     class Meta:
         unique_together = ('bancocuenta', 'fecha','referencia','monto')
         ordering = ['bancocuenta','fecha','referencia','monto'] 
 
+    def save(self, *args, **kwargs):
+        self.fechacreacion = timezone.now()
+        super().save(*args, **kwargs)
