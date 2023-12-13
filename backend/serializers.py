@@ -781,7 +781,7 @@ class LiquidacionSerializer(serializers.ModelSerializer):
     estadocuenta = EstadoCuentaSerializer()
     class Meta:
         model = Liquidacion
-        fields = '__all__' 
+        fields = '__all__'
 
 class LiquidacionDetalleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1084,6 +1084,10 @@ class NotaCreditoSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotaCredito
         fields = '__all__'
+    propietario_nombre= serializers.SerializerMethodField('loadpropietario_nombre')
+    def loadpropietario_nombre(self, obj):
+      return obj.propietario.nombre
+    
 
 class ExcelDocumentSerializer(serializers.ModelSerializer):
     class Meta:

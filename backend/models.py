@@ -873,6 +873,8 @@ class Correlativo(models.Model):
     NumeroIC_Impuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero Impuesto Catastro")
     NumeroAE_Patente = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio")
     NumeroAE_Patente_Generica = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio genérica")
+    Logo1 = models.ImageField(upload_to='Logos/',help_text="Logo 1 para reporte", null=True,blank =True)
+    Logo2 = models.ImageField(upload_to='Logos/',help_text="Logo 2 para reporte", null=True,blank =True)
 
 
 
@@ -1161,9 +1163,6 @@ class AE_Patente_ActividadEconomica(models.Model):
         return '%s - %s - %s - %s - %s' % (self.id,self.AE_patente.tipo_patente,self.AE_patente.numero,self.AE_patente.propietario.nombre,self.AE_actividadeconomicadetalle.descripcion)
         
 class NotaCredito(models.Model):
-    """
-    Ramo
-    """
     numeronotacredito  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de nota de credito")
     propietario = models.ForeignKey (Propietario, on_delete=models.PROTECT,help_text="Id Propietario")
     tipopago = models.ForeignKey(TipoPago,null=True,blank =True, on_delete=models.PROTECT,help_text="Id Tipo Pago")
@@ -1172,7 +1171,9 @@ class NotaCredito(models.Model):
     monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito")     
     saldo=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="saldo de la nota de credito")
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta,null=True,blank =True, on_delete=models.PROTECT,help_text="Id Pago Liquidacion")
-      
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.id,self.numeronotacredito,self.propietario.nombre,self.monto,self.saldo,self.pagoestadocuenta)  
+     
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs)

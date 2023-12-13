@@ -16,7 +16,8 @@ import math  # Importa la biblioteca math
 from django.db import IntegrityError
 from django.http import JsonResponse
 from datetime import datetime, timedelta, date
-
+from django.core.serializers.json import DjangoJSONEncoder
+import json
 
 # obtener la cantidad de dias que tiene un mes en un año especifico
 def obtener_cantidad_dias(year, month):
@@ -181,11 +182,16 @@ def Crear_Pago(request):
         notacredito=[]
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
+        NroPlanilla=correlativo.NumeroPago 
+        print('NroPlanilla',NroPlanilla)
+        correlativo.NumeroPago=correlativo.NumeroPago+1
+        correlativo.save()
         propietario = Propietario.objects.get(id=request['propietario'])
         #liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
         liquidacion = Liquidacion.objects.get(id=request['liquidacion'])
+        print('liquidaciones',liquidacion.id) 
         Cabacera=PagoEstadoCuenta(
-            numero=correlativo.NumeroPago,
+            numero=NroPlanilla,
             liquidacion=liquidacion,
             fecha=str(date.today()),
             observaciones=request['observacion'],
@@ -193,7 +199,7 @@ def Crear_Pago(request):
             monto=request['monto'],
             monto_cxc=request['monto_cxc']
         )
-        Cabacera.save() 
+        Cabacera.save()
         # evalua si se pago de mas para crear la nota de credito a favor del contribuyente
         print(request['monto'],request['monto_cxc'])
         monto_credito= float(request['monto'])-float(request['monto_cxc'])
@@ -234,7 +240,7 @@ def Crear_Pago(request):
                 print('nota de credito',float(notacredito.saldo),float(detalle['monto']),float(notacredito.saldo)-float(detalle['monto']))
             Detalle.save()
         #actualiza el correlativo de numero de pagos
-        correlativo.NumeroPago=correlativo.NumeroPago+1  
+        #correlativo.NumeroPago=correlativo.NumeroPago+1  
         # solo aplica cuando la peticion viene de catastro y es una de esas 3 opciones
         if liquidacion.tipoflujo.carandai:
             #solo aplica cuanbdo es inscripcion, el inmueble se debe crear nuevo
@@ -261,6 +267,7 @@ def Crear_Pago(request):
                 InmuebleFaltanteNew.save()
                 #actualiza en correlativo del expediente 
                 correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
+                correlativo.save()
             else:
                 #seleciona el inmueble ya seleccionado desde la liquidacion
                 InmuebleNew=Inmueble.objects.get(id=liquidacion.inmueble.id)
@@ -284,14 +291,25 @@ def Crear_Pago(request):
             FlujoDetalleNew.save()
             #actualiza en correlativo del expediente 
             correlativo.NumeroSolicitud=correlativo.NumeroSolicitud+1
+            correlativo.save() 
         #actualiza corrrelativo de pago
-        correlativo.save()
+        #correlativo.save()
         #marca la liquidacion como procesada
         liquidacion.habilitado=False
         liquidacion.save()
+
+        queryset = LiquidacionDetalle.objects.filter(liquidacion=liquidacion.id)
+
+        # Convierte el QuerySet a una lista de diccionarios
+        lista_de_diccionarios = list(queryset.values())
+
+        # Convierte la lista de diccionarios a una cadena JSON
+        json_resultado = json.dumps(lista_de_diccionarios, cls=DjangoJSONEncoder)
+        print(json_resultado)
         result = {
         "documento": Cabacera.numero,
-        "id": Cabacera.id }
+        "idpago": Cabacera.id ,
+        "liquidacionDetalleData":json_resultado,}
         return Response(result, status=status.HTTP_200_OK)
     else:
         result = {
@@ -623,25 +641,29 @@ def Impuesto_Inmueble(request):
                 tPeriodo= IC_Periodo.objects.filter(aplica='C')
                 CountPeriodo= tPeriodo.count()
 
-                terreno = InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
+                terreno =      InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
                 construccion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
                 if terreno:
-                    total_area_terreno = terreno.area
+                    total_area_terreno = terreno.area 
                 else:
                     total_area_terreno = 0
+
                 if construccion:
                     total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
                 else:
                     total_area_construccion = 0
+
                 if (total_area_construccion > total_area_terreno) or (total_area_terreno==0 and total_area_construccion>0):
                     ocupacion=construccion
                 elif total_area_terreno>0 and total_area_construccion==0:
-                    ocupacion=terreno
+                    ocupacion =  InmuebleValoracionTerreno.objects.filter(inmueble=request['inmueble'])
+                    ocupacion = list(ocupacion) 
                 else:
                     ocupacion=construccion
                     if terreno: # hay inmuebles que NO TIENEN TERRENO, PARA ESE CASO NO ENTRA, SOLO TOMA LA CONTRUCCION
                         if total_area_construccion < total_area_terreno:
                             # Crear una nueva instancia de InmuebleValoracionConstruccion sin guardar en la base de datos
+                            
                             nuevo_objeto_construccion = InmuebleValoracionConstruccion(
                                 tipologia=terreno.tipologia,
                                 tipo=terreno.tipo,
@@ -653,6 +675,7 @@ def Impuesto_Inmueble(request):
                             ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                             ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                         # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
+                print('ocupacion',ocupacion)
                 ZonaInmueble=Zona.zona
                 oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
@@ -1971,6 +1994,7 @@ def importar_datos_desde_excel(archivo,pestana):
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
         print("val_terreno actualizados exitosamente.")  
     if importar=='val_construccion':
+        InmuebleValoracionConstruccion.objects.all().delete()
         ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='val_construccion')
         for index, row in datos_excel.iterrows():
