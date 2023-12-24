@@ -145,7 +145,7 @@ class Urbanizacion(models.Model):
         ('P', 'Publica'),
         ('R', 'Privada'),
     )
-    codigo = models.TextField(null=True,blank =True, help_text="Codigo de la avenida")
+    codigo = models.TextField(null=True,blank =True, help_text="Codigo de la Urbanizacion")
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     nombre = models.TextField(null=False,blank =False, help_text="Nombre de la urbanizacion")
     tipo= models.CharField(max_length=1, choices=TIPO, default='P', help_text='tipo de la urbanizacion')
@@ -176,7 +176,7 @@ class Manzana(models.Model):
 class Parcela(models.Model):
     manzana=models.ForeignKey(Manzana,on_delete=models.PROTECT,help_text="Manzana asociado")
     codigo = models.TextField(null=False,blank =False, help_text="Codigo de la Parcela")
-    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Area en m2")
     perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la Parcela")
     def __str__(self):
         return '%s - %s - %s - %s' % (self.manzana.codigo,self.manzana.sector.codigo,self.manzana.sector.ambito.codigo,self.codigo)
@@ -239,6 +239,8 @@ class TipoInmueble(models.Model):
 class EstatusInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del estatus de inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del estatus de inmueble")
+    inmueble_activo = models.BooleanField(default=True, help_text="si es tru, este estatus permite procesar el inmueble para calculo de impuestos")
+
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
@@ -325,6 +327,8 @@ class Tipologia(models.Model):
     tarifa = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Tarifa o Alicuota")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones en caso de no esar hablita por que cambio el valor a causa de una ordenanza nueva.")    
+    FinesFiscales = models.BooleanField(default=False, help_text="True es para fines fiscales(para impresion de cedula catastral)")
+
     def __str__(self):
         return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s' % (self.id,self.zona,self.codigo, self.descripcion)
     
@@ -382,6 +386,7 @@ class IC_Periodo(models.Model):
     def __str__(self):
         return '%s - %s' % (self.periodo,self.aplica)
 
+
 class Inmueble(models.Model):
     numero_expediente = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente.Correlativo.ExpedienteCatastro")
     fecha_inscripcion = models.DateField(blank=True,null=True, help_text="fecha de inscripcion")
@@ -400,10 +405,10 @@ class Inmueble(models.Model):
     edificio=models.ForeignKey(Edificio,on_delete=models.PROTECT,null=True,blank =True,help_text="edificio asociado")
     avenida=models.ForeignKey(Avenida,on_delete=models.PROTECT,null=True,blank =True,help_text="avenida asociado")
     torre=models.ForeignKey(Torre,on_delete=models.PROTECT,null=True,blank =True,help_text="Sector asociado")
-    numero_civico = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    numero_casa = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    numero_piso = models.TextField(null=True,blank =True, help_text="Numero de expediente")
-    telefono = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    numero_civico = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    numero_casa = models.TextField(null=True,blank =True, help_text="numero_casa de expediente")
+    numero_piso = models.TextField(null=True,blank =True, help_text="numero_piso de expediente")
+    telefono = models.TextField(null=True,blank =True, help_text="telefono de expediente")
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
     direccion = models.TextField(null=True,blank =True, help_text="direccion")
     referencia = models.TextField(null=True,blank =True, help_text="referencia")
@@ -411,7 +416,11 @@ class Inmueble(models.Model):
     inscripcion_paga = models.BooleanField(default=False, help_text="True desde use_case de crear pago cuando se cancele el flujo de Inscripcion de Inmueble")
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     periodo=models.ForeignKey(IC_Periodo, null=True,blank =True,on_delete=models.PROTECT,help_text="Periodo que adeuda")
+    tipodesincorporacion=models.ForeignKey(TipoDesincorporacion, null=True,blank =True,on_delete=models.PROTECT,help_text="Motivo Desincorporacion")
     anio = models.PositiveIntegerField(null=True, blank=True,  help_text="Año que adeuda")
+    ReportePdfDesincorporacion = models.FileField(upload_to='Desincorporacion/',help_text="PDF Desincorporacion", null=True,blank =True)
+    ReportePdfCedulaCatastral = models.FileField(upload_to='CedulaCatastral/',help_text="PDF Cedula catastral", null=True,blank =True)
+
 
     #history = HistoricalRecords()
     
@@ -442,6 +451,7 @@ class InmueblePropiedad(models.Model):
     protocolo_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     tomo_construccion = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     area_construccion =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="area_construccion en m2")
+    valor_construccion = models.TextField(null=True,blank =True, help_text="valor construccion")
     lindero_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_sur	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
@@ -824,6 +834,8 @@ class MotivoAnulacionPago(models.Model):
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion del motivo")
     def __str__(self):
         return '%s' % (self.descripcion)
+    
+
 
 #Maestro de recibo Pago
 class PagoEstadoCuenta(models.Model):
@@ -1012,7 +1024,6 @@ class IC_Impuesto(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Correlativo.NumeroIC_Impuesto")
     estadocuenta = models.ForeignKey(EstadoCuenta, null=True, blank=True,on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     liquidacion = models.ForeignKey(Liquidacion, null=True, blank=True,on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
-    #ActividadEconomica
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
     basecalculobs =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="base imponible del tributo en referencia") 
     subtotal =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="suma de total_uso de ImpuestoDetalle") 
@@ -1022,14 +1033,17 @@ class IC_Impuesto(models.Model):
     total =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Total") 
     descuento  =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="descuento????") 
     grantotal =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="gran total")
-    aniopago=models.PositiveIntegerField(null=True, blank=True,  help_text="Año hasta donde se calculo el impuesto")
-    periodopago=models.PositiveIntegerField(null=True, blank=True,  help_text="Periodo  hasta donde se calculo el impuesto")
-    #Factor= models.DecimalField(max_digits=5, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="si es 1 es todo el año (4 periodos). Si es un periodo, el factor=0.75") 
-    inmueble=models.ForeignKey(Inmueble, on_delete=models.PROTECT,help_text="Inmueble")
-
+    aniopagoini=models.PositiveIntegerField(null=True, blank=True,  help_text="Año hasta donde se calculo el impuesto")
+    periodopagoini=models.PositiveIntegerField(null=True, blank=True,  help_text="Periodo  hasta donde se calculo el impuesto")
+    aniopagofin=models.PositiveIntegerField(null=True, blank=True,  help_text="Año hasta donde se calculo el impuesto")
+    periodopagofin=models.PositiveIntegerField(null=True, blank=True,  help_text="Periodo  hasta donde se calculo el impuesto")
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s - %s - %s' % (self.numero,self.estadocuenta.numero,self.estadocuenta.inmueble.numero_expediente,self.total,self.aniopagoini,self.periodopagoini,self.aniopagofin,self.periodopagofin)
+    
 class IC_ImpuestoDetalle(models.Model):
     IC_impuesto  = models.ForeignKey(IC_Impuesto, on_delete=models.PROTECT,help_text="ID IC_Impuesto") 
-    IC_ImpuestoPeriodo  = models.ForeignKey(IC_ImpuestoPeriodo,null=True,blank =True, on_delete=models.PROTECT,help_text="ID IC_ImpuestoPeriodo. Por este D al momento de pagar esta Liquidacion entonces marco el periodo en IC_ImpuestoPeriodo como cancelado") 
+    periodo=models.ForeignKey(IC_Periodo, on_delete=models.PROTECT,null=True,blank =True,help_text="Periodo de proceso")
+    anio=models.PositiveIntegerField(null=True, blank=True,  help_text="Año de proceso")
     tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado") 
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2") 
     alicuota_articulo41=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Alicuota") 
@@ -1037,7 +1051,22 @@ class IC_ImpuestoDetalle(models.Model):
     descuento=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="suma de descuentos (detalle en IC_ImpuestoDescuento)") 
     total=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="(area x alicuota_articulo41)-descuento") 
     sub_utilizado = models.BooleanField(default=False, help_text="subutilizado si o no") 
+    multa = models.BooleanField(default=False, help_text="Aplico multa?") 
     tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")     
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.IC_impuesto.numero,self.anio,self.periodo.periodo,self.tipologia.descripcion,self.area,self.alicuota_articulo41) 
+
+class IC_ImpuestoDetalleMora(models.Model):
+    IC_impuesto  = models.ForeignKey(IC_Impuesto, on_delete=models.PROTECT,help_text="ID IC_Impuesto") 
+    anio=models.PositiveIntegerField(null=True, blank=True,  help_text="Año de proceso")
+    mes=models.PositiveIntegerField(null=True, blank=True,  help_text="Mes de proceso")
+    tasa=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="tasa") 
+    dias=models.PositiveIntegerField(null=True, blank=True,  help_text="dias")
+    moramensual=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="moramensual") 
+    interesmensual=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="interesmensual") 
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s - %s' % (self.IC_impuesto.numero,self.anio,self.mes,self.tasa,self.dias,self.moramensual,self.interesmensual) 
+
 
 # MAESTRO Configuración de descuentos por impuestos si la fecha del pago del impuesto esta contenida entra fechadesde y fecha 
 # hasta aplica es descuento, si no tiene tipologia aplica a cualquier uso, si tiene tipologia solo aplica a ese uso. 
@@ -1062,11 +1091,16 @@ class IC_ImpuestoDescuento(models.Model):
     
 # Descuentos aplicados por cada IC_ImpuestoDetalle
 class IC_ImpuestoDetalleDescuentos(models.Model):
-    IC_impuestodetalle  = models.ForeignKey(IC_ImpuestoDetalle, on_delete=models.PROTECT,help_text="ID Impuesto Inmueble")  
-    IC_impuestodescuento  = models.ForeignKey(IC_ImpuestoDescuento, on_delete=models.PROTECT,help_text="ID Impuesto Inmueble")
+    IC_impuesto  = models.ForeignKey(IC_Impuesto, on_delete=models.PROTECT,null=True,blank =True,help_text="ID IC_Impuesto") 
+    IC_impuestodescuento  = models.ForeignKey(IC_ImpuestoDescuento, on_delete=models.PROTECT,null=True,blank =True,help_text="ID Impuesto Inmueble")
+    periodo=models.ForeignKey(IC_Periodo, on_delete=models.PROTECT,null=True,blank =True,help_text="Periodo de proceso")
+    anio=models.PositiveIntegerField(null=True, blank=True,  help_text="Año de proceso")
+    tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado")
     base =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Base de calculo") 
     porcentaje =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Porcentaje de descuento") 
     total =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Total. Segun la tipologia:IC_ImpuestoDetalle.base * TC_ImpuestoDescuentos.porcentaje")  
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.IC_impuesto.numero,self.anio,self.periodo.periodo,self.tipologia.descripcion,self.IC_impuestodescuento.descripcion,self.porcentaje) 
 
 class IC_Multa(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")

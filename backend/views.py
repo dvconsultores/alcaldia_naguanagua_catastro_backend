@@ -145,6 +145,13 @@ def ImpuestoInmueble(request):
 @api_view(["POST"])
 @csrf_exempt
 @permission_classes([IsAuthenticated])
+def ImpuestoInmuebleDetalle(request):
+    datos=request.data
+    return Impuesto_Inmueble_Detalle(datos)
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
 def MuestraTasa(request):
     datos=request.data
     return Muestra_Tasa(datos)
@@ -355,8 +362,8 @@ def filtrar_inmuebles(request):
     data = [{'id': prop.id, 
             'numero_expediente': prop.numero_expediente,
             'fecha_inscripcion': prop.fecha_inscripcion,
-            'tipo': prop.tipo,
-            'status': prop.status,
+            #'tipo': prop.tipo,
+            #'status': prop.status,
             #'ambito': prop.ambito,
             #'sector': prop.sector,
             #'manzana': prop.manzana,
@@ -445,6 +452,10 @@ class EstatusInmuebleViewset(MultiSerializerViewSet):
     queryset=EstatusInmueble.objects.all()
     serializers = {
         'default': EstatusInmuebleSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'codigo':['exact'],
     }
 
 class NivelInmuebleViewset(MultiSerializerViewSet):
@@ -1009,7 +1020,12 @@ class IC_ImpuestoDetalleDescuentosViewset(MultiSerializerViewSet):
     serializers = {
         'default': IC_ImpuestoDetalleDescuentosSerializer
     }
-
+class IC_ImpuestoDetalleMoraViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=IC_ImpuestoDetalleMora.objects.all()
+    serializers = {
+        'default': IC_ImpuestoDetalleMoraSerializer
+    }
 
 class AE_ActividadEconomicaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]

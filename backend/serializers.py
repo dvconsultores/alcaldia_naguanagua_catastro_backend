@@ -153,7 +153,7 @@ class ParcelaSerializer(serializers.ModelSerializer):
     def loaddescripcion_sector(self, obj):
       return obj.manzana.sector.descripcion
 
-    manzana= serializers.SerializerMethodField('loadid_manzana')
+    manzana_id= serializers.SerializerMethodField('loadid_manzana')
     def loadid_manzana(self, obj):
       return obj.manzana.id
 
@@ -183,7 +183,7 @@ class SubParcelaSerializer(serializers.ModelSerializer):
     def loaddescripcion_sector(self, obj):
       return obj.parcela.manzana.sector.descripcion
 
-    manzana= serializers.SerializerMethodField('loadid_manzana')
+    manzana_id= serializers.SerializerMethodField('loadid_manzana')
     def loadid_manzana(self, obj):
       return obj.parcela.manzana.id
 
@@ -217,7 +217,7 @@ class ConjuntoResidencialSerializer(serializers.ModelSerializer):
     def loaddescripcion_sector(self, obj):
       return obj.urbanizacion.sector.descripcion  
 
-    urbanizacion= serializers.SerializerMethodField('loadid_urbanizacion')
+    urbanizacion_id= serializers.SerializerMethodField('loadid_urbanizacion')
     def loadid_urbanizacion(self, obj):
       return obj.urbanizacion.id
 
@@ -410,6 +410,13 @@ class InmuebleSerializer(serializers.ModelSerializer):
       if obj.status:
         return obj.status.descripcion
       return None
+    
+    inmueble_activo= serializers.SerializerMethodField('loadinmueble_activo')
+    def loadinmueble_activo(self, obj):
+      if obj.status:
+        return obj.status.inmueble_activo
+      return None
+
 
     descripcion_sector= serializers.SerializerMethodField('loaddescripcion_sector')
     def loaddescripcion_sector(self, obj):
@@ -505,6 +512,12 @@ class InmuebleSerializer(serializers.ModelSerializer):
     def loadcodigo_periodo(self, obj):
       if obj.periodo:
         return obj.periodo.periodo
+      return None
+    
+    descripcion_desincorporacion= serializers.SerializerMethodField('loaddescripcion_desincorporacion')
+    def loaddescripcion_desincorporacion(self, obj):
+      if obj.tipodesincorporacion:
+        return obj.tipodesincorporacion.descripcion
       return None
 
 class InmueblePropietariosSerializer(serializers.ModelSerializer):
@@ -1040,10 +1053,14 @@ class IC_ImpuestoDescuentoSerializer(serializers.ModelSerializer):
         model = IC_ImpuestoDescuento
         fields = '__all__' 
 
-
 class IC_ImpuestoDetalleDescuentosSerializer(serializers.ModelSerializer):
     class Meta:
         model = IC_ImpuestoDetalleDescuentos
+        fields = '__all__' 
+
+class IC_ImpuestoDetalleMoraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoDetalleMora
         fields = '__all__' 
 
 class AE_ActividadEconomicaSerializer(serializers.ModelSerializer):
