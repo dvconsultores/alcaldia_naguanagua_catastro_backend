@@ -384,7 +384,7 @@ class IC_Periodo(models.Model):
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
     def __str__(self):
-        return '%s - %s' % (self.periodo,self.aplica)
+        return '%s - %s- %s' % (self.id,self.periodo,self.aplica)
 
 
 class Inmueble(models.Model):
@@ -1078,6 +1078,7 @@ class IC_ImpuestoDescuento(models.Model):
     porcentaje =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Porcentaje de descuento") 
     tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado. Solo para Inmuebles. Si no tiene aplica a cualquier uso") 
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    prontopago = models.BooleanField(default=False, help_text="Es de pronto pago?, True si y valida la fecha con la fecha de sistema, false aplica por fecha y periododo")
     APLICA = (
         ('C', 'Inmuebles Urbanos'),
         ('A', 'Actividades económicas'),

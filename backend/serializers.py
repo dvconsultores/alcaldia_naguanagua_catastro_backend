@@ -514,6 +514,12 @@ class InmuebleSerializer(serializers.ModelSerializer):
         return obj.periodo.periodo
       return None
     
+    id_periodo= serializers.SerializerMethodField('loadid_periodo')
+    def loadid_periodo(self, obj):
+      if obj.periodo:
+        return obj.periodo.id
+      return None
+    
     descripcion_desincorporacion= serializers.SerializerMethodField('loaddescripcion_desincorporacion')
     def loaddescripcion_desincorporacion(self, obj):
       if obj.tipodesincorporacion:
@@ -1073,7 +1079,6 @@ class AE_ActividadEconomicaDetalleSerializer(serializers.ModelSerializer):
         model = AE_ActividadEconomicaDetalle
         fields = '__all__'
 
-        AE_Patente
 
 class AE_PatenteSerializer(serializers.ModelSerializer):
     class Meta:
