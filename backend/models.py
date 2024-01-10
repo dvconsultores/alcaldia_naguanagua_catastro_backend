@@ -1088,7 +1088,7 @@ class IC_ImpuestoDescuento(models.Model):
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
     def __str__(self):
-        return '%s - %s - %s - %s - %s' % (self.id,self.fechadesde,self.fechahasta,self.porcentaje,self.tipologia)
+        return '%s - %s - %s - %s - %s - %s' % (self.id,self.fechadesde,self.fechahasta,self.porcentaje,self.tipologia,self.descripcion)
     
 # Descuentos aplicados por cada IC_ImpuestoDetalle
 class IC_ImpuestoDetalleDescuentos(models.Model):

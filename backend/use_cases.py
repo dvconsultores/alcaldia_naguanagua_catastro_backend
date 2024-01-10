@@ -834,21 +834,22 @@ def Impuesto_Inmueble(request):
                                         print('fecha actual',today.year,today.month,today.day) 
                                         print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
-                                            fechadesde__year__lte=today.year,   # < =
-                                            fechahasta__year__gte=today.year,   # > =
+                                            #fechadesde__year__lte=today.year,   # < =
+                                            #fechahasta__year__gte=today.year,   # > =
+                                            fechadesde__year=minimo_ano,
                                             fechadesde__month__lte=today.month, # < =
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
                                         print('registros_validos pronto pago 1',registros_validos)
-                                        registros_validos = registros_validos.filter(
+                                        registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
                                             fechadesde__month__lte=aPeriodoMesDesde,# < =
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos)
+                                        print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -1188,21 +1189,22 @@ def Impuesto_Inmueble_Public(request):
                                         print('fecha actual',today.year,today.month,today.day) 
                                         print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
-                                            fechadesde__year__lte=today.year,   # < =
-                                            fechahasta__year__gte=today.year,   # > =
+                                            #fechadesde__year__lte=today.year,   # < =
+                                            #fechahasta__year__gte=today.year,   # > =
+                                            fechadesde__year=minimo_ano,
                                             fechadesde__month__lte=today.month, # < =
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
                                         print('registros_validos pronto pago 1',registros_validos)
-                                        registros_validos = registros_validos.filter(
+                                        registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
                                             fechadesde__month__lte=aPeriodoMesDesde,# < =
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos)
+                                        print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -1299,6 +1301,9 @@ def Impuesto_Inmueble_Public(request):
                         'mesini':mesini,
                         'aniofin':request['anio'],
                         'mesfin':request['periodo'],
+                        'propietario_numero_documento':oPropietario.propietario.numero_documento,
+                        'propietario_direccion':oPropietario.propietario.direccion,
+                        'propietario_nombre':oPropietario.propietario.nombre,
                     }
                     datos={
                         'cabacera':Impuesto,
