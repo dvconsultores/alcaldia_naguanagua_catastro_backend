@@ -378,9 +378,19 @@ class TipologiaSerializer(serializers.ModelSerializer):
         model = Tipologia
         fields = '__all__'
 
+class Tipologia_CategorizacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tipologia_Categorizacion
+        fields = '__all__'
+
 class ZonaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Zona
+        fields = '__all__'
+
+class CategorizacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categorizacion
         fields = '__all__'
 
 class IC_PeriodoSerializer(serializers.ModelSerializer):
@@ -506,6 +516,12 @@ class InmuebleSerializer(serializers.ModelSerializer):
     def loaddescripcion_zona(self, obj):
       if obj.zona:
         return obj.zona.descripcion
+      return None
+
+    descripcion_categorizacion= serializers.SerializerMethodField('loaddescripcion_categorizacion')
+    def loaddescripcion_categorizacion(self, obj):
+      if obj.categorizacion:
+        return obj.categorizacion.descripcion
       return None
 
     codigo_periodo= serializers.SerializerMethodField('loadcodigo_periodo')
@@ -638,65 +654,132 @@ class InmuebleValoracionTerrenoSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmuebleValoracionTerreno
         fields = '__all__'
-        
+    zona_codigo= serializers.SerializerMethodField('loadzona_codigo')
+    def loadzona_codigo(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.zona.codigo
+        return None
     uso_codigo= serializers.SerializerMethodField('loaduso_codigo')
     def loaduso_codigo(self, obj):
         if obj.tipologia:
           return obj.tipologia.codigo
         return None
-
     uso_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
     def loaduso_descripcion(self, obj):
         if obj.tipologia:
           return obj.tipologia.descripcion
         return None
-    
     uso_valor= serializers.SerializerMethodField('loaduso_valor')
     def loaduso_valor(self, obj):
         if obj.tipologia:
           return obj.tipologia.tarifa
         return None
- 
     uso_total= serializers.SerializerMethodField('loaduso_total')
     def loaduso_total(self, obj):
         if obj.tipologia:
           return obj.tipologia.tarifa*obj.area
         return None
-
-
     tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
     def loadtipo_descripcion(self, obj):
         if obj.tipo:
           return obj.tipo.descripcion
         return None
-
-    
+ 
 
 class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmuebleValoracionConstruccion
         fields = '__all__'  
-
+    zona_codigo= serializers.SerializerMethodField('loadzona_codigo')
+    def loadzona_codigo(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.zona.codigo
+        return None
     uso_codigo= serializers.SerializerMethodField('loaduso_codigo')
     def loaduso_codigo(self, obj):
       return obj.tipologia.codigo
-
     uso_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
     def loaduso_descripcion(self, obj):
       return obj.tipologia.descripcion
-    
     uso_valor= serializers.SerializerMethodField('loaduso_valor')
     def loaduso_valor(self, obj):
       return obj.tipologia.tarifa
- 
     uso_total= serializers.SerializerMethodField('loaduso_total')
     def loaduso_total(self, obj):
       return obj.tipologia.tarifa*obj.area
-
     tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
     def loadtipo_descripcion(self, obj):
       return obj.tipo.descripcion
+    fecha_construccion = serializers.SerializerMethodField('get_fecha_construccion')
+    def get_fecha_construccion(self, obj):
+      if obj.fecha_construccion is not None:
+          formatted_date = obj.fecha_construccion.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha_construccion.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
 
+
+
+class InmuebleValoracionTerreno2024Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleValoracionTerreno2024
+        fields = '__all__'
+    categorizacion_codigo= serializers.SerializerMethodField('loadcategorizacion_codigo')
+    def loadcategorizacion_codigo(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.categorizacion.codigo
+        return None
+    uso_codigo= serializers.SerializerMethodField('loaduso_codigo')
+    def loaduso_codigo(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.codigo
+        return None
+    uso_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
+    def loaduso_descripcion(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.descripcion
+        return None
+    uso_valor= serializers.SerializerMethodField('loaduso_valor')
+    def loaduso_valor(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.tarifa
+        return None
+    uso_total= serializers.SerializerMethodField('loaduso_total')
+    def loaduso_total(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.tarifa*obj.area
+        return None
+    tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
+    def loadtipo_descripcion(self, obj):
+        if obj.tipo:
+          return obj.tipo.descripcion
+        return None
+ 
+
+class InmuebleValoracionConstruccion2024Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = InmuebleValoracionConstruccion2024
+        fields = '__all__'  
+    categorizacion_codigo= serializers.SerializerMethodField('loadcategorizacion_codigo')
+    def loadcategorizacion_codigo(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.categorizacion.codigo
+        return None
+    uso_codigo= serializers.SerializerMethodField('loaduso_codigo')
+    def loaduso_codigo(self, obj):
+      return obj.tipologia_categorizacion.codigo
+    uso_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
+    def loaduso_descripcion(self, obj):
+      return obj.tipologia_categorizacion.descripcion
+    uso_valor= serializers.SerializerMethodField('loaduso_valor')
+    def loaduso_valor(self, obj):
+      return obj.tipologia_categorizacion.tarifa
+    uso_total= serializers.SerializerMethodField('loaduso_total')
+    def loaduso_total(self, obj):
+      return obj.tipologia_categorizacion.tarifa*obj.area
+    tipo_descripcion= serializers.SerializerMethodField('loadtipo_descripcion')
+    def loadtipo_descripcion(self, obj):
+      return obj.tipo.descripcion
     fecha_construccion = serializers.SerializerMethodField('get_fecha_construccion')
     def get_fecha_construccion(self, obj):
       if obj.fecha_construccion is not None:
@@ -728,7 +811,6 @@ class InmuebleValoracionConstruccionSerializer(serializers.ModelSerializer):
     #        validated_data['tipo_id'] = tipo_id
     #    
     #    return validated_data
-
 
 
 

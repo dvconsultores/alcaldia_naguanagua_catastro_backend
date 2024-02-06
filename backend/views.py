@@ -145,6 +145,13 @@ def ImpuestoInmueble(request):
 @api_view(["POST"])
 @csrf_exempt
 @permission_classes([IsAuthenticated])
+def ImpuestoInmueble2023(request):
+    datos=request.data
+    return Impuesto_Inmueble2023(datos)
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
 def ValidarTransferencia(request):
     datos=request.data
     return Validar_Transferencia(datos)
@@ -157,6 +164,22 @@ def ValidarTransferencia(request):
 def ImpuestoInmueblePublic(request):
     datos=request.data
     return Impuesto_Inmueble_Public(datos)
+
+# API PUBLICA!!!!!!!!!!!!
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def ImpuestoInmueble2023Public(request):
+    datos=request.data
+    return Impuesto_Inmueble2023_Public(datos)
+
+# API PUBLICA!!!!!!!!!!!!
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def ImpuestoInmueblePago(request):
+    datos=request.data
+    return Impuesto_Inmueble_Pago(datos)    
 
 @api_view(["POST"])
 @csrf_exempt
@@ -351,8 +374,8 @@ def filtrar_propietarios(request):
     #if numero_documento:
     #propietarios_filtrados = Propietario.objects.filter(numero_documento__contains=numero_documento)
     propietarios_filtrados = Propietario.objects.filter(
-    Q(numero_documento__contains=numero_documento) | Q(nombre__contains=numero_documento)
-)
+    Q(numero_documento__icontains=numero_documento) | Q(nombre__icontains=numero_documento)
+    )
     #else:
     #    propietarios_filtrados = Propietario.objects.all()
 
@@ -386,21 +409,6 @@ def filtrar_inmuebles(request):
     data = [{'id': prop.id, 
             'numero_expediente': prop.numero_expediente,
             'fecha_inscripcion': prop.fecha_inscripcion,
-            #'tipo': prop.tipo,
-            #'status': prop.status,
-            #'ambito': prop.ambito,
-            #'sector': prop.sector,
-            #'manzana': prop.manzana,
-            #'parcela': prop.parcela,
-            #'subparcela': prop.subparcela,
-            #'nivel': prop.nivel,
-            #'unidad': prop.unidad,
-            #'urbanizacion': prop.urbanizacion,
-            #'calle': prop.calle,
-            #'conjunto_residencial': prop.conjunto_residencial,
-            #'edificio': prop.edificio,
-            #'avenida': prop.avenida,
-            #'torre': prop.torre,
             'numero_civico': prop.numero_civico,
             'numero_casa': prop.numero_casa,
             'numero_piso': prop.numero_piso,
@@ -422,7 +430,7 @@ def filtrar_patentes(request):
     numero_expediente = request.GET.get('numero_expediente', None)
 
     #if numero_expediente:
-    inmuebles_filtrados = Inmueble.objects.filter(numero_expediente=numero_expediente)
+    inmuebles_filtrados = AE_Patente.objects.filter(numero=numero_expediente)
     #else:
     #    inmuebles_filtrados = Inmueble.objects.all()
 
@@ -433,30 +441,15 @@ def filtrar_patentes(request):
             'fecha_inscripcion': prop.fecha_inscripcion,
             'tipo': prop.tipo,
             'status': prop.status,
-            #'ambito': prop.ambito,
-            #'sector': prop.sector,
-            #'manzana': prop.manzana,
-            #'parcela': prop.parcela,
-            #'subparcela': prop.subparcela,
-            #'nivel': prop.nivel,
-            #'unidad': prop.unidad,
-            #'urbanizacion': prop.urbanizacion,
-            #'calle': prop.calle,
-            #'conjunto_residencial': prop.conjunto_residencial,
-            #'edificio': prop.edificio,
-            #'avenida': prop.avenida,
-            #'torre': prop.torre,
             'numero_civico': prop.numero_civico,
             'numero_casa': prop.numero_casa,
             'numero_piso': prop.numero_piso,
             'telefono': prop.telefono,
-            #'zona': prop.zona,
             'direccion': prop.direccion, 
             'referencia': prop.referencia,
             'observaciones': prop.observaciones,
             'inscripcion_paga': prop.inscripcion_paga,
             'habilitado': prop.habilitado,
-            #'periodo': prop.periodo,
             'anio ': prop.anio
            } for prop in inmuebles_filtrados]
 
@@ -598,11 +591,29 @@ class TipologiaViewset(MultiSerializerViewSet):
       'zona':['exact'],
     }
 
+class Tipologia_CategorizacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Tipologia_Categorizacion.objects.all()
+    serializers = {
+        'default': Tipologia_CategorizacionSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'categorizacion':['exact'],
+    }
+
 class ZonaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=Zona.objects.all()
     serializers = {
         'default': ZonaSerializer
+    }
+
+class CategorizacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Categorizacion.objects.all()
+    serializers = {
+        'default': CategorizacionSerializer
     }
 
 class InmuebleViewset(MultiSerializerViewSet):
@@ -775,6 +786,29 @@ class InmuebleValoracionConstruccionViewset(MultiSerializerViewSet):
     filterset_fields = {
       'inmueblevaloracionterreno':['exact'],
     }
+
+class InmuebleValoracionTerreno2024Viewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleValoracionTerreno2024.objects.all()
+    serializers = {
+        'default': InmuebleValoracionTerreno2024Serializer
+     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueble':['exact'],
+    }
+
+class InmuebleValoracionConstruccion2024Viewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset= InmuebleValoracionConstruccion2024.objects.all()
+    serializers = {
+        'default': InmuebleValoracionConstruccion2024Serializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'inmueblevaloracionterreno':['exact'],
+    }
+
 
 class InmuebleUbicacionViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]

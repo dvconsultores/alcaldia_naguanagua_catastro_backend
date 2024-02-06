@@ -40,6 +40,8 @@ router.register(r'tipodesincorporacion', views.TipoDesincorporacionViewset,basen
 router.register(r'tipotransaccion', views.TipoTransaccionViewset,basename='tipotransaccion')
 router.register(r'tipologia', views.TipologiaViewset,basename='tipologia')
 router.register(r'zona', views.ZonaViewset,basename='zona')
+router.register(r'categorizacion', views.CategorizacionViewset,basename='categorizacion')
+router.register(r'tipologia_categorizacion', views.Tipologia_CategorizacionViewset,basename='tipologia_categorizacion')
 router.register(r'inmueble', views.InmuebleViewset,basename='inmueble')
 router.register(r'inmueble_propiedad', views.InmueblePropiedadViewset,basename='inmueble_propiedad')
 router.register(r'inmueble_propietarios', views.InmueblePropietariosViewset,basename='inmueble_propietarios')
@@ -61,6 +63,10 @@ router.register(r'inmueble_construccion_techo', views.InmuebleConstruccionTechoV
 router.register(r'inmueble_construccion_cubierta', views.InmuebleConstruccionCubiertaViewset,basename='inmueble_construccion_cubierta')
 router.register(r'inmueble_valoracion_terreno', views.InmuebleValoracionTerrenoViewset,basename='inmueble_valoracion_terreno')
 router.register(r'inmueble_valoracion_construccion', views.InmuebleValoracionConstruccionViewset,basename='inmueble_valoracion_construccion')
+
+router.register(r'inmueble_valoracion_terreno2024', views.InmuebleValoracionTerreno2024Viewset,basename='inmueble_valoracion_terreno2024')
+router.register(r'inmueble_valoracion_construccion2024', views.InmuebleValoracionConstruccion2024Viewset,basename='inmueble_valoracion_construccion2024')
+
 router.register(r'inmueble_ubicacion', views.InmuebleUbicacionViewset,basename='inmueble_ubicacion')
 router.register(r'inmueble_faltante', views.InmuebleFaltanteViewset,basename='inmueble_faltante')
 router.register(r'propietario/', views.PropietarioViewset,basename='propietario')
@@ -116,7 +122,10 @@ urlpatterns = [
     path('CrearInmueblePropietario/', views.CrearInmueblePropietario),
     path('MultaInmueble/', views.MultaInmueble),
     path('ImpuestoInmueble/', views.ImpuestoInmueble),
+    path('ImpuestoInmueble2023/', views.ImpuestoInmueble2023),
     path('ImpuestoInmueblePublic/', views.ImpuestoInmueblePublic),
+    path('ImpuestoInmueble2023Public/', views.ImpuestoInmueble2023Public),
+    path('ImpuestoInmueblePago/', views.ImpuestoInmueblePago),
     path('ValidarTransferencia/', views.ValidarTransferencia),
     path('ImpuestoInmuebleDetalle/', views.ImpuestoInmuebleDetalle),
     path('MuestraTasa', views.MuestraTasa),

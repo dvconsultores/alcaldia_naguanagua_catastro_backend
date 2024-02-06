@@ -139,7 +139,13 @@ class Zona(models.Model):
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Zona")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
-    
+
+class Categorizacion(models.Model):
+    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Categorizacion Ordenanza 2024")
+    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Categorizacion Ordenanza 2024")
+    def __str__(self):
+        return '%s - %s' % (self.codigo, self.descripcion)
+
 class Urbanizacion(models.Model):
     TIPO = (
         ('P', 'Publica'),
@@ -328,10 +334,20 @@ class Tipologia(models.Model):
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones en caso de no esar hablita por que cambio el valor a causa de una ordenanza nueva.")    
     FinesFiscales = models.BooleanField(default=False, help_text="True es para fines fiscales(para impresion de cedula catastral)")
-
     def __str__(self):
         return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s' % (self.id,self.zona,self.codigo, self.descripcion)
     
+class Tipologia_Categorizacion(models.Model):
+    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
+    descripcion = models.TextField(null=False,blank =False, help_text="descripcion de tipologia")
+    categorizacion = models.ForeignKey(Categorizacion,on_delete=models.PROTECT, null=True,blank =True,help_text="Categorizacion ORDENANZA 2024!! Base para calculo")
+    tarifa = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Tarifa o Alicuota")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones en caso de no esar hablita por que cambio el valor a causa de una ordenanza nueva.")    
+    FinesFiscales = models.BooleanField(default=False, help_text="True es para fines fiscales(para impresion de cedula catastral)")
+    def __str__(self):
+        return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s' % (self.id,self.categorizacion,self.codigo, self.descripcion)
+
 
     #!!! ojo es posible se elimine etste modelo!!!!!!!!!!!!!!!!!!!!!!
 class FinesFiscales(models.Model):
@@ -410,6 +426,7 @@ class Inmueble(models.Model):
     numero_piso = models.TextField(null=True,blank =True, help_text="numero_piso de expediente")
     telefono = models.TextField(null=True,blank =True, help_text="telefono de expediente")
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
+    categorizacion = models.ForeignKey(Categorizacion,on_delete=models.PROTECT, null=True,blank =True,help_text="Categorizacion !! Base para calculo")
     direccion = models.TextField(null=True,blank =True, help_text="direccion")
     referencia = models.TextField(null=True,blank =True, help_text="referencia")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
@@ -613,21 +630,58 @@ class InmuebleValoracionConstruccion(models.Model):
     depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
     valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
-
     #history = HistoricalRecords()
-
     def save(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
         super().save(*args, **kwargs)
-
         if user:
             history_instance = self.history.most_recent()  # Obtiene la instancia histórica
             history_instance.user = user
             history_instance.save()
-
     def __str__(self):
         return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id) 
+
+
+class InmuebleValoracionTerreno2024(models.Model):
+    inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
+    tipologia_categorizacion = models.ForeignKey (Tipologia_Categorizacion, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado ORDENANZA 2024")
+    tipo=models.ForeignKey(TipoInmueble, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")    
+    fines_fiscales	= models.ForeignKey (FinesFiscales,null=True,blank =True, on_delete=models.PROTECT,help_text="fines_fiscales asociado")
+    valor_unitario = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor_unitario")
+    area_factor_ajuste =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 del factor de ajuste")
+    forma_factor_ajuste	= models.ForeignKey (Forma,null=True,blank =True, on_delete=models.PROTECT,help_text="Forma del factor de ajuste")
+    valor_ajustado = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Ajustado")
+    valor_total = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Total")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
+    aplica= models.CharField(max_length=1, default='T', help_text='TERRENO')
+    def __str__(self):
+        return '%s - %s' % (self.inmueble.id, self.observaciones)
     
+class InmuebleValoracionConstruccion2024(models.Model): 
+    inmueblevaloracionterreno = models.ForeignKey (InmuebleValoracionTerreno2024, on_delete=models.PROTECT,help_text="Id inmueble_terreno asociado")
+    tipologia_categorizacion = models.ForeignKey (Tipologia_Categorizacion,null=True,blank =True, on_delete=models.PROTECT,help_text="tipologia asociado ORDENANZA 2024")
+    sub_utilizado = models.BooleanField(default=False, help_text="subutilizado si o no")
+    tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")    
+    fecha_construccion = models.DateField(blank=True,  null=True, help_text="fecha construccion")
+    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
+    valor = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
+    depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
+    valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
+    aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
+    #history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
+    def __str__(self):
+        return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id)
+
+
+
 class InmuebleUbicacion(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
     lindero_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
@@ -1077,6 +1131,7 @@ class IC_ImpuestoDescuento(models.Model):
     fechahasta  = models.DateField(blank=True,null=True, help_text="fecha Hasta donde valida si aplica el descuento")
     porcentaje =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Porcentaje de descuento") 
     tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado. Solo para Inmuebles. Si no tiene aplica a cualquier uso") 
+    tipologia_categorizacion = models.ForeignKey (Tipologia_Categorizacion, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado. Solo para Inmuebles. Si no tiene aplica a cualquier uso") 
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     prontopago = models.BooleanField(default=False, help_text="Es de pronto pago?, True si y valida la fecha con la fecha de sistema, false aplica por fecha y periododo")
     APLICA = (
@@ -1146,12 +1201,18 @@ class AE_ActividadEconomica(models.Model):
     """
     codigo = models.TextField(null=False,blank =False, unique=False,help_text="Código de clasificación actividad económica")
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
+    alicuota=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Alicuota") 
+    minimo_tributable_mensual=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="") 
+    minimo_tributable_anual=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="") 
+    porcentaje_maximo_ingresos=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, 
+                                                   help_text="este  impuesto no puede ser superior a este % de los ingresos brutos obtenidos en el mes") 
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     def __str__(self):
         return '%s - %s - %s' % (self.id,self.codigo,self.descripcion)
     
 #Maestro de específico de Actividades económicas    
 class AE_ActividadEconomicaDetalle(models.Model):
-    AE_actividadeconomica = models.ForeignKey (AE_ActividadEconomica, null=True,blank =True,on_delete=models.PROTECT,help_text="Id TipoFlujo")
+    AE_actividadeconomica = models.ForeignKey (AE_ActividadEconomica, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_ActividadEconomica")
     codigo = models.TextField(null=False,blank =False, unique=False,help_text="Código de clasificación actividad económica")
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
     alicuota=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Alicuota") 
@@ -1173,14 +1234,14 @@ class AE_Patente(models.Model):
         ('G', 'Genérica')
     )
     tipo_patente= models.CharField(max_length=1, choices=TIPO_PATENTE, default='T', help_text='Tpo de patente o licencia')  
-    numero_documento_representante  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de documento (RIF)")
-    nombre_representante  = models.TextField(null=False,blank =False, unique=False, help_text="Nombre o razon social")
-    cargo_representante  = models.TextField(null=False,blank =False, unique=False, help_text="Cargo")
+    numero_documento_representante  = models.TextField(null=False,blank =False,  help_text="Numero de documento (RIF)")
+    nombre_representante  = models.TextField(null=False,blank =False,  help_text="Nombre o razon social")
+    cargo_representante  = models.TextField(null=False,blank =False,  help_text="Cargo")
     telefono   = models.TextField(null=True,blank =True, help_text="Numero de teléfono secundario")
     periodo=models.ForeignKey(IC_Periodo, on_delete=models.PROTECT,help_text="Periodo de inscripcion")
     anio = models.PositiveIntegerField(null=True, blank=True,  help_text="Año")
-    horario_desde  = models.TextField(null=False,blank =False, unique=False, help_text="horario de trabajo desde formato militar")
-    horario_hasta= models.TextField(null=False,blank =False, unique=False, help_text="horario de trabajo hasta: formato militar")
+    horario_desde  = models.TextField(null=False,blank =False, help_text="horario de trabajo desde formato militar")
+    horario_hasta= models.TextField(null=False,blank =False,  help_text="horario de trabajo hasta: formato militar")
     nro_inmuebles=models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de inmuebles")
     nro_solicitud=models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de solicitud")
     nro_tomo=models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de tomo")
@@ -1188,15 +1249,16 @@ class AE_Patente(models.Model):
     habilitado = models.BooleanField(default=True, help_text="Licencia activa si o no") 
 
     def __str__(self):
-        return '%s - %s - %s - %s - %s' % (self.id,self.tipo_patente,self.numero,self.propietario.numero_documento, self.propietario.nombre) 
+        return '%s - %s - %s - %s - %s' % (self.id,self.tipo_patente,self.numero,self.nombre_representante, self.cargo_representante) 
 
 # Detalle de activiades econimicas por patente    
 class AE_Patente_ActividadEconomica(models.Model):
     AE_patente = models.ForeignKey (AE_Patente, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_patente")
-    AE_actividadeconomicadetalle = models.ForeignKey (AE_ActividadEconomicaDetalle, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_ActividadEconomicaDetalle")
+    AE_actividadeconomica = models.ForeignKey (AE_ActividadEconomica, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_ActividadEconomica")
     def __str__(self):
         return '%s - %s - %s - %s - %s' % (self.id,self.AE_patente.tipo_patente,self.AE_patente.numero,self.AE_patente.propietario.nombre,self.AE_actividadeconomicadetalle.descripcion)
-        
+
+
 class NotaCredito(models.Model):
     numeronotacredito  = models.TextField(null=False,blank =False, unique=True, help_text="Numero de nota de credito")
     propietario = models.ForeignKey (Propietario, on_delete=models.PROTECT,help_text="Id Propietario")
