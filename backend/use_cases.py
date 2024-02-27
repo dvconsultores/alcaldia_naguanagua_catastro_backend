@@ -18,6 +18,9 @@ from django.http import JsonResponse
 from datetime import datetime, timedelta, date
 from django.core.serializers.json import DjangoJSONEncoder
 import json
+import urllib.parse
+from django.http import HttpResponse
+
 
 # obtener la cantidad de dias que tiene un mes en un año especifico
 def obtener_cantidad_dias(year, month):
@@ -48,6 +51,7 @@ def generate_token(username,password):
                          'modulo':perfil.modulo.nombre,
                          'caja':perfil.caja,
                          'departamento':perfil.departamento.nombre,
+                         'finaliza_flujo':perfil.departamento.finaliza_flujo,
                          'aplica':perfil.departamento.aplica,
                          'permisos': dataPermisos
                         }, status=status.HTTP_200_OK)
@@ -290,6 +294,8 @@ def Crear_Pago(request):
                 InmuebleConstruccionNew.save()
                 InmuebleValoracionTerrenoNew=InmuebleValoracionTerreno(inmueble=InmuebleNew)
                 InmuebleValoracionTerrenoNew.save()
+                InmuebleValoracionTerreno2024New=InmuebleValoracionTerreno2024(inmueble=InmuebleNew)
+                InmuebleValoracionTerreno2024New.save()
                 InmuebleUbicacionNew=InmuebleUbicacion(inmueble=InmuebleNew)
                 InmuebleUbicacionNew.save()
                 InmuebleFaltanteNew=InmuebleFaltante(inmueble=InmuebleNew)
@@ -1865,6 +1871,51 @@ def Impuesto_Inmueble_Pago(request):
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
 
 
+
+def Certifica_Ficha(ficha):
+    if (ficha):
+        print('Certifica_Ficha',ficha)
+        if (ficha):
+            try:
+                inmueble=Inmueble.objects.get(numero_expediente=ficha) 
+                print('inmueble',inmueble)
+                propietarios=InmueblePropietarios.objects.filter(inmueble=inmueble) 
+                print(propietarios)
+                numero_expediente=inmueble.numero_expediente
+                html_content = f"<h2>Certificación de Cédula Catastral: </h2> <p> <b>Numero de Expediente: </b> {numero_expediente}</p>"
+                sector=inmueble.sector
+                urbanizacion=inmueble.urbanizacion
+                tipo=inmueble.tipo
+                if propietarios:
+                    html_content += "<b>Propietarios:</b2><ul>"
+                    for propietario in propietarios:
+                        html_content += f"<li>{propietario.propietario.numero_documento} {propietario.propietario.nombre}</li>"
+                    html_content += "</ul>"
+                else:
+                    html_content = "<p>No se encontraron propietarios para este inmueble.</p>"
+                if sector:
+                    html_content += f"<p><b>Sector: </b> {sector.codigo} </p>"
+                else:
+                    html_content += f"<p><b>Sin información de sector</p>"
+                if urbanizacion:
+                    html_content += f"<p><b>Urbanización: </b> {urbanizacion.nombre} </p>"
+                else:
+                    html_content += f"<p><b>Sin información de urbanización </p>"
+                if tipo:
+                    html_content += f"<p><b>Tipo Inmueble: </b> {tipo.descripcion} </p>"
+                else:
+                    html_content += f"<p> Sin información de Tipo Inmueble </p>"
+                return HttpResponse(html_content, content_type="text/html; charset=utf-8")
+
+            except Inmueble.DoesNotExist:
+                return Response('Insert NOT Ok, No existe el numero de expediente', status=status.HTTP_400_BAD_REQUEST)
+            except IntegrityError as e:
+                return Response('Insert NOT Ok,Error de integridad', status=status.HTTP_400_BAD_REQUEST)
+        return Response('Insert OK', status=status.HTTP_200_OK)
+
+
+
+
 #****************************************************************************************************
 #ORDENANZA 2024
 #**************************************************************************************************** 
@@ -3115,6 +3166,64 @@ def importar_datos_desde_excel(archivo,pestana):
     importar=pestana
    # ExcelDocumentLOG.objects.filter(codigo=importar).delete()
     excel_document=ExcelDocument.objects.get(title=archivo)
+    if importar=='comunidad':
+        Comunidad.objects.all().delete()
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='comunidad')
+        for index, row in datos_excel.iterrows():
+
+
+            print('comunidad',row['categoria'],'categoria',row['categoria'])
+
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = Comunidad.objects.get_or_create(
+                    comunidad = row['comunidad'],
+                    categoria = row['categoria'],
+                    clave = row['clave'], 
+                )
+                if not creado:
+                    print(f"El registro ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=mes, error=e)
+        print("Datos importados exitosamente.")
+    if importar=='inmueblecategorizacion':
+        InmuebleCategorizacion.objects.all().delete()
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='inmueblecategorizacion')
+        for index, row in datos_excel.iterrows():
+            print('id_inmueble',row['id_inmueble'])
+            try:
+                # Intenta obtener un registro existente o crear uno nuevo si no existe
+                creado = InmuebleCategorizacion.objects.get_or_create(
+                    id_inmueble = row['id_inmueble'],
+                    tipo_inmueble = row['tipo_inmueble'],
+                    id_ambito = row['id_ambito'],
+                    sector = row['sector'],
+                    id_manzana = row['id_manzana'],
+                    id_parcela = row['id_parcela'],
+                    id_sub_parcela = row['id_sub_parcela'],
+                    urb_barrio = row['urb_barrio'],
+                    con_residencial = row['con_residencial'],
+                    edificio = row['edificio'],
+                    avenida = row['avenida'],
+                    via = row['via'],
+                    referencia = row['referencia'],
+                    telefono = row['telefono'],
+                    observaciones = row['observaciones'],
+                    direccion = row['direccion'],
+                    total_construccion = row['total_construccion'],
+                    total_terreno = row['total_terreno'],
+                )
+                if not creado:
+                    print(f"El registro ya existe y no se creó uno nuevo.")
+                    
+            except IntegrityError as e:
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=mes, error=e)
+        print("Datos importados exitosamente.")
     if importar=='inicio':
         # asignar al control de correlativos el ultimo numero de expediemte importado
         max_numero_expediente = Inmueble.objects.exclude(numero_expediente__isnull=True).exclude(numero_expediente='').filter(numero_expediente__regex=r'^\d+$').aggregate(max_numero_expediente=Max('numero_expediente'))['max_numero_expediente']
@@ -3126,6 +3235,8 @@ def importar_datos_desde_excel(archivo,pestana):
     if importar=='vaciar':
         NotaCredito.objects.all().delete()
         print('NotaCredito')
+        AE_Patente_ActividadEconomica.objects.all().delete()
+        print('AE_Patente_ActividadEconomica')
         AE_Patente.objects.all().delete()
         print('AE_Patente')
         FlujoDetalle.objects.all().delete()
@@ -3914,7 +4025,7 @@ def importar_datos_desde_excel(archivo,pestana):
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
         print("val_terreno actualizados exitosamente.")
 
-    if importar=='val_terreno2024':
+    if importar=='val_terreno2024': 
         InmuebleValoracionTerreno2024.objects.all().delete()
         terreno = InmuebleValoracionTerreno.objects.all() #filter(tipologia__isnull=False)
         for detalle in terreno:
@@ -4126,10 +4237,10 @@ def importar_datos_desde_excel(archivo,pestana):
                 print(f"No existe el la tipologia {vUso}")
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe Tipologia') 
             except Categorizacion.DoesNotExist:
-                print(f"No existe el la tipologia {vUso}")
+                print(f"No existe el la Categorizacion {vUso}")
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe Tipologia') 
             except Tipologia_Categorizacion.DoesNotExist:
-                print(f"No existe el la tipologia {vUso}")
+                print(f"No existe el la Tipologia_Categorizacion {vUso}")
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe Tipologia_Categorizacion')           
             except IntegrityError as e:
                 # Maneja cualquier error de integridad si es necesario
@@ -4505,7 +4616,7 @@ def importar_datos_desde_excel_old(archivo,pestana):
         NotaCredito.objects.all().delete()
         print('NotaCredito')
         AE_Patente.objects.all().delete()
-        print('AE_Patente')
+        print('AE_Patente') 
         FlujoDetalle.objects.all().delete()
         print('FlujoDetalle')
         Flujo.objects.all().delete()
@@ -5071,7 +5182,6 @@ def importar_datos_desde_excel_old(archivo,pestana):
         #correlativo=Correlativo.objects.get(id=1)
         #correlativo.ExpedienteCatastro=int(max_numero_expediente)+1
         #correlativo.save()
-
         print("inmueble importados exitosamente.")
     if importar=='propietario':
         #ruta_archivo_excel = os.path.join('media', 'archivos_excel/maestros_dir_estructurada.xlsx')

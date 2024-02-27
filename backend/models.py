@@ -34,7 +34,9 @@ class Departamento(models.Model):
         ('P', 'Propaganda y publicidad'),
         ('X', 'Todos')
     )
-    aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')     
+    aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')   
+    finaliza_flujo = models.BooleanField(default=False, help_text="Es TRUE si finaliza flujos")
+  
     def __str__(self):
         return '%s' % (self.nombre)
 
@@ -151,27 +153,20 @@ class Urbanizacion(models.Model):
         ('P', 'Publica'),
         ('R', 'Privada'),
     )
-    codigo = models.TextField(null=True,blank =True, help_text="Codigo de la Urbanizacion")
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     nombre = models.TextField(null=False,blank =False, help_text="Nombre de la urbanizacion")
     tipo= models.CharField(max_length=1, choices=TIPO, default='P', help_text='tipo de la urbanizacion')
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
 
     def __str__(self):
-        return '%s - %s - %s' % (self.sector.codigo,self.sector.ambito.codigo,self.codigo)
+        return '%s - %s - %s' % (self.sector.codigo,self.sector.ambito.codigo)
     class Meta:
-        unique_together = ('sector', 'codigo')
-        ordering = ['sector','codigo']
+        unique_together = ('sector', 'nombre')
+        ordering = ['sector','nombre']
 
 class Manzana(models.Model):
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     codigo = models.TextField(null=False,blank =False, help_text="Codigo de la Manzana")
-    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
-    perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la manzana")
-    via_norte=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana norte",related_name='manzana_via_norte')
-    via_sur=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana sur",related_name='manzana_via_sur')
-    via_este=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana este",related_name='manzana_via_este')
-    via_oeste=models.ForeignKey(Calle,null=True,on_delete=models.PROTECT,help_text="Via cercana oeste",related_name='manzana_via_oeste')
     def __str__(self):
         return '%s - %s' % (self.sector.codigo,self.codigo)
     
@@ -180,57 +175,55 @@ class Manzana(models.Model):
         ordering = ['sector','codigo']
    
 class Parcela(models.Model):
-    manzana=models.ForeignKey(Manzana,on_delete=models.PROTECT,help_text="Manzana asociado")
+    sector=models.ForeignKey(Sector,null=True,blank =True,on_delete=models.PROTECT,help_text="Sector asociado.")
     codigo = models.TextField(null=False,blank =False, help_text="Codigo de la Parcela")
-    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Area en m2")
-    perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la Parcela")
     def __str__(self):
-        return '%s - %s - %s - %s' % (self.manzana.codigo,self.manzana.sector.codigo,self.manzana.sector.ambito.codigo,self.codigo)
+        return '%s - %s - %s ' % (self.sector.codigo,self.sector.ambito.codigo,self.codigo)
     class Meta:
-        unique_together = ('manzana', 'codigo')
-        ordering = ['manzana','codigo']
+        unique_together = ('sector', 'codigo')
+        ordering = ['sector','codigo'] 
 
 class SubParcela(models.Model):
     parcela=models.ForeignKey(Parcela,on_delete=models.PROTECT,help_text="Parcela asociado")
     codigo = models.TextField(null=False,blank =False, help_text="Codigo de la SubParcela")
-    area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
-    perimetro = models.TextField(null=True,blank =True, help_text="Perimetro de la SubParcela")
     def __str__(self):
-        return '%s - %s - %s - %s - %s' % (self.parcela.codigo,self.parcela.manzana.codigo,self.parcela.manzana.sector.codigo,self.parcela.manzana.sector.ambito.codigo,self.codigo)
+        return '%s - %s - %s - %s ' % (self.parcela.codigo,self.parcela.sector.codigo,self.parcela.sector.ambito.codigo,self.codigo)
     class Meta:
         unique_together = ('parcela', 'codigo')
         ordering = ['parcela','codigo']
 
 class ConjuntoResidencial(models.Model):
-    urbanizacion = models.ForeignKey(Urbanizacion,on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
-    codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo ConjuntoResidencial")
+    urbanizacion = models.ForeignKey(Urbanizacion,null=True,blank =True,on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
+    sector=models.ForeignKey(Sector,null=True,blank =True,on_delete=models.PROTECT,help_text="Sector asociado.")
+    #codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo ConjuntoResidencial")
     nombre = models.TextField(null=False,blank =False, help_text="nombre del conjunto residencial")
     def __str__(self):
-        return '%s -%s -%s' % (self.urbanizacion.codigo,self.codigo,self.nombre)
+        return '%s -%s -%s' % (self.sector.codigo,self.nombre)
     class Meta:
-        unique_together = ('urbanizacion', 'codigo')
-        ordering = ['urbanizacion','codigo']
+        unique_together = ('sector', 'nombre')
+        ordering = ['sector','nombre']
 
 
 class Edificio(models.Model):
-    conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
-    codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Edificio")
+    conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,blank =True, on_delete=models.PROTECT,help_text="conjunto residencial asociado")
+    urbanizacion = models.ForeignKey(Urbanizacion,null=True,blank =True, on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
+    #codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Edificio")
     nombre = models.TextField(null=False,blank =False, help_text="nombre del Edificio")
     def __str__(self):
-        return '%s -%s -%s' % (self.conjuntoresidencial.codigo,self.codigo,self.nombre)
+        return '%s -%s -%s' % (self.urbanizacion.nombre,self.nombre)
     class Meta:
-        unique_together = ('conjuntoresidencial', 'codigo')
-        ordering = ['conjuntoresidencial','codigo']
+        unique_together = ('urbanizacion', 'nombre')
+        ordering = ['urbanizacion','nombre']
     
 class Torre(models.Model):
     conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
-    codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Torre")
+    #codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Torre")
     nombre = models.TextField(null=False,blank =False, help_text="nombre de la Torre")
     def __str__(self):
-        return '%s -%s -%s' % (self.conjuntoresidencial.codigo,self.codigo,self.nombre)
+        return '%s -%s -%s' % (self.conjuntoresidencial.codigo,self.nombre)
     class Meta:
-        unique_together = ('conjuntoresidencial', 'codigo')
-        ordering = ['conjuntoresidencial','codigo']
+        unique_together = ('conjuntoresidencial', 'nombre')
+        ordering = ['conjuntoresidencial','nombre']
 
 class TipoInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo de inmueble")
@@ -346,7 +339,7 @@ class Tipologia_Categorizacion(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones en caso de no esar hablita por que cambio el valor a causa de una ordenanza nueva.")    
     FinesFiscales = models.BooleanField(default=False, help_text="True es para fines fiscales(para impresion de cedula catastral)")
     def __str__(self):
-        return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s' % (self.id,self.categorizacion,self.codigo, self.descripcion)
+        return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s - Alicuota:%s' % (self.id,self.categorizacion,self.codigo, self.descripcion, self.tarifa)
 
 
     #!!! ojo es posible se elimine etste modelo!!!!!!!!!!!!!!!!!!!!!!
@@ -444,7 +437,7 @@ class Inmueble(models.Model):
     def __str__(self):
         return '%s - %s' % (self.id,self.numero_expediente)
 
-class InmueblePropiedad(models.Model):
+class InmueblePropiedad(models.Model): 
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Sector asociado")
     tipo_documento = models.ForeignKey (TipoDocumento, null=True,blank =True,on_delete=models.PROTECT,help_text="tipo_documento asociado")
     tipo_especial = models.ForeignKey (TipoEspecial, null=True,blank =True,on_delete=models.PROTECT,help_text="tipo_especial asociado")
@@ -452,7 +445,7 @@ class InmueblePropiedad(models.Model):
     tipo_tenencia = models.ForeignKey (TipoTenencia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipo_tenencia asociado")
     fecha_vigencia = models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
     fecha_documento	= models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
-    numero_documento = models.TextField(null=True,blank =True,unique=True, help_text="Numero de expediente")
+    numero_documento = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     matricula_documento	= models.TextField(null=True,blank =True, help_text="Numero de expediente")
     anio_folio_documento = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     fecha_terreno = models.DateField(null=True,blank =True, help_text="fecha de inscripcion")
@@ -1254,9 +1247,9 @@ class AE_Patente(models.Model):
 # Detalle de activiades econimicas por patente    
 class AE_Patente_ActividadEconomica(models.Model):
     AE_patente = models.ForeignKey (AE_Patente, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_patente")
-    AE_actividadeconomica = models.ForeignKey (AE_ActividadEconomica, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_ActividadEconomica")
+    AE_actividadeconomica = models.ForeignKey (AE_ActividadEconomicaDetalle, null=True,blank =True,on_delete=models.PROTECT,help_text="Id AE_ActividadEconomica")
     def __str__(self):
-        return '%s - %s - %s - %s - %s' % (self.id,self.AE_patente.tipo_patente,self.AE_patente.numero,self.AE_patente.propietario.nombre,self.AE_actividadeconomicadetalle.descripcion)
+        return '%s - %s - %s - %s - %s' % (self.id,self.AE_patente.tipo_patente,self.AE_patente.numero,self.AE_patente.propietario.nombre,self.AE_actividadeconomica.descripcion)
 
 
 class NotaCredito(models.Model):
@@ -1325,3 +1318,35 @@ class CorridasBancarias(models.Model):
     def save(self, *args, **kwargs):
         self.fechacreacion = timezone.now()
         super().save(*args, **kwargs)
+
+class Comunidad(models.Model):
+    comunidad = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
+    categoria = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+
+
+class InmuebleCategorizacion(models.Model):
+    id_inmueble = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
+    tipo_inmueble = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    id_ambito = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    sector = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    id_manzana = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    id_parcela = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    id_sub_parcela = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    urb_barrio = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    con_residencial = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    edificio = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    avenida = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    via = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    referencia = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    telefono = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    observaciones = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    direccion = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    total_construccion = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    total_terreno = models.TextField( help_text="numero_civico de expediente")
+    comunidad = models.ForeignKey(Comunidad, null=True,blank =True,on_delete=models.PROTECT,help_text="comunidad")
+
+
+
+
+

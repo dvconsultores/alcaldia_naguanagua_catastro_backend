@@ -125,6 +125,9 @@ urlpatterns = [
     path('ImpuestoInmueble2023/', views.ImpuestoInmueble2023),
     path('ImpuestoInmueblePublic/', views.ImpuestoInmueblePublic),
     path('ImpuestoInmueble2023Public/', views.ImpuestoInmueble2023Public),
+
+    path('CertificaFicha/', views.CertificaFicha),
+
     path('ImpuestoInmueblePago/', views.ImpuestoInmueblePago),
     path('ValidarTransferencia/', views.ValidarTransferencia),
     path('ImpuestoInmuebleDetalle/', views.ImpuestoInmuebleDetalle),

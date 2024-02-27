@@ -8,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
 from django.db.models import Q
+from django.http import JsonResponse
+import json
 
 
 
@@ -179,7 +181,21 @@ def ImpuestoInmueble2023Public(request):
 @permission_classes([AllowAny])
 def ImpuestoInmueblePago(request):
     datos=request.data
-    return Impuesto_Inmueble_Pago(datos)    
+    return Impuesto_Inmueble_Pago(datos)  
+  
+# API PUBLICA!!!!!!!!!!!!
+@api_view(["GET"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def CertificaFicha(request):
+    datos = request.query_params
+    data_string = datos.get('data')  # Obtenemos la cadena JSON
+    data_json = json.loads(data_string)  # Convertimos la cadena JSON a un diccionario
+    ficha = data_json.get('ficha')  # Obtenemos el valor de "ficha" del diccionario
+    print('CertificaFicha', ficha)
+    return Certifica_Ficha(ficha)
+
+
 
 @api_view(["POST"])
 @csrf_exempt
@@ -201,6 +217,8 @@ def MuestraTasa(request):
 def MuestraTasaNew(request):
     datos=request.data
     return Muestra_Tasa_New(datos)
+
+
 
 #######################Api PUBLICA
 @api_view(["POST"])
@@ -406,7 +424,8 @@ def filtrar_inmuebles(request):
 
     # Convierte los resultados a JSON
 
-    data = [{'id': prop.id, 
+    data = [
+        {'id': prop.id, 
             'numero_expediente': prop.numero_expediente,
             'fecha_inscripcion': prop.fecha_inscripcion,
             'numero_civico': prop.numero_civico,
@@ -421,37 +440,31 @@ def filtrar_inmuebles(request):
             'habilitado': prop.habilitado,
             #'periodo': prop.periodo,
             'anio ': prop.anio
-           } for prop in inmuebles_filtrados]
+        } 
+        for prop in inmuebles_filtrados
+        ]
 
     return JsonResponse(data, safe=False)
 
 @csrf_exempt
 def filtrar_patentes(request):
     numero_expediente = request.GET.get('numero_expediente', None)
-
-    #if numero_expediente:
-    inmuebles_filtrados = AE_Patente.objects.filter(numero=numero_expediente)
-    #else:
-    #    inmuebles_filtrados = Inmueble.objects.all()
-
-    # Convierte los resultados a JSON
+    patentes_filtrados = AE_Patente.objects.filter(numero=numero_expediente)
 
     data = [{'id': prop.id, 
-            'numero_expediente': prop.numero_expediente,
-            'fecha_inscripcion': prop.fecha_inscripcion,
-            'tipo': prop.tipo,
-            'status': prop.status,
-            'numero_civico': prop.numero_civico,
-            'numero_casa': prop.numero_casa,
-            'numero_piso': prop.numero_piso,
-            'telefono': prop.telefono,
-            'direccion': prop.direccion, 
-            'referencia': prop.referencia,
-            'observaciones': prop.observaciones,
-            'inscripcion_paga': prop.inscripcion_paga,
-            'habilitado': prop.habilitado,
-            'anio ': prop.anio
-           } for prop in inmuebles_filtrados]
+            'numero':prop.numero,
+            'tipo_patente':prop.tipo_patente,
+            'numero_documento_representante':prop.numero_documento_representante,
+            'nombre_representante':prop.nombre_representante,
+            'cargo_representante':prop.cargo_representante,
+            'telefono':prop.telefono,
+            'horario_desde':prop.horario_desde,
+            'horario_hasta':prop.horario_hasta,
+            'nro_inmuebles':prop.nro_inmuebles,
+            'nro_solicitud':prop.nro_solicitud,
+            'nro_tomo':prop.nro_tomo,
+            'habilitado':prop.habilitado
+           } for prop in patentes_filtrados]
 
     return JsonResponse(data, safe=False)
 
@@ -1106,13 +1119,21 @@ class AE_PatenteViewset(MultiSerializerViewSet):
     serializers = {
         'default': AE_PatenteSerializer
     }
-
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'propietario':['exact'],
+    }
 
 class AE_Patente_ActividadEconomicaViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
     queryset=AE_Patente_ActividadEconomica.objects.all()
     serializers = {
         'default': AE_Patente_ActividadEconomicaSerializer
+    }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'AE_patente':['exact'],
+      'AE_actividadeconomica':['exact'],
     }
 
 class TasaInteresViewset(MultiSerializerViewSet):
@@ -1179,19 +1200,19 @@ class CorridasBancariasViewset(MultiSerializerViewSet):
       'bancocuenta':['exact'],
       'situado':['exact'],
     }
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
+class ComunidadViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=Comunidad.objects.all()
+    serializers = {
+        'default': ComunidadSerializer
+    }
 
-#class Viewset(MultiSerializerViewSet):
-#    permission_classes = [IsAuthenticated]
-#    queryset=.objects.all()
-#    serializers = {
-#        'default': Serializer
-#    }
+class InmuebleCategorizacionViewset(MultiSerializerViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset=InmuebleCategorizacion.objects.all()
+    serializers = {
+        'default': InmuebleCategorizacionSerializer
+    }
 
 #class Viewset(MultiSerializerViewSet):
 #    permission_classes = [IsAuthenticated]
