@@ -36,6 +36,7 @@ class Departamento(models.Model):
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')   
     finaliza_flujo = models.BooleanField(default=False, help_text="Es TRUE si finaliza flujos")
+    imprime_recibo_entrega = models.BooleanField(default=False, help_text="Es TRUE si Imprime recibo de entrega a contribuyente (para expediente)")
   
     def __str__(self):
         return '%s' % (self.nombre)
@@ -117,11 +118,10 @@ class Calle(models.Model):
         ('3', 'Colateral'),
         ('4', 'Arterial')
     )
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la calle")
     nombre = models.TextField(null=False,blank =False, unique=False, help_text="Nombre de la calle")
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='tipo calle')
     def __str__(self):
-        return '%s - %s' % (self.codigo, self.nombre)
+        return '%s - %s' % (self.tipo, self.nombre)
     
 class Avenida(models.Model):
     TIPO = (
@@ -130,11 +130,10 @@ class Avenida(models.Model):
         ('3', 'Colateral'),
         ('4', 'Arterial')
     )
-    codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la avenida")
     nombre = models.TextField(null=False,blank =False, help_text="Nombre de la avenida")
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='tipo de avenida')
     def __str__(self):
-        return '%s - %s' % (self.codigo, self.nombre)
+        return '%s - %s' % (self.tipo, self.nombre)
     
 class Zona(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Zona")
@@ -159,7 +158,7 @@ class Urbanizacion(models.Model):
     zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
 
     def __str__(self):
-        return '%s - %s - %s' % (self.sector.codigo,self.sector.ambito.codigo)
+        return '%s -%s - %s' % (self.nombre,self.sector.codigo,self.sector.ambito.codigo)
     class Meta:
         unique_together = ('sector', 'nombre')
         ordering = ['sector','nombre']
@@ -198,7 +197,7 @@ class ConjuntoResidencial(models.Model):
     #codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo ConjuntoResidencial")
     nombre = models.TextField(null=False,blank =False, help_text="nombre del conjunto residencial")
     def __str__(self):
-        return '%s -%s -%s' % (self.sector.codigo,self.nombre)
+        return '%s -%s' % (self.sector.codigo,self.nombre) 
     class Meta:
         unique_together = ('sector', 'nombre')
         ordering = ['sector','nombre']
@@ -207,20 +206,21 @@ class ConjuntoResidencial(models.Model):
 class Edificio(models.Model):
     conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,blank =True, on_delete=models.PROTECT,help_text="conjunto residencial asociado")
     urbanizacion = models.ForeignKey(Urbanizacion,null=True,blank =True, on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
-    #codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Edificio")
     nombre = models.TextField(null=False,blank =False, help_text="nombre del Edificio")
+
+
     def __str__(self):
-        return '%s -%s -%s' % (self.urbanizacion.nombre,self.nombre)
+        return '%s -%s' % (self.urbanizacion.nombre,self.nombre)
+    
     class Meta:
         unique_together = ('urbanizacion', 'nombre')
         ordering = ['urbanizacion','nombre']
     
 class Torre(models.Model):
     conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
-    #codigo = models.TextField(null=False,blank =False,  default='S-N',help_text="Codigo Torre")
     nombre = models.TextField(null=False,blank =False, help_text="nombre de la Torre")
     def __str__(self):
-        return '%s -%s -%s' % (self.conjuntoresidencial.codigo,self.nombre)
+        return '%s -%s' % (self.conjuntoresidencial.nombre,self.nombre)
     class Meta:
         unique_together = ('conjuntoresidencial', 'nombre')
         ordering = ['conjuntoresidencial','nombre']
@@ -395,10 +395,15 @@ class IC_Periodo(models.Model):
     def __str__(self):
         return '%s - %s- %s' % (self.id,self.periodo,self.aplica)
 
+class Comunidad(models.Model):
+    comunidad = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
+    categoria = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
 
 class Inmueble(models.Model):
     numero_expediente = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente.Correlativo.ExpedienteCatastro")
     fecha_inscripcion = models.DateField(blank=True,null=True, help_text="fecha de inscripcion")
+    fecha_creacion = models.DateField(blank=True,null=True, help_text="fecha de creacion en el modelo")
     tipo=models.ForeignKey(TipoInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="TipoInmueble asociado")
     status=models.ForeignKey(EstatusInmueble,on_delete=models.PROTECT,null=True,blank =True,help_text="status asociado")
     ambito=models.ForeignKey(Ambito,on_delete=models.PROTECT,null=True,blank =True,help_text="ambito asociado")
@@ -430,6 +435,7 @@ class Inmueble(models.Model):
     anio = models.PositiveIntegerField(null=True, blank=True,  help_text="Año que adeuda")
     ReportePdfDesincorporacion = models.FileField(upload_to='Desincorporacion/',help_text="PDF Desincorporacion", null=True,blank =True)
     ReportePdfCedulaCatastral = models.FileField(upload_to='CedulaCatastral/',help_text="PDF Cedula catastral", null=True,blank =True)
+    comunidad = models.ForeignKey(Comunidad, null=True,blank =True,on_delete=models.PROTECT,help_text="comunidad")
 
 
     #history = HistoricalRecords()
@@ -783,11 +789,9 @@ class TipoFlujo(models.Model):
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')
     carandai = models.BooleanField(default=True, help_text="genera flujo?")
- 
-
-    
+    crea_expediente = models.BooleanField(default=False, help_text="genera un nuevo numero de expediente?")
     def __str__(self):
-        return '%s - %s - %s - %s - %s' % (self.id,self.codigo,self.descripcion,self.aplica,self.vencimiento)
+        return '%s - %s - %s - %s - %s - crea flujo:%s - crea expediente:%s' % (self.id,self.codigo,self.descripcion,self.aplica,self.vencimiento,self.carandai,self.crea_expediente)
     
 class TipoFlujoDetalle(models.Model):
     tipoflujo = models.ForeignKey (TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Id TipoFlujo")
@@ -949,6 +953,8 @@ class Flujo(models.Model):
         ('2', 'Cerrado'),
     )
     estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado dela solicitud')
+    ReportePdf = models.FileField(upload_to='FlujoEntregaDocumentos/',help_text="PDF soporte entrega de documentos", null=True,blank =True)
+
     def __str__(self):
         return '%s - %s - %s' % (self.inmueble,self.pagoestadocuenta,self.estado)
     def save(self, *args, **kwargs):
@@ -968,7 +974,9 @@ class FlujoDetalle(models.Model):
         ('7', 'Enviado'),
         ('8', 'Finalizado'),
         ('9', 'Fin de la Solicitud'),
-        ('0', 'Pendiente por Re-Enviar')
+        ('0', 'Pendiente por Re-Enviar'),
+        ('A', 'Imprimir Soporte Entrega Expediente')
+
     )
     TAREA = (
         ('1', 'Pendiente por Recibir'),
@@ -993,7 +1001,7 @@ class FlujoDetalle(models.Model):
     
     inicio_proceso_usuario  = models.ForeignKey(User,blank=True,null=True, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_inicio_proceso_usuario')
     inicio_proceso_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha Inicio de proceso")
-    
+   
     procesa_usuario  = models.ForeignKey(User,blank=True,null=True, on_delete=models.CASCADE, help_text="usuario asociado",related_name='FujoDetalle_procesa_usuario')
     procesa_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN de proceso")
     
@@ -1318,11 +1326,6 @@ class CorridasBancarias(models.Model):
     def save(self, *args, **kwargs):
         self.fechacreacion = timezone.now()
         super().save(*args, **kwargs)
-
-class Comunidad(models.Model):
-    comunidad = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
-    categoria = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
-    clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
 
 
 class InmuebleCategorizacion(models.Model):

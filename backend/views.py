@@ -182,6 +182,13 @@ def ImpuestoInmueble2023Public(request):
 def ImpuestoInmueblePago(request):
     datos=request.data
     return Impuesto_Inmueble_Pago(datos)  
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def DatosInmueblesPublic(request):
+    datos=request.data
+    return Datos_Inmuebles_Public(datos)
   
 # API PUBLICA!!!!!!!!!!!!
 @api_view(["GET"])

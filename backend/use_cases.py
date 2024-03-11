@@ -52,6 +52,7 @@ def generate_token(username,password):
                          'caja':perfil.caja,
                          'departamento':perfil.departamento.nombre,
                          'finaliza_flujo':perfil.departamento.finaliza_flujo,
+                         'imprime_recibo_entrega':perfil.departamento.imprime_recibo_entrega,
                          'aplica':perfil.departamento.aplica,
                          'permisos': dataPermisos
                         }, status=status.HTTP_200_OK)
@@ -83,13 +84,16 @@ def Crear_Estado_Cuenta(request):
     if (request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
+        nNumero=correlativo.NumeroEstadoCuenta
+        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
+        correlativo.save()
         valor_petro=TasaBCV.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(codigo=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         Cabacera=EstadoCuenta(
-            numero=correlativo.NumeroEstadoCuenta,
+            numero=nNumero,
             tipoflujo=tipoflujo,
             inmueble=inmueble,
             fecha=str(date.today()),
@@ -111,8 +115,7 @@ def Crear_Estado_Cuenta(request):
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
-        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
-        correlativo.save()
+
         result = {
         "documento": Cabacera.numero,
         "id": Cabacera.id
@@ -130,6 +133,9 @@ def Crear_Liquidacion(request):
     if (request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
+        nNumero=correlativo.NumeroLiquidacion
+        correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
+        correlativo.save()
         valor_petro=TasaBCV.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(id=request['flujo'])
@@ -137,7 +143,7 @@ def Crear_Liquidacion(request):
         propietario = Propietario.objects.get(id=request['propietario'])
         estadocuenta = None if request['estadocuenta']==None else EstadoCuenta.objects.get(id=request['estadocuenta'])
         Cabacera=Liquidacion(
-            numero=correlativo.NumeroLiquidacion,
+            numero=nNumero,
             tipoflujo=tipoflujo,
             estadocuenta=estadocuenta,
             inmueble=inmueble,
@@ -160,8 +166,6 @@ def Crear_Liquidacion(request):
             )
             Detalle.save()
             # actualizamos 
-        correlativo.NumeroLiquidacion=correlativo.NumeroLiquidacion+1
-        correlativo.save()
         result = {
         "documento": Cabacera.numero,
         "id": Cabacera.id,
@@ -212,9 +216,7 @@ def Crear_Pago(request):
                 oPeriodoPago= tPeriodo.get(periodo=1)
                 AnioPago=AnioPago+1
             else:
-                oPeriodoPago= tPeriodo.get(periodo=oPeriodoPago.periodo+1)
-
-            
+                oPeriodoPago= tPeriodo.get(periodo=oPeriodoPago.periodo+1)          
             InmueblePago=Inmueble.objects.get(id=oIC_Impuesto.estadocuenta.inmueble.id)
             InmueblePago.anio=AnioPago
             InmueblePago.periodo=oPeriodoPago
@@ -277,10 +279,15 @@ def Crear_Pago(request):
         # solo aplica cuando la peticion viene de catastro y es una de esas 3 opciones
         if liquidacion.tipoflujo.carandai:
             #solo aplica cuanbdo es inscripcion, el inmueble se debe crear nuevo
-            if liquidacion.tipoflujo.codigo=='1':
+            if liquidacion.tipoflujo.crea_expediente:
                 #crear inmuebles
+                estatusinmueble=EstatusInmueble.objects.get(codigo='99')
+                print(estatusinmueble)
+
                 InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro,
-                                     fecha_inscripcion=date.today())
+                                     #fecha_inscripcion=date.today(),
+                                     fecha_creacion=date.today(),
+                                     status=estatusinmueble)
                 InmuebleNew.save()
                 InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
                                                             propietario=propietario,
@@ -1439,6 +1446,67 @@ def Impuesto_Inmueble2023_Public(request):
     else:
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
 
+def Datos_Inmuebles_Public(request):
+    if (request):
+        data = []
+        aPropietario = []
+        if (request['inmueble']):
+            not_process=False
+            try:
+                oInmueble = Inmueble.objects.get(numero_expediente=request['inmueble'], status__inmueble_activo=True)
+                terreno =      InmuebleValoracionTerreno.objects.get(inmueble__numero_expediente=request['inmueble'])
+                construccion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
+                if terreno:
+                    total_area_terreno = terreno.area 
+                else:
+                    total_area_terreno = 0
+                if construccion:
+                    total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
+                else:
+                    total_area_construccion = 0
+                if oInmueble.categorizacion:
+                    categoria=oInmueble.categorizacion.codigo
+                else:
+                    categoria='SIN CATEGORIZACION!!!'
+
+                dAnio=oInmueble.anio        # Año que incia la deuda
+                dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
+                oPropietario = InmueblePropietarios.objects.filter(inmueble__numero_expediente=request['inmueble'])
+            except Inmueble.DoesNotExist:
+                 not_process=True
+            if not_process:
+                return Response('Inmueble con estatus por procesar en catastro', status=status.HTTP_400_BAD_REQUEST)
+            else:
+                if oPropietario:
+                    for propietario in oPropietario:
+                        inmueblepropietarios={
+                            'Documento':propietario.propietario.numero_documento,
+                            'Nombre':propietario.propietario.nombre,
+                            'Telefono':propietario.propietario.telefono_principal,
+                            'email':propietario.propietario.email_principal,
+                            'direccion':propietario.propietario.direccion,
+                        }
+                        aPropietario.append(inmueblepropietarios)
+                Impuesto={
+                    'expediente':oInmueble.numero_expediente,
+                    'zona':oInmueble.zona.codigo,
+                    'categoria':categoria,
+                    'Anio':dAnio,
+                    'Periodo':dPeriodo,
+                    'AreaTerreno':total_area_terreno,
+                    'AreaConstruccion':total_area_construccion,
+                }
+                datos={
+                    'cabacera':Impuesto,
+                    'propietarios':aPropietario,
+                }
+                data.append(datos)
+            return Response(data, status=status.HTTP_200_OK)
+        return Response('Insert OK', status=status.HTTP_200_OK)
+    else:
+        return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+
+
 def Impuesto_Inmueble_Pago(request):
     if (request):
         if (request['inmueble']):
@@ -1476,443 +1544,218 @@ def Impuesto_Inmueble_Pago(request):
 
 
 
-    if (request):
-        if (request['inmueble']):
-            not_process=False
-            try:
-                oInmueble = Inmueble.objects.get(numero_expediente=request['inmueble'], status__inmueble_activo=True)
-            except Inmueble.DoesNotExist:
-                 not_process=True
-            if not_process:
-                return Response('Inmueble con estatus por procesar en catastro', status=status.HTTP_400_BAD_REQUEST)
-            else:
-                ## esto contruye la tabla de periodos por inmueble para mantener el historico
-                # esto permite saber si esta pendientes por cancelar
-                ############## inicio
-                today = date.today()
-                #Zona = Urbanizacion.objects.get(id=oInmueble.urbanizacion.id)
-                Zona = oInmueble
-                oPeriodo = IC_Periodo.objects.filter(aplica='C')
-                ano_fin= 2023 #request['anio']  #today.year
-                print('oInmueble.anio:',oInmueble.anio)
-                if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
-                    oInmueble.anio=oInmueble.fecha_inscripcion.year
-                    oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
-                    oInmueble.save()
-                    dAnio=oInmueble.anio
-                    dPeriodo=oInmueble.periodo.periodo 
-                    print('creadooo')
-                dAnio=oInmueble.anio        # Año que incia la deuda
-                dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
-                anioini=dAnio
-                print('AÑO INICIO DEUDAAAAAA1111111111',anioini)
-                if anioini<((today.year+1)-7):
-                    anioini=((today.year+1)-7)
-                    dAnio=anioini
-                print('AÑO INICIO DEUDAAAAAA2222222222',anioini)  
-                mesini=dPeriodo
-                primero=True
-                print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
-
-                IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
-                                                        #por que este dato lo puede cambiar hacienda con acceso.borrar=true
-                while dAnio<=ano_fin: # crea la cxc de periodos pendientes
-                    if primero:
-                        oPeriodo = IC_Periodo.objects.filter(aplica='C',periodo__gte=dPeriodo)
-                        primero=False
-                    else:
-                        oPeriodo = IC_Periodo.objects.filter(aplica='C')
-                    for aPeriodo in oPeriodo:
-                        existe=IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble,periodo=aPeriodo,anio=dAnio).count()
-                        if existe == 0: # si no existe, crea el periodo
-                            ic_impuestoperiodo=IC_ImpuestoPeriodo(
-                                inmueble=oInmueble,
-                                periodo=aPeriodo,
-                                anio=dAnio
-                            )
-                            ic_impuestoperiodo.save()
-                    dAnio=dAnio+1
-                ############# fin
-
-                #Periodos Pendientes por Cobrar al Inmueble
-                oImpuestoPeriodo = IC_ImpuestoPeriodo.objects.filter(inmueble__numero_expediente=request['inmueble']).order_by('anio', 'periodo')
-                if oImpuestoPeriodo:
-                    # se maneja ahora un metepo por año por rso se quita eso aca
-                    #oBaseCalculo = UnidadTributaria.objects.get(habilitado=True)
-                    #baseCalculoBs= float(oBaseCalculo.monto)
-
-                    #Crear lista con los años presentes en la cxc
-                    oAnio = IC_ImpuestoPeriodo.objects.filter(inmueble__numero_expediente=request['inmueble']).values('anio').distinct().order_by('anio')
-                    maximo_ano = oAnio.aggregate(Max('anio'))['anio__max']
-                    minimo_ano = oAnio.aggregate(Min('anio'))['anio__min']
-                    
-                    # Contar la cantidad de periodos configurados para C atastro
-                    tPeriodo= IC_Periodo.objects.filter(aplica='C')
-                    CountPeriodo= tPeriodo.count()
-                    terreno =      InmuebleValoracionTerreno.objects.get(inmueble__numero_expediente=request['inmueble'])
-                    construccion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
-                    if terreno:
-                        total_area_terreno = terreno.area 
-                    else:
-                        total_area_terreno = 0
-
-                    if construccion:
-                        total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
-                    else:
-                        total_area_construccion = 0
-
-                    if (total_area_construccion > total_area_terreno) or (total_area_terreno==0 and total_area_construccion>0):
-                        ocupacion=construccion
-                    elif total_area_terreno>0 and total_area_construccion==0:
-                        ocupacion =  InmuebleValoracionTerreno.objects.filter(inmueble__numero_expediente=request['inmueble'])
-                        ocupacion = list(ocupacion) 
-                    else:
-                        ocupacion=construccion
-                        if terreno: # hay inmuebles que NO TIENEN TERRENO, PARA ESE CASO NO ENTRA, SOLO TOMA LA CONTRUCCION
-                            if total_area_construccion < total_area_terreno:
-                                # Crear una nueva instancia de InmuebleValoracionConstruccion sin guardar en la base de datos
-                                
-                                nuevo_objeto_construccion = InmuebleValoracionConstruccion(
-                                    tipologia=terreno.tipologia,
-                                    tipo=terreno.tipo,
-                                    area=terreno.area-total_area_construccion,
-                                    aplica=terreno.aplica,
-                                    inmueblevaloracionterreno=terreno  # Asignar la relación con el objeto terreno
-                                )
-                                # Agregar el nuevo objeto a la variable "ocupacion"
-                                ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
-                                ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
-                            # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    print('ocupacion',ocupacion)
-                    ZonaInmueble=Zona.zona
-                    oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
-
-                    #Ubicar la fecha de compra
-                    ##oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble__numero_expediente=request['inmueble'])
-                    ##fechaCompra=oPropietario.fecha_compra
-                    ##diferencia=today-fechaCompra
-                    ##print(fechaCompra,today,diferencia.days)
-                    # valida si aplica descuentos por pronto pago.
-                    oDescuento=0 # Bandera que valida si aplica descuento o no
-                    try:
-                        oDescuento=IC_ImpuestoDescuento.objects.filter(habilitado=True,aplica='C')
-                    except:
-                        oDescuento=0
-                    bMulta=True
-                    oCargos=IC_ImpuestoCargos.objects.filter(habilitado=True,aplica='C')
-                    fMulta=float(oCargos.get(codigo='multa').porcentaje)
-                    fRecargo=float(oCargos.get(codigo='recargo').porcentaje)
-                    tBaseMultaRecargoInteres=0
-                    tMulta=0
-                    tRecargo=0
-                    tInteres=0
-                    tTotal=0
-                    tTotalMora=0
-                    tDescuento=0
-                    while minimo_ano<=maximo_ano:
-                        oBaseCalculo = UnidadTributaria.objects.get(habilitado=True,fecha__year=minimo_ano)
-                        baseCalculoBs= float(oBaseCalculo.monto)
-                        #para los años menores al actual, toma los periodos pendientes segun el historico
-                        PeriodosCxc=oImpuestoPeriodo.filter(anio=minimo_ano).order_by('periodo')
-                        if minimo_ano==today.year:
-                            # para el año en curso, solo procesa hasta el periodo que el contribuyente decide cancelar
-                            PeriodosCxc=oImpuestoPeriodo.filter(anio=minimo_ano,periodo__lte=4).order_by('periodo')
-
-                        iAlicuota=(1/CountPeriodo)
-                        for aPeriodo in PeriodosCxc:
-                            if minimo_ano==today.year:
-                                #ARTÍCULO 50: En el caso del pago fraccionado previsto en el artículo anterior los pagos se harán
-                                #trimestralmente, salvo las excepciones previstas en esta Ordenanza la primera porción se pagará dentro del
-                                #plazo concedido para hacer la declaración prevista en el artículo 31 y previamente a la presentación de
-                                #ésta. Las tres (3) restantes porciones del pago fraccionado se pagará dentro del primer (01) mes contado a
-                                #partir de la fecha en que comience cada uno de los trimestres subsiguientes al primero. Los trimestres
-                                #comenzarán a contarse desde el 1 ° de enero de cada año.
-                                fDiasGracia=tPeriodo.get(periodo=aPeriodo.periodo.periodo)
-                                # Para el año en curso, evaluamos si dentro del rango de periodos va a cancelar, 
-                                # existe un periodo que sumando los dias de gracia al inicio del periodo, la fecha de pago esta contenida
-                                if today>= fDiasGracia.fechadesde and  \
-                                today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
-                                    # La fecha actual está entre las fechas del modelo
-                                    print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
-                                    bMulta=False
-                                else:
-                                    if today<= fDiasGracia.fechadesde and  \
-                                        today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
-                                        # La fecha actual es menor a las fechas del modelo (periodos proximos)
-                                        print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
-                                        bMulta=False
-
-                                    # La fecha actual NO está entre las fechas del modelo
-                                    print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
-                            for dato in ocupacion:
-                                #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
-                                #posesión por 5 años o más por el mismo propietario
-                                if dato.tipologia.codigo=='17' and ZonaInmueble.codigo=='1':
-                                    mesesTrascurridos = meses_transcurridos(fechaCompra, today)
-                                    if mesesTrascurridos>=60: # tiene 5 años de antiguedad
-                                        Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
-                                    else:
-                                        # si no se cumple aplico Otros Usos=5
-                                        Alicuota=float(oTipologia.get(codigo='15').tarifa)
-                                else:
-                                    Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
-                                Monto=float(dato.area)*(Alicuota*iAlicuota)*baseCalculoBs
-                                mDescuento=0
-                                ppDescuento=0
-                                if oDescuento: # and minimo_ano==today.year:
-                                    # Valida que aplique descuento solamente con el año actual  !! inactivo. aplica descuento segun la tabla
-                                    # Aplica descuentos generales
-                                    aPeriodoMesDesde=aPeriodo.periodo.fechadesde.month
-                                    aPeriodoMesHasta=aPeriodo.periodo.fechahasta.month
-                                    aPeriodoDiaDesde=aPeriodo.periodo.fechadesde.day
-                                    aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
-                                    try:
-                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=False)
-                                        print('descuento',pDescuento)
-                                        print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
-                                        registros_validos = pDescuento.filter(
-                                            fechadesde__year__lte=minimo_ano,
-                                            fechahasta__year__gte=minimo_ano,
-                                            fechadesde__month__lte=aPeriodoMesDesde,
-                                            fechahasta__month__gte=aPeriodoMesHasta,
-                                            fechadesde__day__lte=aPeriodoDiaDesde,
-                                            fechahasta__day__gte=aPeriodoDiaHasta) 
-                                        mDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
-                                    except:
-                                        mDescuento=0
-                                    for DescuentoAplicado in registros_validos:
-                                        ImpuestoDetalleDescuentos={
-                                            'IC_impuestodetalle':'',
-                                            'IC_impuestodescuento':DescuentoAplicado.id,
-                                            'fechadesde':DescuentoAplicado.fechadesde,
-                                            'fechahasta':DescuentoAplicado.fechahasta,
-                                            'descripcion':DescuentoAplicado.descripcion,
-                                            'base':Monto,
-                                            'descuento':float(DescuentoAplicado.porcentaje),
-                                            'total':Monto*(float(DescuentoAplicado.porcentaje/100)),
-                                            'IC_impuestoperiodo':aPeriodo.periodo.id,
-                                            'uso_id':dato.tipologia.id,
-                                            'uso_descripcion':dato.tipologia.descripcion,
-                                            'apica':dato.aplica,
-                                            'anio': minimo_ano,
-                                            'periodo': aPeriodo.periodo.periodo,
-                                        }
-                                        aDescuento.append(ImpuestoDetalleDescuentos)
-
-                                    # Aplica descuentos prontopago
-                                    try:
-                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=True)
-                                        print('descuento Pronto Pago',pDescuento)
-                                        print('fecha actual',today.year,today.month,today.day) 
-                                        print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
-                                        registros_validos = pDescuento.filter(
-                                            #fechadesde__year__lte=today.year,   # < =
-                                            #fechahasta__year__gte=today.year,   # > =
-                                            fechadesde__year=minimo_ano,
-                                            fechadesde__month__lte=today.month, # < =
-                                            fechahasta__month__gte=today.month, # > =
-                                            fechadesde__day__lte=today.day,     # < =
-                                            fechahasta__day__gte=today.day)     # > =
-                                        print('registros_validos pronto pago 1',registros_validos)
-                                        registros_validos2 = registros_validos.filter(
-                                            fechadesde__year__lte=minimo_ano,       # < =
-                                            fechahasta__year__gte=minimo_ano,       # > =
-                                            fechadesde__month__lte=aPeriodoMesDesde,# < =
-                                            fechahasta__month__gte=aPeriodoMesDesde,# > =
-                                            fechadesde__day__lte=aPeriodoDiaDesde,  # < =
-                                            fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos2)
-                                        ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
-                                    except:
-                                        ppDescuento=0
-                                    for DescuentoAplicado in registros_validos:
-                                        ImpuestoDetalleDescuentos={
-                                            'IC_impuestodetalle':'',
-                                            'IC_impuestodescuento':DescuentoAplicado.id,
-                                            'fechadesde':DescuentoAplicado.fechadesde,
-                                            'fechahasta':DescuentoAplicado.fechahasta,
-                                            'descripcion':DescuentoAplicado.descripcion,
-                                            'base':Monto,
-                                            'descuento':float(DescuentoAplicado.porcentaje),
-                                            'total':Monto*(float(DescuentoAplicado.porcentaje/100)),
-                                            'IC_impuestoperiodo':aPeriodo.periodo.id,
-                                            'uso_id':dato.tipologia.id,
-                                            'uso_descripcion':dato.tipologia.descripcion,
-                                            'apica':dato.aplica,
-                                            'anio': minimo_ano,
-                                            'periodo': aPeriodo.periodo.periodo,
-                                        }
-                                        aDescuento.append(ImpuestoDetalleDescuentos)
-                                Total=float(Monto-(Monto*((mDescuento+ppDescuento)/100)))
-                                ImpuestoDetalle = {
-                                    'IC_impuestoperiodo':aPeriodo.periodo.id,
-                                    'anio': minimo_ano,
-                                    'periodo': aPeriodo.periodo.periodo,
-                                    'multa':bMulta,
-                                    'uso_id':dato.tipologia.id,
-                                    'uso_descripcion':dato.tipologia.descripcion,
-                                    'apica':dato.aplica,
-                                    'tipo':dato.tipo.id,
-                                    'tipo_descripcion':dato.tipo.descripcion,
-                                    'area_m2':dato.area,
-                                    'factor':iAlicuota,
-                                    'alicuota_full':Alicuota,
-                                    'alicuota':Alicuota*iAlicuota,
-                                    'basecalculobs':baseCalculoBs, 
-                                    'sub_total':Monto,
-                                    'mdescuento':mDescuento+ppDescuento,
-                                    'total':Total,
-                                }
-                                tDescuento=tDescuento+mDescuento+ppDescuento
-                                aDetalle.append(ImpuestoDetalle)
-                                tTotal=tTotal+Total
-                                if bMulta:
-                                    tTotalMora=tTotalMora+Total
-                                    tBaseMultaRecargoInteres=tBaseMultaRecargoInteres+Total
-                                    tMulta=tMulta+(Total*(fMulta/100))
-                                    tRecargo=tRecargo+(Total*(fRecargo/100))
-                        if tTotalMora:                   
-                            oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora4=(tTotalMora/1)
-                            tTotalMora3=(tTotalMora/4)*3
-                            tTotalMora2=(tTotalMora/2)
-                            tTotalMora1=(tTotalMora/4)
-                            incremento=1.200000000
-                            incremento_decimal = Decimal(str(incremento))
-
-                            for aTasa in oTasaInteres:
-                                if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
-                                    cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
-                                    tasa_porcentaje=float((aTasa.tasa*incremento_decimal)/100)
-                                    if  aTasa.mes==1: 
-                                        monto=0
-                                        por_mes=0
-                                    if  aTasa.mes==2:
-                                        monto=0
-                                        por_mes=0
-                                    if  aTasa.mes==3:
-                                        monto=0
-                                        por_mes=0
-                                    if  aTasa.mes==4:
-                                        monto=((tTotalMora1*tasa_porcentaje)/360)*cantidad_dias 
-                                        por_mes=tTotalMora1
-                                    if  aTasa.mes==5:
-                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora2
-                                    if  aTasa.mes==6:
-                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora2
-                                    if  aTasa.mes==7:
-                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora2
-                                    if  aTasa.mes==8:
-                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora3
-                                    if  aTasa.mes==9:
-                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora3
-                                    if  aTasa.mes==10:
-                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora3
-                                    if  aTasa.mes==11:
-                                        monto=((tTotalMora4*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora4
-                                    if  aTasa.mes==12:
-                                        monto=((tTotalMora4*tasa_porcentaje)/360)*cantidad_dias
-                                        por_mes=tTotalMora4
-                                    ImpuestoInteresMoratorio={
-                                            'anio':aTasa.anio,
-                                            'mes':aTasa.mes,
-                                            'tasa':tasa_porcentaje*100,
-                                            'dias':cantidad_dias,
-                                            'moramensual':por_mes,
-                                            'interesmensual':monto,
-                                        }
-                                    aInteres.append(ImpuestoInteresMoratorio)
-                                    tInteres=tInteres+monto
-                                #end If
-                            # end For oTasaInteres 
-                            tTotalMora=0
-                        minimo_ano=minimo_ano+1
-                    #EndWhile
-                    correlativo=Correlativo.objects.get(id=1)
-                    numero=correlativo.NumeroIC_Impuesto
-                    Impuesto={
-                        'numero':numero,
-                        'zona':ZonaInmueble.id,
-                        'basecalculobs':baseCalculoBs,
-                        'inmueble':oInmueble.id,
-                        'subtotal':tTotal,
-                        'multa':tMulta,
-                        'recargo':tRecargo,
-                        'interes':tInteres,
-                        'fmulta':fMulta,
-                        'frecargo':fRecargo,
-                        'descuento':tDescuento,
-                        'total':tTotal+tMulta+tRecargo+tInteres,
-                        'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
-                        'flujo':Flujo.objects.filter(inmueble=oInmueble,estado='1').count() ,
-                        'anioini':anioini,
-                        'mesini':mesini,
-                        'aniofin':request['anio'],
-                        'mesfin':request['periodo'],
-                    }
-                    datos={
-                        'cabacera':Impuesto,
-                        'detalle':aDetalle,
-                        'descuento':aDescuento,
-                        'interes':aInteres,
-                    }
-                    data.append(datos)
-
-            return Response(data, status=status.HTTP_200_OK)
-        return Response('Insert OK', status=status.HTTP_200_OK)
-    else:
-        return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
-
-
-
 def Certifica_Ficha(ficha):
-    if (ficha):
-        print('Certifica_Ficha',ficha)
-        if (ficha):
-            try:
-                inmueble=Inmueble.objects.get(numero_expediente=ficha) 
-                print('inmueble',inmueble)
-                propietarios=InmueblePropietarios.objects.filter(inmueble=inmueble) 
-                print(propietarios)
-                numero_expediente=inmueble.numero_expediente
-                html_content = f"<h2>Certificación de Cédula Catastral: </h2> <p> <b>Numero de Expediente: </b> {numero_expediente}</p>"
-                sector=inmueble.sector
-                urbanizacion=inmueble.urbanizacion
-                tipo=inmueble.tipo
-                if propietarios:
-                    html_content += "<b>Propietarios:</b2><ul>"
-                    for propietario in propietarios:
-                        html_content += f"<li>{propietario.propietario.numero_documento} {propietario.propietario.nombre}</li>"
-                    html_content += "</ul>"
-                else:
-                    html_content = "<p>No se encontraron propietarios para este inmueble.</p>"
-                if sector:
-                    html_content += f"<p><b>Sector: </b> {sector.codigo} </p>"
-                else:
-                    html_content += f"<p><b>Sin información de sector</p>"
-                if urbanizacion:
-                    html_content += f"<p><b>Urbanización: </b> {urbanizacion.nombre} </p>"
-                else:
-                    html_content += f"<p><b>Sin información de urbanización </p>"
-                if tipo:
-                    html_content += f"<p><b>Tipo Inmueble: </b> {tipo.descripcion} </p>"
-                else:
-                    html_content += f"<p> Sin información de Tipo Inmueble </p>"
-                return HttpResponse(html_content, content_type="text/html; charset=utf-8")
+    if ficha:
+        try:
+            correlativo = Correlativo.objects.get()
+            logo_path1 = correlativo.Logo1.url  # URL de la primera imagen
 
-            except Inmueble.DoesNotExist:
-                return Response('Insert NOT Ok, No existe el numero de expediente', status=status.HTTP_400_BAD_REQUEST)
-            except IntegrityError as e:
-                return Response('Insert NOT Ok,Error de integridad', status=status.HTTP_400_BAD_REQUEST)
-        return Response('Insert OK', status=status.HTTP_200_OK)
+            inmueble = Inmueble.objects.get(numero_expediente=ficha) 
+            dataDocumentoPropiedad = InmueblePropiedad.objects.get(inmueble=inmueble) 
+            propietarios = InmueblePropietarios.objects.filter(inmueble=inmueble) 
+            dataFinesFiscales = InmuebleFaltante.objects.get(inmueble=inmueble) 
+            print('logo_path1',logo_path1)
 
+            numero_expediente = inmueble.numero_expediente
+            sector = inmueble.sector
+            urbanizacion = inmueble.urbanizacion
+            tipo = inmueble.tipo
+
+            html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Certificación de Cédula Catastral</title>
+                    <style>
+                        .container {{
+                            border: 1px solid #000;
+                            padding: 10px;
+                            width: 800px; /* Ajusta el ancho según tus necesidades */
+                            margin: 0 auto; /* Centra el contenido */
+                        }}
+                        .column {{
+                            float: left;
+                            width: 50%;
+                        }}
+                        .clear {{
+                            clear: both;
+                        }}
+                        table {{
+                            width: 100%;
+                            border-collapse: collapse;
+                        }}
+                        th, td {{
+                            border: 1px solid #000;
+                            padding: 8px;
+                            text-align: center;
+                        }}
+                        .certification-image {{
+                            max-width: 100%; /* Ajusta el tamaño máximo de la imagen al 100% del contenedor */
+                            height: auto; /* Ajusta la altura automáticamente para mantener la proporción */
+                            display: block; /* Evita el espacio adicional debajo de la imagen */
+                            margin: 10px auto; /* Centra la imagen horizontalmente */
+                        }}
+                    </style> 
+                </head>
+                    <body style="font-size: 14px; font-family: Arial, sans-serif;">
+                    <div class="container">
+
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <img src="{logo_path1}" alt="Logo 1" style="max-width: 30%;">
+                            <h2 style="text-align: center;">Certificación de {dataDocumentoPropiedad.tipo_documento.descripcion}</h2>
+                            <div>
+                             <p style="max-width: 30%;"><b>Expediente Nro.:</b> <h1>{numero_expediente} </h1></p>
+                             </div>
+                        </div>
+            """
+
+            if propietarios:
+                html_content += """
+                <div class="column">
+                    <p><b>Propietario(s) :</b></p>
+                    </div>
+                    <table>
+                        <tr>
+                            <th>Número de Documento</th>
+                            <th>Nombre</th>
+                        </tr>
+                """
+                for propietario in propietarios:
+                    html_content += f"""
+                        <tr>
+                            <td>{propietario.propietario.numero_documento}</td>
+                            <td>{propietario.propietario.nombre}</td>
+                        </tr>
+                    """
+                html_content += "</table>"
+            else:
+                html_content += "<p>No se encontraron propietarios para este inmueble.</p>"
+
+            html_content += f"""
+                        <p><b>Sector       :</b> {sector.codigo if sector else "Sin información de sector"}</p>
+                        <p><b>Urbanización :</b> {urbanizacion.nombre if urbanizacion else "Sin información de urbanización"}</p>
+                        <p><b>Tipo Inmueble:</b> {tipo.descripcion if tipo else "Sin información de Tipo Inmueble"}</p>
+                """
+            
+
+            if dataDocumentoPropiedad.numero_documento and dataDocumentoPropiedad.numero_documento != 'null':
+                html_content += """
+                    <p><b>1.- Datos del documento.</b></p>
+                    <table>
+                        <tr>
+                            <th>Fecha.Doc.</th>
+                            <th>Nro. Doc.</th>
+                            <th>Nro. Matrícula</th>
+                            <th>Año libro real</th>
+                            <th>M2 Terreno</th>
+                            <th>Valor Terreno</th>
+                            <th>M2 Construcción</th>
+                            <th>Valor Construcción</th>
+                        </tr>
+                        """
+                html_content += f"""
+                        <tr>
+                            <td> {dataDocumentoPropiedad.fecha_documento if dataDocumentoPropiedad.fecha_documento else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.numero_documento if dataDocumentoPropiedad.numero_documento else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.matricula_documento if dataDocumentoPropiedad.matricula_documento else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.anio_folio_documento if dataDocumentoPropiedad.anio_folio_documento else '&nbsp;'}</td>
+                            <td> {'{:.2f}'.format(dataDocumentoPropiedad.area_terreno) if dataDocumentoPropiedad.area_terreno else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.valor_terreno if dataDocumentoPropiedad.valor_terreno else '&nbsp;'}</td>
+                            <td> {'{:.2f}'.format(dataDocumentoPropiedad.area_construccion) if dataDocumentoPropiedad.area_construccion else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.valor_construccion   if dataDocumentoPropiedad.valor_construccion else '&nbsp;'}</td>
+                        </tr>
+                """
+                html_content += "</table>"
+            if dataDocumentoPropiedad.numero_terreno and dataDocumentoPropiedad.numero_terreno != 'null':
+                html_content += """
+                    <p><b>1.1.- Datos de Terreno según documento.</b></p>
+                    <table>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Nro. Doc.</th>
+                            <th>Folios</th>
+                            <th>Prot.</th>
+                            <th>Tomo</th>
+                            <th>Sup. M2</th>
+                            <th>Valor Bs. Total</th>
+                        </tr>
+                        """
+                html_content += f"""
+                        <tr>
+                            <td> {dataDocumentoPropiedad.fecha_terreno if dataDocumentoPropiedad.fecha_terreno else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.numero_terreno if dataDocumentoPropiedad.numero_terreno else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.folio_terreno if dataDocumentoPropiedad.folio_terreno else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.protocolo_terreno if dataDocumentoPropiedad.protocolo_terreno else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.tomo_terreno if dataDocumentoPropiedad.tomo_terreno else '&nbsp;'}</td>
+                            <td> {'{:.2f}'.format(dataDocumentoPropiedad.area_terreno) if dataDocumentoPropiedad.area_terreno else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.valor_terreno   if dataDocumentoPropiedad.valor_terreno else '&nbsp;'}</td>
+                        </tr>
+                """
+                html_content += "</table>"
+            if dataDocumentoPropiedad.numero_construccion and dataDocumentoPropiedad.numero_construccion != 'null':
+                html_content += """
+                    <p><b>1.2.- Datos de Contrucción según documento.</b></p>
+                    <table>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Nro. Doc.</th>
+                            <th>Folios</th>
+                            <th>Prot.</th>
+                            <th>Tomo</th>
+                            <th>Sup. M2</th>
+                            <th>Valor Bs. Total</th>
+                        </tr>
+                        """
+                html_content += f"""
+                        <tr>
+                            <td> {dataDocumentoPropiedad.fecha_construccion if dataDocumentoPropiedad.fecha_construccion else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.numero_construccion if dataDocumentoPropiedad.numero_construccion else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.folio_construccion if dataDocumentoPropiedad.folio_construccion else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.protocolo_construccion if dataDocumentoPropiedad.protocolo_construccion else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.tomo_construccion if dataDocumentoPropiedad.tomo_construccion else '&nbsp;'}</td>
+                            <td> {'{:.2f}'.format(dataDocumentoPropiedad.area_construccion) if dataDocumentoPropiedad.area_construccion else '&nbsp;'}</td>
+                            <td> {dataDocumentoPropiedad.valor_construccion   if dataDocumentoPropiedad.valor_construccion else '&nbsp;'}</td>
+                        </tr>
+                """
+                html_content += "</table>"
+
+
+
+            html_content += """
+                    <p><b>2. Metrajes según Inspección.</b></p>
+                    <table>
+                        <tr>
+                            <th>2.1 Superficie de construcción M2</th>
+                            <th>2.1 Superficie de terreno M2</th>
+                        </tr>
+                        """
+            html_content += f"""
+                        <tr>
+                            <td> {dataFinesFiscales.cedula if dataFinesFiscales.cedula else '&nbsp;'}</td>
+                            <td> {dataFinesFiscales.documentopropiedad  if dataFinesFiscales.documentopropiedad  else '&nbsp;'}</td>
+                        </tr>
+                """
+            html_content += "</table>"
+            html_content += f"""
+                        <p><b>Dirección  :</b> {inmueble.direccion if inmueble.direccion  else "Sin información de Dirección"}</p> 
+                        <p><b>Referencia :</b> {inmueble.referencia if inmueble.referencia  else "Sin información de Referencia"}</p>
+                        <p><b>Observación:</b> {inmueble.observaciones if inmueble.observaciones else "Sin información de Observación"}</p>
+                """
+
+            html_content += f"""
+                    </div>
+                </body>
+                </html>
+                """
+
+            return HttpResponse(html_content, content_type="text/html; charset=utf-8")
+
+        except Inmueble.DoesNotExist:
+            return Response('Insert NOT Ok, No existe el numero de expediente', status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response('Insert NOT Ok,Error de integridad', status=status.HTTP_400_BAD_REQUEST)
+
+    return Response('Insert OK', status=status.HTTP_200_OK)
 
 
 
@@ -3166,21 +3009,77 @@ def importar_datos_desde_excel(archivo,pestana):
     importar=pestana
    # ExcelDocumentLOG.objects.filter(codigo=importar).delete()
     excel_document=ExcelDocument.objects.get(title=archivo)
+
+    if importar=='CategorizacionUrbana':
+        ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='CategorizacionUrbana')
+        for index, row in datos_excel.iterrows():
+            if not math.isnan(row['id_inmueble']):
+                numero_expediente = int((row['id_inmueble']))
+            else:
+                numero_expediente = 0
+            nComunidad = (row['comunidad']) #nombre de la comunidad
+            try:
+                oComunidad=Comunidad.objects.get(comunidad=nComunidad)                  #Ubicamos la comunidad segun el excel
+                oCategoria=Categorizacion.objects.get(codigo=oComunidad.categoria)      #Ubicamos en codigo de la categorizacion segun el excel
+                oIinmueble=Inmueble.objects.get(numero_expediente=numero_expediente)    #Ubicamos el inmuevle segun el excel
+                oIinmueble.comunidad=oComunidad
+                oIinmueble.categorizacion=oCategoria
+                print("INMUEBLE EXCEL :",numero_expediente)
+                print("comunidadexcel :",row['comunidad'],oComunidad)
+                print("Categoria excel:",oCategoria)
+                if oComunidad.categoria!='X': # solo ENTRA A PROCESAR cuando la comunidad es difeente de X "SIN COMUNIDAD" PERO SI ACTUALIZO LA FICHA OARA QUE MUESTRE LA ALERTA, QUE FALTA COLOCAR LA COMUNIDAD CORRECTA.
+
+                    #------------------------------- actualizar la valoracion economica
+                    TerrenoValido=True
+                    try:
+                        terreno=InmuebleValoracionTerreno2024.objects.get(inmueble=oIinmueble)
+                        if terreno.tipologia_categorizacion==None:
+                            TerrenoValido=False
+                    except InmuebleValoracionTerreno2024.DoesNotExist:
+                        TerrenoValido=False
+                    print('terreno.tipologia_categorizacion',terreno.tipologia_categorizacion)
+                    if TerrenoValido: 
+                        print('Actual Codigo Cateforizacion terreno:',terreno.tipologia_categorizacion.codigo)
+                        print('Actual Nombre Cateforizacion terreno:',terreno.tipologia_categorizacion.descripcion)
+                        print('Actual codigo Tipologia      terreno:',terreno.tipologia_categorizacion.categorizacion.codigo)
+                        NewdUso=Tipologia_Categorizacion.objects.get(categorizacion=oCategoria,descripcion=terreno.tipologia_categorizacion.descripcion)
+                        terreno.tipologia_categorizacion=NewdUso   
+                        print('NewdUso terreno',NewdUso.codigo,NewdUso.descripcion)
+                        terreno.save()
+                    else:
+                        print('Inmueble sin terreno!!!!!!!!!!!!!!!!!!!')
+                    
+                    construccion = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno)
+                    for detalle in construccion:
+                        print('Actual Codigo Cateforizacion construccion:',detalle.tipologia_categorizacion.codigo)
+                        print('Actual Nombre Cateforizacion construccion:',detalle.tipologia_categorizacion.descripcion)
+                        print('Actual codigo Tipologia      construccion:',detalle.tipologia_categorizacion.categorizacion.codigo)
+                        NewdUso=Tipologia_Categorizacion.objects.get(categorizacion=oCategoria,descripcion=detalle.tipologia_categorizacion.descripcion)
+                        detalle.tipologia_categorizacion=NewdUso  
+                        detalle.save() 
+                        print('NewdUso construccion',NewdUso.codigo,NewdUso.descripcion)                 
+                        #input()
+                oIinmueble.save() 
+            except Inmueble.DoesNotExist:
+                print(f"No existe el numero de expediente {numero_expediente}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error='No existe expediente')
+            except IntegrityError as e:
+                # Maneja cualquier error de integridad si es necesario
+                print(f"Error de integridad al crear el registro: {e}")
+                ExcelDocumentLOG.objects.create(pestana=importar, codigo=numero_expediente, error=e)
+        print("Ultimo pagos actualizados exitosamente.")  
     if importar=='comunidad':
-        Comunidad.objects.all().delete()
+        #Comunidad.objects.all().delete()
         ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='comunidad')
         for index, row in datos_excel.iterrows():
-
-
-            print('comunidad',row['categoria'],'categoria',row['categoria'])
-
+            print('comunidad',row['comunidad'],'categoria',row['categoria'])
             try:
                 # Intenta obtener un registro existente o crear uno nuevo si no existe
                 creado = Comunidad.objects.get_or_create(
                     comunidad = row['comunidad'],
-                    categoria = row['categoria'],
-                    clave = row['clave'], 
+                    categoria = row['categoria'], 
                 )
                 if not creado:
                     print(f"El registro ya existe y no se creó uno nuevo.")
@@ -3190,6 +3089,8 @@ def importar_datos_desde_excel(archivo,pestana):
                 ExcelDocumentLOG.objects.create(pestana=importar, codigo=mes, error=e)
         print("Datos importados exitosamente.")
     if importar=='inmueblecategorizacion':
+        # aca se crear un modelo igual a Inmueble. luego se importa un excel generado nueva,mente dela BD de sicadi
+        # solo para trabajar lo categorizacion 
         InmuebleCategorizacion.objects.all().delete()
         ruta_archivo_excel = excel_document.excel_file.path
         datos_excel = pd.read_excel(ruta_archivo_excel, sheet_name='inmueblecategorizacion')
@@ -4059,6 +3960,7 @@ def importar_datos_desde_excel(archivo,pestana):
                         vCategoria='D'
                     if vZona=='4':
                         vCategoria='E'
+
                     oCategoria=Categorizacion.objects.get(codigo=vCategoria).id
                     
                     if vUso=='RESIDENCIAL' and vZona=='1':
@@ -5691,13 +5593,16 @@ def Crear_Patente(request):
     if (request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
+        nNumero=correlativo.NumeroEstadoCuenta
+        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
+        correlativo.save()
         valor_petro=TasaBCV.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
         tipoflujo = None if request['flujo']==None else TipoFlujo.objects.get(codigo=request['flujo'])
         inmueble = None if request['inmueble']==None else Inmueble.objects.get(id=request['inmueble'])
         propietario = Propietario.objects.get(id=request['propietario'])
         Cabacera=EstadoCuenta(
-            numero=correlativo.NumeroEstadoCuenta,
+            numero=nNumero,
             tipoflujo=tipoflujo,
             inmueble=inmueble,
             fecha=str(date.today()),
@@ -5719,8 +5624,7 @@ def Crear_Patente(request):
                 cantidad=detalle['cantidad']                     
             )
             Detalle.save()
-        correlativo.NumeroEstadoCuenta=correlativo.NumeroEstadoCuenta+1
-        correlativo.save()
+
         result = {
         "documento": Cabacera.numero,
         "id": Cabacera.id
