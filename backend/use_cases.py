@@ -5,8 +5,6 @@ from knox.models import AuthToken
 from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
 import re
-from pyDolarVenezuela import price
-import pyBCV
 from django.db.models import Max,Min,Sum,Q 
 import pandas as pd
 import os
@@ -2965,45 +2963,6 @@ def Crear_Estado_Cuenta1(request):
     else:
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
     
-def Muestra_Tasa(request):
-    precios = price()
-    print(precios,request)  
-    tasa=precios['$bcv']
-    return Response('Tasa BCV al dia: '+tasa,status=status.HTTP_200_OK)
-
-def Muestra_Tasa_New(request):
-    
-    currency = pyBCV.Currency()
-    print(dir(currency))
-    print('Tasas de cambio disponibles:', currency.get_rate())
-
-    all_rates = currency.get_rate() # obtener todas las tasas de cambio de moneda
-    usd_rate = currency.get_rate(currency_code='USD', prettify=False) # obtener la tasa de cambio del dólar estadounidense sin símbolo de moneda
-    last_update = currency.get_rate(currency_code='Fecha') # obtener la hora de la última actualización
-    print('4')
-
-    rate_values = [float(value) for key, value in all_rates.items() if key != "Fecha"]
-    print(rate_values)
-    # Encontrar el valor máximo
-
-    rate_values = {key: float(value) for key, value in all_rates.items() if key != "Fecha"}
-
-    # Encontrar el key correspondiente al valor máximo
-    max_rate_key = max(rate_values, key=lambda key: rate_values[key])
-    max_rate_value = rate_values[max_rate_key]
-
-    print(all_rates)
-    print("El valor más alto de las tasas de cambio es:", max_rate_value)
-    print("El key correspondiente es:", max_rate_key)
-
-    result = {
-        "max_rate_key": max_rate_key,
-        "max_rate_value": max_rate_value
-    }
-
-    return Response(result,status=status.HTTP_200_OK) 
-
-
 def importar_datos_desde_excel(archivo,pestana):
     print('Backend procesando: ',pestana)
     importar=pestana

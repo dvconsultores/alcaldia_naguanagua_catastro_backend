@@ -211,29 +211,7 @@ def ImpuestoInmuebleDetalle(request):
     datos=request.data
     return Impuesto_Inmueble_Detalle(datos)
 
-@api_view(["POST"])
-@csrf_exempt
-@permission_classes([IsAuthenticated])
-def MuestraTasa(request):
-    datos=request.data
-    return Muestra_Tasa(datos)
 
-@api_view(["POST"])
-@csrf_exempt
-@permission_classes([IsAuthenticated])
-def MuestraTasaNew(request):
-    datos=request.data
-    return Muestra_Tasa_New(datos)
-
-
-
-#######################Api PUBLICA
-@api_view(["POST"])
-@csrf_exempt
-@permission_classes([AllowAny])
-def MuestraTasaPublic(request):
-    datos=request.data
-    return Muestra_Tasa_New(datos)
 
 ###################################################
 
