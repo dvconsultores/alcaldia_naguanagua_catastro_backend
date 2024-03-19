@@ -189,14 +189,14 @@ def Crear_Pago(request):
         items=request['detalle']
         correlativo=Correlativo.objects.get(id=1)
         NroPlanilla=correlativo.NumeroPago 
-        print('NroPlanilla',NroPlanilla)
+        ##print('NroPlanilla',NroPlanilla)
         correlativo.NumeroPago=correlativo.NumeroPago+1
         correlativo.save()
         propietario = Propietario.objects.get(id=request['propietario'])
         #liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
         liquidacion = Liquidacion.objects.get(id=request['liquidacion'])
-        print('liquidaciones',liquidacion.id)
-        print('estado de cuenta',liquidacion.estadocuenta.id)
+        ##print('liquidaciones',liquidacion.id)
+        ##print('estado de cuenta',liquidacion.estadocuenta.id)
         # valida si el pago corresponde a un impuesto de inmueble.
         PagaImpuestoInmueble=False;
         AnioPago=0
@@ -209,7 +209,7 @@ def Crear_Pago(request):
             CountPeriodo= tPeriodo.count()                              # cuenta el total de periodos de cayastro para saber cual es el ultimo
             oPeriodoPago=tPeriodo.get(id=oIC_Impuesto.periodopagofin)   #ubica el numero de periodo pagado 
             AnioPago=oIC_Impuesto.aniopagofin                           #año ultimo pago
-            print('CountPeriodo',CountPeriodo,oPeriodoPago.periodo)
+            ##print('CountPeriodo',CountPeriodo,oPeriodoPago.periodo)
             if oPeriodoPago.periodo==CountPeriodo:                      #evalua si el "periodo" pagado es el ultimo segun el maestro de periodos de catastro
                 oPeriodoPago= tPeriodo.get(periodo=1)
                 AnioPago=AnioPago+1
@@ -222,7 +222,7 @@ def Crear_Pago(request):
 
         except IC_Impuesto.DoesNotExist:
             PagaImpuestoInmueble=False
-        print('PagaImpuestoInmueble',PagaImpuestoInmueble,AnioPago,PeriodoPago,InmueblePago)  
+        ##print('PagaImpuestoInmueble',PagaImpuestoInmueble,AnioPago,PeriodoPago,InmueblePago)  
         Cabacera=PagoEstadoCuenta(
             numero=NroPlanilla,
             liquidacion=liquidacion,
@@ -234,7 +234,7 @@ def Crear_Pago(request):
         )
         Cabacera.save()
         # evalua si se pago de mas para crear la nota de credito a favor del contribuyente
-        print(request['monto'],request['monto_cxc'])
+        ##print(request['monto'],request['monto_cxc'])
         monto_credito= float(request['monto'])-float(request['monto_cxc'])
         if monto_credito>0:
             tipopago = TipoPago.objects.get(codigo='N')
@@ -270,7 +270,7 @@ def Crear_Pago(request):
                 notacredito=NotaCredito.objects.get(propietario = propietario,numeronotacredito=detalle['nro_referencia'])
                 notacredito.saldo=float(notacredito.saldo)-float(detalle['monto'])
                 notacredito.save()
-                print('nota de credito',float(notacredito.saldo),float(detalle['monto']),float(notacredito.saldo)-float(detalle['monto']))
+                ##print('nota de credito',float(notacredito.saldo),float(detalle['monto']),float(notacredito.saldo)-float(detalle['monto']))
             Detalle.save()
         #actualiza el correlativo de numero de pagos
         #correlativo.NumeroPago=correlativo.NumeroPago+1  
@@ -280,7 +280,7 @@ def Crear_Pago(request):
             if liquidacion.tipoflujo.crea_expediente:
                 #crear inmuebles
                 estatusinmueble=EstatusInmueble.objects.get(codigo='99')
-                print(estatusinmueble)
+                ##print(estatusinmueble)
 
                 InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro,
                                      #fecha_inscripcion=date.today(),
@@ -345,7 +345,7 @@ def Crear_Pago(request):
 
         # Convierte la lista de diccionarios a una cadena JSON
         json_resultado = json.dumps(lista_de_diccionarios, cls=DjangoJSONEncoder)
-        print(json_resultado)
+        ##print(json_resultado)
         result = {
         "documento": Cabacera.numero,
         "idpago": Cabacera.id ,
@@ -404,9 +404,9 @@ def Multa_Inmueble(request):
             
             diferenciac=today-fecha_compra
             diferenciai=today-fecha_inscripcion
-            print('fecha_inscripcion:',fecha_inscripcion,'today:',today,'diferencia:',diferenciai.days,'bInscripcion:',bInscripcion)
+            ##print('fecha_inscripcion:',fecha_inscripcion,'today:',today,'diferencia:',diferenciai.days,'bInscripcion:',bInscripcion)
 
-            print('fecha_compra:',fecha_compra,'today:',today,'diferencia:',diferenciac.days,'bModifica:',bModifica)
+            ##print('fecha_compra:',fecha_compra,'today:',today,'diferencia:',diferenciac.days,'bModifica:',bModifica)
 
             if (bModifica or bInscripcion): # Artículo 20
                 baseCalculo = TasaBCV.objects.get(habilitado=True)
@@ -416,7 +416,7 @@ def Multa_Inmueble(request):
                     fechaVencidaI=fecha_inscripcion+ timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
 
                     mesesVencidosI = meses_transcurridos(fechaVencidaI, today)
-                    print("Meses Vencidos Inscripcion:", mesesVencidosI)
+                    ##print("Meses Vencidos Inscripcion:", mesesVencidosI)
                     #Artículo 99
                     MultaMinInscripcionUni=0 * baseCalculoBs  #Si no maneja una multa mínima, coloque 0 !!!!! No implementado!!!
                     alicuotaMultaInscripcionUni=0.011111111
@@ -430,7 +430,7 @@ def Multa_Inmueble(request):
                 if bModifica:
                     fechaVencidaM=fecha_compra+ timedelta(days=90) # Sumar los 90 dias de plazo a la fecha vencida para determinar el periodo vencido
                     mesesVencidosM= meses_transcurridos(fechaVencidaM, today)
-                    print("Meses Vencidos Modificacion:", mesesVencidosM)
+                    ##print("Meses Vencidos Modificacion:", mesesVencidosM)
                     #Artículo 101
                     MultaMinModificaUni=0 * baseCalculoBs #Si no maneja una multa mínima, coloque 0 !!!!! No implementado!!!
                     alicuotaMultaModificaUni=0.033
@@ -442,8 +442,8 @@ def Multa_Inmueble(request):
                 
                 terreno=InmuebleValoracionTerreno.objects.get(inmueble=request['inmueble'])
                 ocupacion=InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno.id)
-                print(terreno)
-                #print(ocupacion)
+                ##print(terreno)
+                ###print(ocupacion)
                 for dato in ocupacion:
                     # Validar la multa por los m2 del inmueble si esa multa es menor al mínimo, la multa final sera el mínimo
                     metrosCuadrados=float(dato.area)
@@ -642,14 +642,14 @@ def Impuesto_Inmueble2023(request):
                 Zona = oInmueble
                 oPeriodo = IC_Periodo.objects.filter(aplica='C')
                 ano_fin= 2023 #request['anio']  #today.year
-                print('oInmueble.anio:',oInmueble.anio)
+                ##print('oInmueble.anio:',oInmueble.anio)
                 if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
                     oInmueble.anio=oInmueble.fecha_inscripcion.year
                     oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
                     oInmueble.save()
                     dAnio=oInmueble.anio
                     dPeriodo=oInmueble.periodo.periodo 
-                    print('creadooo')
+                    ##print('creadooo')
                 dAnio=oInmueble.anio        # Año qe iica la deuda
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 anioini=dAnio
@@ -658,7 +658,7 @@ def Impuesto_Inmueble2023(request):
                     dAnio=anioini
                 mesini=dPeriodo
                 primero=True
-                print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+                ##print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
 
                 IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
                                                         #por que este dato lo puede cambiar hacienda con acceso.borrar=true
@@ -729,7 +729,7 @@ def Impuesto_Inmueble2023(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    print('ocupacion',ocupacion)
+                    ##print('ocupacion',ocupacion)
                     ZonaInmueble=Zona.zona
                     oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
@@ -737,7 +737,7 @@ def Impuesto_Inmueble2023(request):
                     ##oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble=request['inmueble'])
                     ##fechaCompra=oPropietario.fecha_compra
                     ##diferencia=today-fechaCompra
-                    ##print(fechaCompra,today,diferencia.days)
+                    ####print(fechaCompra,today,diferencia.days)
                     # valida si aplica descuentos por pronto pago.
                     oDescuento=0 # Bandera que valida si aplica descuento o no
                     try:
@@ -779,17 +779,17 @@ def Impuesto_Inmueble2023(request):
                                 if today>= fDiasGracia.fechadesde and  \
                                 today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual está entre las fechas del modelo
-                                    print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
+                                    ##print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                     bMulta=False
                                 else:
                                     if today<= fDiasGracia.fechadesde and  \
                                         today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                         # La fecha actual es menor a las fechas del modelo (periodos proximos)
-                                        print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
+                                        ##print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
                                         bMulta=False
 
                                     # La fecha actual NO está entre las fechas del modelo
-                                    print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
+                                    ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                                 #posesión por 5 años o más por el mismo propietario
@@ -814,8 +814,8 @@ def Impuesto_Inmueble2023(request):
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=False)
-                                        print('descuento',pDescuento)
-                                        print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
+                                        ##print('descuento',pDescuento)
+                                        ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
                                             fechadesde__year__lte=minimo_ano,
                                             fechahasta__year__gte=minimo_ano,
@@ -848,9 +848,9 @@ def Impuesto_Inmueble2023(request):
                                     # Aplica descuentos prontopago
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=True)
-                                        print('descuento Pronto Pago',pDescuento)
-                                        print('fecha actual',today.year,today.month,today.day) 
-                                        print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
+                                        ##print('descuento Pronto Pago',pDescuento)
+                                        ##print('fecha actual',today.year,today.month,today.day) 
+                                        ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
                                             #fechadesde__year__lte=today.year,   # < =
                                             #fechahasta__year__gte=today.year,   # > =
@@ -859,7 +859,7 @@ def Impuesto_Inmueble2023(request):
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
-                                        print('registros_validos pronto pago 1',registros_validos)
+                                        ##print('registros_validos pronto pago 1',registros_validos)
                                         registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
@@ -867,7 +867,7 @@ def Impuesto_Inmueble2023(request):
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos2)
+                                        ##print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -1068,25 +1068,25 @@ def Impuesto_Inmueble2023_Public(request):
                 Zona = oInmueble
                 oPeriodo = IC_Periodo.objects.filter(aplica='C')
                 ano_fin= 2023 #request['anio']  #today.year
-                print('oInmueble.anio:',oInmueble.anio)
+                ##print('oInmueble.anio:',oInmueble.anio)
                 if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
                     oInmueble.anio=oInmueble.fecha_inscripcion.year
                     oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
                     oInmueble.save()
                     dAnio=oInmueble.anio
                     dPeriodo=oInmueble.periodo.periodo 
-                    print('creadooo')
+                    ##print('creadooo')
                 dAnio=oInmueble.anio        # Año que incia la deuda
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 anioini=dAnio
-                print('AÑO INICIO DEUDAAAAAA1111111111',anioini)
+                ##print('AÑO INICIO DEUDAAAAAA1111111111',anioini)
                 if anioini<((today.year+1)-7):
                     anioini=((today.year+1)-7)
                     dAnio=anioini
-                print('AÑO INICIO DEUDAAAAAA2222222222',anioini)  
+                ##print('AÑO INICIO DEUDAAAAAA2222222222',anioini)  
                 mesini=dPeriodo
                 primero=True
-                print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+                ##print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
 
                 IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
                                                         #por que este dato lo puede cambiar hacienda con acceso.borrar=true
@@ -1157,7 +1157,7 @@ def Impuesto_Inmueble2023_Public(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    print('ocupacion',ocupacion)
+                    ##print('ocupacion',ocupacion)
                     ZonaInmueble=Zona.zona
                     oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
@@ -1165,7 +1165,7 @@ def Impuesto_Inmueble2023_Public(request):
                     ##oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble__numero_expediente=request['inmueble'])
                     ##fechaCompra=oPropietario.fecha_compra
                     ##diferencia=today-fechaCompra
-                    ##print(fechaCompra,today,diferencia.days)
+                    ####print(fechaCompra,today,diferencia.days)
                     # valida si aplica descuentos por pronto pago.
                     oDescuento=0 # Bandera que valida si aplica descuento o no
                     try:
@@ -1207,17 +1207,17 @@ def Impuesto_Inmueble2023_Public(request):
                                 if today>= fDiasGracia.fechadesde and  \
                                 today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual está entre las fechas del modelo
-                                    print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
+                                    ##print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                     bMulta=False
                                 else:
                                     if today<= fDiasGracia.fechadesde and  \
                                         today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                         # La fecha actual es menor a las fechas del modelo (periodos proximos)
-                                        print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
+                                        ##print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
                                         bMulta=False
 
                                     # La fecha actual NO está entre las fechas del modelo
-                                    print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
+                                    ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                                 #posesión por 5 años o más por el mismo propietario
@@ -1242,8 +1242,8 @@ def Impuesto_Inmueble2023_Public(request):
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=False)
-                                        print('descuento',pDescuento)
-                                        print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
+                                        ##print('descuento',pDescuento)
+                                        ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
                                             fechadesde__year__lte=minimo_ano,
                                             fechahasta__year__gte=minimo_ano,
@@ -1276,9 +1276,9 @@ def Impuesto_Inmueble2023_Public(request):
                                     # Aplica descuentos prontopago
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=True)
-                                        print('descuento Pronto Pago',pDescuento)
-                                        print('fecha actual',today.year,today.month,today.day) 
-                                        print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
+                                        ##print('descuento Pronto Pago',pDescuento)
+                                        ##print('fecha actual',today.year,today.month,today.day) 
+                                        ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
                                             #fechadesde__year__lte=today.year,   # < =
                                             #fechahasta__year__gte=today.year,   # > =
@@ -1287,7 +1287,7 @@ def Impuesto_Inmueble2023_Public(request):
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
-                                        print('registros_validos pronto pago 1',registros_validos)
+                                        ##print('registros_validos pronto pago 1',registros_validos)
                                         registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
@@ -1295,7 +1295,7 @@ def Impuesto_Inmueble2023_Public(request):
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos2)
+                                        ##print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -1522,7 +1522,7 @@ def Impuesto_Inmueble_Pago(request):
             try:
                 periodo=IC_Periodo.objects.get(periodo=periodoId,aplica='C')
                 inmueble=Inmueble.objects.get(numero_expediente=numero_expediente)
-                print('anio',anio,'periodo',periodo)
+                ##print('anio',anio,'periodo',periodo)
                 inmueble.anio=anio
                 inmueble.periodo=periodo
                 inmueble.save()
@@ -1552,7 +1552,7 @@ def Certifica_Ficha(ficha):
             dataDocumentoPropiedad = InmueblePropiedad.objects.get(inmueble=inmueble) 
             propietarios = InmueblePropietarios.objects.filter(inmueble=inmueble) 
             dataFinesFiscales = InmuebleFaltante.objects.get(inmueble=inmueble) 
-            print('logo_path1',logo_path1)
+            ##print('logo_path1',logo_path1)
 
             numero_expediente = inmueble.numero_expediente
             sector = inmueble.sector
@@ -1785,14 +1785,14 @@ def Impuesto_Inmueble(request):
                 Categorizacion = oInmueble
                 oPeriodo = IC_Periodo.objects.filter(aplica='C')
                 ano_fin=request['anio']  #today.year
-                print('oInmueble.anio:',oInmueble.anio)
+                ##print('oInmueble.anio:',oInmueble.anio)
                 if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
                     oInmueble.anio=oInmueble.fecha_inscripcion.year
                     oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
                     oInmueble.save()
                     dAnio=oInmueble.anio
                     dPeriodo=oInmueble.periodo.periodo 
-                    print('creadooo')
+                    ##print('creadooo')
                 dAnio=oInmueble.anio        # Año qe inicio la deuda
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 if dAnio<2024:
@@ -1802,7 +1802,7 @@ def Impuesto_Inmueble(request):
                 anioini=dAnio
                 mesini=dPeriodo
                 primero=True
-                print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+                ##print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
 
                 IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
                                                         #por que este dato lo puede cambiar hacienda con acceso.borrar=true
@@ -1871,7 +1871,7 @@ def Impuesto_Inmueble(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    print('ocupacion',ocupacion)
+                    ##print('ocupacion',ocupacion)
                     CategorizacionInmueble=Categorizacion.categorizacion
                     oTipologia=Tipologia_Categorizacion.objects.filter(categorizacion=CategorizacionInmueble)
 
@@ -1879,7 +1879,7 @@ def Impuesto_Inmueble(request):
                     #oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble=request['inmueble'])
                     #fechaCompra=oPropietario.fecha_compra
                     #diferencia=today-fechaCompra 
-                    #print(fechaCompra,today,diferencia.days)
+                    ###print(fechaCompra,today,diferencia.days)
                     # valida si aplica descuentos por pronto pago.
                     oDescuento=0 # Bandera que valida si aplica descuento o no
                     try:
@@ -1919,17 +1919,17 @@ def Impuesto_Inmueble(request):
                                 if today>= fDiasGracia.fechadesde and  \
                                 today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual está entre las fechas del modelo
-                                    print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
+                                    ##print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                     bMulta=False
                                 else:
                                     if today<= fDiasGracia.fechadesde and  \
                                         today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                         # La fecha actual es menor a las fechas del modelo (periodos proximos)
-                                        print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
+                                        ##print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
                                         bMulta=False
 
                                     # La fecha actual NO está entre las fechas del modelo
-                                    print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
+                                    ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
 
                                 Alicuota=float(oTipologia.get(id=dato.tipologia_categorizacion.id).tarifa)
@@ -1945,8 +1945,8 @@ def Impuesto_Inmueble(request):
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=False)
-                                        print('descuento',pDescuento)
-                                        print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
+                                        ##print('descuento',pDescuento)
+                                        ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
                                             fechadesde__year__lte=minimo_ano,
                                             fechahasta__year__gte=minimo_ano,
@@ -1979,9 +1979,9 @@ def Impuesto_Inmueble(request):
                                     # Aplica descuentos prontopago
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=True)
-                                        print('descuento Pronto Pago',pDescuento)
-                                        print('fecha actual',today.year,today.month,today.day) 
-                                        print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
+                                        ##print('descuento Pronto Pago',pDescuento)
+                                        ##print('fecha actual',today.year,today.month,today.day) 
+                                        ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
                                             #fechadesde__year__lte=today.year,   # < =
                                             #fechahasta__year__gte=today.year,   # > =
@@ -1990,7 +1990,7 @@ def Impuesto_Inmueble(request):
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
-                                        print('registros_validos pronto pago 1',registros_validos)
+                                        ##print('registros_validos pronto pago 1',registros_validos)
                                         registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
@@ -1998,7 +1998,7 @@ def Impuesto_Inmueble(request):
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos2)
+                                        ##print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -2135,14 +2135,14 @@ def Impuesto_Inmueble_Public(request):
                 Categorizacion = oInmueble
                 oPeriodo = IC_Periodo.objects.filter(aplica='C')
                 ano_fin=request['anio']  #today.year
-                print('oInmueble.anio:',oInmueble.anio)
+                ##print('oInmueble.anio:',oInmueble.anio)
                 if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
                     oInmueble.anio=oInmueble.fecha_inscripcion.year
                     oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
                     oInmueble.save()
                     dAnio=oInmueble.anio
                     dPeriodo=oInmueble.periodo.periodo 
-                    print('creadooo')
+                    ##print('creadooo')
                 dAnio=oInmueble.anio        # Año qe inicio la deuda
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 if dAnio<2024:
@@ -2152,7 +2152,7 @@ def Impuesto_Inmueble_Public(request):
                 anioini=dAnio
                 mesini=dPeriodo
                 primero=True
-                print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+                ##print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
 
                 IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
                                                         #por que este dato lo puede cambiar hacienda con acceso.borrar=true
@@ -2221,7 +2221,7 @@ def Impuesto_Inmueble_Public(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    print('ocupacion',ocupacion)
+                    ##print('ocupacion',ocupacion)
                     CategorizacionInmueble=Categorizacion.categorizacion
                     oTipologia=Tipologia_Categorizacion.objects.filter(categorizacion=CategorizacionInmueble)
 
@@ -2229,7 +2229,7 @@ def Impuesto_Inmueble_Public(request):
                     #oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble=request['inmueble'])
                     #fechaCompra=oPropietario.fecha_compra
                     #diferencia=today-fechaCompra 
-                    #print(fechaCompra,today,diferencia.days)
+                    ###print(fechaCompra,today,diferencia.days)
                     # valida si aplica descuentos por pronto pago.
                     oDescuento=0 # Bandera que valida si aplica descuento o no
                     try:
@@ -2269,17 +2269,17 @@ def Impuesto_Inmueble_Public(request):
                                 if today>= fDiasGracia.fechadesde and  \
                                 today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual está entre las fechas del modelo
-                                    print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
+                                    ##print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                     bMulta=False
                                 else:
                                     if today<= fDiasGracia.fechadesde and  \
                                         today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                         # La fecha actual es menor a las fechas del modelo (periodos proximos)
-                                        print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
+                                        ##print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
                                         bMulta=False
 
                                     # La fecha actual NO está entre las fechas del modelo
-                                    print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
+                                    ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
 
                                 Alicuota=float(oTipologia.get(id=dato.tipologia_categorizacion.id).tarifa)
@@ -2295,8 +2295,8 @@ def Impuesto_Inmueble_Public(request):
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=False)
-                                        print('descuento',pDescuento)
-                                        print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
+                                        ##print('descuento',pDescuento)
+                                        ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
                                             fechadesde__year__lte=minimo_ano,
                                             fechahasta__year__gte=minimo_ano,
@@ -2329,9 +2329,9 @@ def Impuesto_Inmueble_Public(request):
                                     # Aplica descuentos prontopago
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=True)
-                                        print('descuento Pronto Pago',pDescuento)
-                                        print('fecha actual',today.year,today.month,today.day) 
-                                        print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
+                                        ##print('descuento Pronto Pago',pDescuento)
+                                        ##print('fecha actual',today.year,today.month,today.day) 
+                                        ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
                                             #fechadesde__year__lte=today.year,   # < =
                                             #fechahasta__year__gte=today.year,   # > =
@@ -2340,7 +2340,7 @@ def Impuesto_Inmueble_Public(request):
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
-                                        print('registros_validos pronto pago 1',registros_validos)
+                                        ##print('registros_validos pronto pago 1',registros_validos)
                                         registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
@@ -2348,7 +2348,7 @@ def Impuesto_Inmueble_Public(request):
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos2)
+                                        ##print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -2487,20 +2487,20 @@ def Impuesto_Inmueble_Public_old(request):
                 Zona = oInmueble
                 oPeriodo = IC_Periodo.objects.filter(aplica='C')
                 ano_fin=request['anio']  #today.year
-                print('oInmueble.anio:',oInmueble.anio)
+                ##print('oInmueble.anio:',oInmueble.anio)
                 if oInmueble.anio is None: # si al momento de importar de excel  no tiene pagos, le coloco el año de la fecha de inscripcion
                     oInmueble.anio=oInmueble.fecha_inscripcion.year
                     oInmueble.periodo=IC_Periodo.objects.get(aplica='C',periodo=1)
                     oInmueble.save()
                     dAnio=oInmueble.anio
                     dPeriodo=oInmueble.periodo.periodo 
-                    print('creadooo')
+                    ##print('creadooo')
                 dAnio=oInmueble.anio        # Año qe iica la deuda
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 anioini=dAnio
                 mesini=dPeriodo
                 primero=True
-                print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
+                ##print('kkkkkkkkkkkkkkkkkkkkkk',dPeriodo) 
 
                 IC_ImpuestoPeriodo.objects.filter(inmueble=oInmueble).delete()  # elimina el historial de periodos pendientes
                                                         #por que este dato lo puede cambiar hacienda con acceso.borrar=true
@@ -2569,7 +2569,7 @@ def Impuesto_Inmueble_Public_old(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    print('ocupacion',ocupacion)
+                    ##print('ocupacion',ocupacion)
                     ZonaInmueble=Zona.zona
                     oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
@@ -2577,7 +2577,7 @@ def Impuesto_Inmueble_Public_old(request):
                     oPropietario = InmueblePropietarios.objects.get(propietario__numero_documento=request['propietario'],inmueble__numero_expediente=request['inmueble'])
                     fechaCompra=oPropietario.fecha_compra
                     diferencia=today-fechaCompra
-                    print(fechaCompra,today,diferencia.days)
+                    ##print(fechaCompra,today,diferencia.days)
                     # valida si aplica descuentos por pronto pago.
                     oDescuento=0 # Bandera que valida si aplica descuento o no
                     try:
@@ -2617,17 +2617,17 @@ def Impuesto_Inmueble_Public_old(request):
                                 if today>= fDiasGracia.fechadesde and  \
                                 today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                     # La fecha actual está entre las fechas del modelo
-                                    print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
+                                    ##print("La fecha actual está entre fecha_desde y fecha_hasta.",fDiasGracia)
                                     bMulta=False
                                 else:
                                     if today<= fDiasGracia.fechadesde and  \
                                         today <= fDiasGracia.fechadesde+timedelta(days=fDiasGracia.dias_gracia) :
                                         # La fecha actual es menor a las fechas del modelo (periodos proximos)
-                                        print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
+                                        ##print("La fecha actual es menor a las fechas del modelo (periodos proximos).",fDiasGracia)
                                         bMulta=False
 
                                     # La fecha actual NO está entre las fechas del modelo
-                                    print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
+                                    ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                                 #posesión por 5 años o más por el mismo propietario
@@ -2652,8 +2652,8 @@ def Impuesto_Inmueble_Public_old(request):
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=False)
-                                        print('descuento',pDescuento)
-                                        print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
+                                        ##print('descuento',pDescuento)
+                                        ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
                                             fechadesde__year__lte=minimo_ano,
                                             fechahasta__year__gte=minimo_ano,
@@ -2686,9 +2686,9 @@ def Impuesto_Inmueble_Public_old(request):
                                     # Aplica descuentos prontopago
                                     try:
                                         pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=True)
-                                        print('descuento Pronto Pago',pDescuento)
-                                        print('fecha actual',today.year,today.month,today.day) 
-                                        print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
+                                        ##print('descuento Pronto Pago',pDescuento)
+                                        ##print('fecha actual',today.year,today.month,today.day) 
+                                        ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
                                         registros_validos = pDescuento.filter(
                                             #fechadesde__year__lte=today.year,   # < =
                                             #fechahasta__year__gte=today.year,   # > =
@@ -2697,7 +2697,7 @@ def Impuesto_Inmueble_Public_old(request):
                                             fechahasta__month__gte=today.month, # > =
                                             fechadesde__day__lte=today.day,     # < =
                                             fechahasta__day__gte=today.day)     # > =
-                                        print('registros_validos pronto pago 1',registros_validos)
+                                        ##print('registros_validos pronto pago 1',registros_validos)
                                         registros_validos2 = registros_validos.filter(
                                             fechadesde__year__lte=minimo_ano,       # < =
                                             fechahasta__year__gte=minimo_ano,       # > =
@@ -2705,7 +2705,7 @@ def Impuesto_Inmueble_Public_old(request):
                                             fechahasta__month__gte=aPeriodoMesDesde,# > =
                                             fechadesde__day__lte=aPeriodoDiaDesde,  # < =
                                             fechahasta__day__gte=aPeriodoDiaDesde)  # > =
-                                        print('registros_validos pronto pago 2',registros_validos2)
+                                        ##print('registros_validos pronto pago 2',registros_validos2)
                                         ppDescuento=float(registros_validos.aggregate(Sum('porcentaje'))['porcentaje__sum'])
                                     except:
                                         ppDescuento=0
@@ -2916,14 +2916,14 @@ def Crear_Estado_Cuenta1(request):
         correlativo=Correlativo.objects.get(id=1)
         valor_petro=TasaBCV.objects.get(habilitado=True).monto
         valor_tasabcv=TasaBCV.objects.get(habilitado=True).monto
-        print('numero',correlativo.NumeroEstadoCuenta)
-        print('tipoflujo',request['flujo'])
-        print('fecha',str(datetime.now()))
-        print('propietario',request['propietario'])
-        print('observaciones',request['observacion'])
-        print('valor_petro',valor_petro)
-        print('valor_tasa_bs',valor_tasabcv)
-        print('monto_total',request['monto_total'])
+        ##print('numero',correlativo.NumeroEstadoCuenta)
+        ##print('tipoflujo',request['flujo'])
+        ##print('fecha',str(datetime.now()))
+        ##print('propietario',request['propietario'])
+        ##print('observaciones',request['observacion'])
+        ##print('valor_petro',valor_petro)
+        ##print('valor_tasa_bs',valor_tasabcv)
+        ##print('monto_total',request['monto_total'])
         Cabacera=EstadoCuenta(
             numero=correlativo,
             tipoflujo=request['flujo'],
@@ -2938,17 +2938,17 @@ def Crear_Estado_Cuenta1(request):
         
 
         for detalle in items:
-            #print('estadocuenta')
-            print('tasamulta',detalle['tasa_multa_id'])
+            ###print('estadocuenta')
+            ##print('tasamulta',detalle['tasa_multa_id'])
 
             #monto_unidad_tributaria=TasaMulta.objects.get(id=detalle['tasa_multa_id']).unidad_tributaria
-            #print('monto_unidad_tributaria',monto_unidad_tributaria)
-            #print('monto_tasa',monto_unidad_tributaria*detalle['cantidad']*valor_petro*valor_tasabcv)
-            ##print('monto_tasa',detalle['monto_unidad_tributaria']*detalle['cantidad']*valor_petro*valor_tasabcv)
+            ###print('monto_unidad_tributaria',monto_unidad_tributaria)
+            ###print('monto_tasa',monto_unidad_tributaria*detalle['cantidad']*valor_petro*valor_tasabcv)
+            ####print('monto_tasa',detalle['monto_unidad_tributaria']*detalle['cantidad']*valor_petro*valor_tasabcv)
 
-            print('monto_unidad_tributaria',detalle['monto_unidad_tributaria'])
-            print('monto_tasa',detalle['calculo'])
-            print('cantidad',detalle['cantidad'])
+            ##print('monto_unidad_tributaria',detalle['monto_unidad_tributaria'])
+            ##print('monto_tasa',detalle['calculo'])
+            ##print('cantidad',detalle['cantidad'])
             Detalle=EstadoCuentaDetalle(
                 estadocuenta=Cabacera,
                 tasamulta=detalle['tasa_multa_id'],                     

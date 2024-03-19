@@ -86,6 +86,10 @@ class Permiso(models.Model):
 class Ambito(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del ambito")
     descripcion = models.TextField(null=False,blank =False, unique=False, help_text="Descripcion del ambito")
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
@@ -109,7 +113,9 @@ class Sector(models.Model):
     class Meta:
         unique_together = ('ambito', 'codigo')
         ordering = ['ambito','codigo']
-
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
 
 class Calle(models.Model):
     TIPO = (
@@ -120,6 +126,10 @@ class Calle(models.Model):
     )
     nombre = models.TextField(null=False,blank =False, unique=False, help_text="Nombre de la calle")
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='tipo calle')
+    class Meta:
+        indexes = [
+            models.Index(fields=['nombre']),
+        ]
     def __str__(self):
         return '%s - %s' % (self.tipo, self.nombre)
     
@@ -132,18 +142,30 @@ class Avenida(models.Model):
     )
     nombre = models.TextField(null=False,blank =False, help_text="Nombre de la avenida")
     tipo= models.CharField(max_length=1, choices=TIPO, default='1', help_text='tipo de avenida')
+    class Meta:
+        indexes = [
+            models.Index(fields=['nombre']),
+        ]
     def __str__(self):
         return '%s - %s' % (self.tipo, self.nombre)
     
 class Zona(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Zona")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Zona")
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
 
 class Categorizacion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Categorizacion Ordenanza 2024")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la Categorizacion Ordenanza 2024")
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
 
@@ -155,23 +177,27 @@ class Urbanizacion(models.Model):
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     nombre = models.TextField(null=False,blank =False, help_text="Nombre de la urbanizacion")
     tipo= models.CharField(max_length=1, choices=TIPO, default='P', help_text='tipo de la urbanizacion')
-    zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")
-
+    zona = models.ForeignKey(Zona,on_delete=models.PROTECT, null=True,blank =True,help_text="Zona !! Base para calculo")      
     def __str__(self):
         return '%s -%s - %s' % (self.nombre,self.sector.codigo,self.sector.ambito.codigo)
     class Meta:
         unique_together = ('sector', 'nombre')
         ordering = ['sector','nombre']
+        indexes = [
+            models.Index(fields=['nombre']),
+        ]
 
 class Manzana(models.Model):
     sector=models.ForeignKey(Sector,on_delete=models.PROTECT,help_text="Sector asociado")
     codigo = models.TextField(null=False,blank =False, help_text="Codigo de la Manzana")
     def __str__(self):
-        return '%s - %s' % (self.sector.codigo,self.codigo)
-    
+        return '%s - %s' % (self.sector.codigo,self.codigo)  
     class Meta:
         unique_together = ('sector', 'codigo')
         ordering = ['sector','codigo']
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
    
 class Parcela(models.Model):
     sector=models.ForeignKey(Sector,null=True,blank =True,on_delete=models.PROTECT,help_text="Sector asociado.")
@@ -181,6 +207,9 @@ class Parcela(models.Model):
     class Meta:
         unique_together = ('sector', 'codigo')
         ordering = ['sector','codigo'] 
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
 
 class SubParcela(models.Model):
     parcela=models.ForeignKey(Parcela,on_delete=models.PROTECT,help_text="Parcela asociado")
@@ -190,6 +219,9 @@ class SubParcela(models.Model):
     class Meta:
         unique_together = ('parcela', 'codigo')
         ordering = ['parcela','codigo']
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
 
 class ConjuntoResidencial(models.Model):
     urbanizacion = models.ForeignKey(Urbanizacion,null=True,blank =True,on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
@@ -201,20 +233,23 @@ class ConjuntoResidencial(models.Model):
     class Meta:
         unique_together = ('sector', 'nombre')
         ordering = ['sector','nombre']
-
+        indexes = [
+            models.Index(fields=['nombre']),
+        ]
 
 class Edificio(models.Model):
     conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,blank =True, on_delete=models.PROTECT,help_text="conjunto residencial asociado")
     urbanizacion = models.ForeignKey(Urbanizacion,null=True,blank =True, on_delete=models.PROTECT,help_text="Urbanizacion/barrio asociada")
     nombre = models.TextField(null=False,blank =False, help_text="nombre del Edificio")
-
-
     def __str__(self):
         return '%s -%s' % (self.urbanizacion.nombre,self.nombre)
     
     class Meta:
         unique_together = ('urbanizacion', 'nombre')
         ordering = ['urbanizacion','nombre']
+        indexes = [
+            models.Index(fields=['nombre']),
+        ]
     
 class Torre(models.Model):
     conjuntoresidencial = models.ForeignKey(ConjuntoResidencial,null=True,on_delete=models.PROTECT,help_text="conjunto residencial asociado")
@@ -224,6 +259,9 @@ class Torre(models.Model):
     class Meta:
         unique_together = ('conjuntoresidencial', 'nombre')
         ordering = ['conjuntoresidencial','nombre']
+        indexes = [
+            models.Index(fields=['nombre']),
+        ]
 
 class TipoInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo de inmueble")
@@ -231,7 +269,10 @@ class TipoInmueble(models.Model):
     TIPO = (('U', 'Unifamiliar Residencial'), 
             ('M', 'Multifamiliar No residencial'))
     tipo = models.CharField(max_length=1, null=True, choices=TIPO, default='U', help_text="Requerido para cálculo de multas artículo 99 y 101")
-      
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]      
     def __str__(self):
         return 'Id:%s - Codigo:%s- Descripcion:%s- Tipo:%s' % (self.id,self.codigo,self.descripcion, self.tipo)
     
@@ -239,7 +280,10 @@ class EstatusInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del estatus de inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del estatus de inmueble")
     inmueble_activo = models.BooleanField(default=True, help_text="si es tru, este estatus permite procesar el inmueble para calculo de impuestos")
-
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
     
@@ -248,72 +292,120 @@ class NivelInmueble(models.Model):
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del nivel de inmueble")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class UnidadInmueble(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de la unidad del inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de la unidad del inmueble")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class TipoDocumento(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo de documento del inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de documento del inmueble")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class TipoEspecial(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo especial del inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo especial del inmueble")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class TipoTenencia(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo del tipo tenecia del inmueble")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tenecia especial del inmueble")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Topografia(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de topografia")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de topografia")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Acceso(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Acceso")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Acceso")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Forma(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Forma")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Forma")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Ubicacion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Ubicacion")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Ubicacion")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Uso(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Uso")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Uso")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Regimen(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Regimen")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Regimen")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Servicios(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Servicio")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Servicio")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 
 #las tipologias USOS no se deben eliminar nunca, forman parte de la trazabilidad de los cálculos, tampoco de puede modificar
@@ -329,6 +421,10 @@ class Tipologia(models.Model):
     FinesFiscales = models.BooleanField(default=False, help_text="True es para fines fiscales(para impresion de cedula catastral)")
     def __str__(self):
         return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s' % (self.id,self.zona,self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Tipologia_Categorizacion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipologia")
@@ -340,7 +436,10 @@ class Tipologia_Categorizacion(models.Model):
     FinesFiscales = models.BooleanField(default=False, help_text="True es para fines fiscales(para impresion de cedula catastral)")
     def __str__(self):
         return 'Id:%s - Zona:%s - Codigo:%s - Descripcion:%s - Alicuota:%s' % (self.id,self.categorizacion,self.codigo, self.descripcion, self.tarifa)
-
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
 
     #!!! ojo es posible se elimine etste modelo!!!!!!!!!!!!!!!!!!!!!!
 class FinesFiscales(models.Model):
@@ -348,18 +447,30 @@ class FinesFiscales(models.Model):
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de fines fiscales")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class TipoDesincorporacion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipo desincorporacion")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de desincorporacion (cuando se desincorpora un propietario de un inmueble)")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class TipoTransaccion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de tipo transaccion")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion del tipo de transaccion")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 
     
@@ -376,6 +487,10 @@ class Propietario(models.Model):
     direccion = models.TextField(null=True,blank =True, help_text="Direccion")
     def __str__(self):
         return '%s - %s - %s' % (self.id,self.numero_documento, self.nombre)
+    class Meta:
+        indexes = [
+            models.Index(fields=['numero_documento']),
+        ]
 
 # Periodos
 class IC_Periodo(models.Model):
@@ -394,11 +509,30 @@ class IC_Periodo(models.Model):
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
     def __str__(self):
         return '%s - %s- %s' % (self.id,self.periodo,self.aplica)
+    class Meta:
+        indexes = [
+            models.Index(fields=['periodo']),
+        ]
 
 class Comunidad(models.Model):
     comunidad = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
     categoria = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
     clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+
+    history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['comunidad']),
+        ]
+
 
 class Inmueble(models.Model):
     numero_expediente = models.TextField(null=False,blank =False, unique=True, help_text="Numero de expediente.Correlativo.ExpedienteCatastro")
@@ -437,8 +571,20 @@ class Inmueble(models.Model):
     ReportePdfCedulaCatastral = models.FileField(upload_to='CedulaCatastral/',help_text="PDF Cedula catastral", null=True,blank =True)
     comunidad = models.ForeignKey(Comunidad, null=True,blank =True,on_delete=models.PROTECT,help_text="comunidad")
 
+    history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
 
-    #history = HistoricalRecords()
+    class Meta:
+        indexes = [
+            models.Index(fields=['numero_expediente']),
+        ]
+
     
     def __str__(self):
         return '%s - %s' % (self.id,self.numero_expediente)
@@ -473,16 +619,44 @@ class InmueblePropiedad(models.Model):
     lindero_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     lindero_oeste = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     pdf_documento = models.FileField(upload_to=immuebles_path_doc, null=True, blank=True, help_text="Pdf del documento de registro")
+
+    history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
+
     def __str__(self):
         return '%s' % (self.inmueble.numero_expediente)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
 
 class InmueblePropietarios(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble")
     propietario = models.ForeignKey (Propietario, on_delete=models.PROTECT,help_text="Id Propietario")
     fecha_compra = models.DateField(null=True,blank =True, help_text="fecha de compra del inmueble")
     modificacion_paga = models.BooleanField(default=False, help_text="True desde use_case de crear pago cuando se cancele el flujo de cambio de propietario")
+
+    history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
+
     def __str__(self):
         return '%s - %s' % (self.inmueble.numero_expediente,self.propietario.nombre)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
 
 class InmuebleTerreno(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
@@ -497,72 +671,120 @@ class InmuebleTerreno(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="Observaciones")
     def __str__(self):
         return '%s' % (self.inmueble.numero_expediente)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
     
 class InmuebleTerrenoTopografia(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleTerreno, on_delete=models.PROTECT,help_text="Inmueble asociado")
     topografia = models.ForeignKey (Topografia, on_delete=models.PROTECT,help_text="Topografia asociado")
     def __str__(self):
         return '%s' % (self.inmueble_terreno.inmueble.numero_expediente)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_terreno']),
+        ]
     	    
 class InmuebleTerrenoAcceso(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleTerreno, on_delete=models.PROTECT,help_text="Inmueble asociado")
     acceso = models.ForeignKey (Acceso, on_delete=models.PROTECT,help_text="Acceso asociado")
     def __str__(self):
         return '%s' % (self.inmueble_terreno.inmueble.numero_expediente)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_terreno']),
+        ]
     	
 class InmuebleTerrenoUso(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleTerreno, on_delete=models.PROTECT,help_text="Inmueble asociado")
     uso = models.ForeignKey (Uso, on_delete=models.PROTECT,help_text="uso asociado")
     def __str__(self):
         return '%s' % (self.inmueble_terreno.inmueble.numero_expediente)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_terreno']),
+        ]
 
 class InmuebleTerrenoServicio(models.Model):
     inmueble_terreno = models.ForeignKey (InmuebleTerreno, on_delete=models.PROTECT,help_text="Inmueble asociado")
     servicio	= models.ForeignKey (Servicios, on_delete=models.PROTECT,help_text="regimen asociado")
     def __str__(self):
         return '%s' % (self.inmueble_terreno.inmueble.numero_expediente)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_terreno']),
+        ]
 
 class UsoConstruccion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de UsoConstruccion")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de UsoConstruccion")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Soporte(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Soporte")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Soporte")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
 
 class Techo(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Techo")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Techo")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Cubierta(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Cubierta")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Cubierta")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class TipoPared(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de TipoPared")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de TipoPared")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class AcabadoPared(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de AcabadoPared")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de AcabadoPared")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 class Conservacion(models.Model):
     codigo = models.TextField(null=False,blank =False, unique=True, help_text="Codigo de Conservacion")
     descripcion = models.TextField(null=False,blank =False, unique=True, help_text="descripcion de Conservacion")
     def __str__(self):
         return '%s - %s' % (self.codigo, self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
     
 
 class InmuebleConstruccion(models.Model):
@@ -586,18 +808,34 @@ class InmuebleConstruccion(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     def __str__(self):
         return '%s - %s' % (self.inmueble.id, self.observaciones)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
     
 class InmuebleConstruccionSoporte(models.Model):
     inmueble_construccion = models.ForeignKey (InmuebleConstruccion, on_delete=models.PROTECT,help_text="Inmueble asociado")
     soporte = models.ForeignKey(Soporte, on_delete=models.PROTECT,help_text="Soporte asociado")
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_construccion']),
+        ]
 
 class InmuebleConstruccionTecho(models.Model):
     inmueble_construccion = models.ForeignKey (InmuebleConstruccion, on_delete=models.PROTECT,help_text="Inmueble asociado")
     techo = models.ForeignKey(Techo, on_delete=models.PROTECT,help_text="Techo asociado")
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_construccion']),
+        ]
 
 class InmuebleConstruccionCubierta(models.Model):
     inmueble_construccion = models.ForeignKey (InmuebleConstruccion, on_delete=models.PROTECT,help_text="Inmueble asociado")
     cubierta = models.ForeignKey(Cubierta, on_delete=models.PROTECT,help_text="Cubierta asociado") 
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble_construccion']),
+        ]
 
 
 class InmuebleValoracionTerreno(models.Model):
@@ -605,7 +843,6 @@ class InmuebleValoracionTerreno(models.Model):
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2")
     tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado")
     tipo=models.ForeignKey(TipoInmueble, null=True,blank =True,on_delete=models.PROTECT,help_text="Tipo de Inmueble asociado para determinar si unifamiliar o multifamiliar")    
-
     fines_fiscales	= models.ForeignKey (FinesFiscales,null=True,blank =True, on_delete=models.PROTECT,help_text="fines_fiscales asociado")
     valor_unitario = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor_unitario")
     area_factor_ajuste =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 del factor de ajuste")
@@ -614,9 +851,22 @@ class InmuebleValoracionTerreno(models.Model):
     valor_total = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Total")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     aplica= models.CharField(max_length=1, default='T', help_text='TERRENO')
+    
+    history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
 
     def __str__(self):
         return '%s - %s' % (self.inmueble.id, self.observaciones)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
     
 class InmuebleValoracionConstruccion(models.Model):
     inmueblevaloracionterreno = models.ForeignKey (InmuebleValoracionTerreno, on_delete=models.PROTECT,help_text="Id inmueble_terreno asociado")
@@ -629,7 +879,8 @@ class InmuebleValoracionConstruccion(models.Model):
     depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
     valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
-    #history = HistoricalRecords()
+
+    history = HistoricalRecords()
     def save(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
         super().save(*args, **kwargs)
@@ -639,6 +890,10 @@ class InmuebleValoracionConstruccion(models.Model):
             history_instance.save()
     def __str__(self):
         return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id) 
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueblevaloracionterreno']),
+        ]
 
 
 class InmuebleValoracionTerreno2024(models.Model):
@@ -654,8 +909,22 @@ class InmuebleValoracionTerreno2024(models.Model):
     valor_total = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Valor Total")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     aplica= models.CharField(max_length=1, default='T', help_text='TERRENO')
+
+    history = HistoricalRecords()
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        super().save(*args, **kwargs)
+        if user:
+            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+            history_instance.user = user
+            history_instance.save()
+    
     def __str__(self):
         return '%s - %s' % (self.inmueble.id, self.observaciones)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
     
 class InmuebleValoracionConstruccion2024(models.Model): 
     inmueblevaloracionterreno = models.ForeignKey (InmuebleValoracionTerreno2024, on_delete=models.PROTECT,help_text="Id inmueble_terreno asociado")
@@ -668,7 +937,8 @@ class InmuebleValoracionConstruccion2024(models.Model):
     depreciacion = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="depreciacion")
     valor_actual = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="valor")
     aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
-    #history = HistoricalRecords()
+    
+    history = HistoricalRecords()
     def save(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
         super().save(*args, **kwargs)
@@ -678,6 +948,10 @@ class InmuebleValoracionConstruccion2024(models.Model):
             history_instance.save()
     def __str__(self):
         return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id)
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueblevaloracionterreno']),
+        ]
 
 
 
@@ -706,12 +980,20 @@ class InmuebleUbicacion(models.Model):
     g7_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     g8_norte = models.TextField(null=True,blank =True, help_text="Numero de expediente")
     g8_este = models.TextField(null=True,blank =True, help_text="Numero de expediente")
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
 
 class InmuebleFaltante(models.Model):
     inmueble = models.ForeignKey (Inmueble, on_delete=models.PROTECT,help_text="Id Inmueble asociado")
     cedula = models.TextField(null=True,blank =True,help_text="Numero de cedula")
     documentopropiedad = models.TextField(null=True,blank =True, help_text="Numero de documentopropiedad")
     observaciones = models.TextField(null=True,blank =True,help_text="observaciones")
+    class Meta:
+        indexes = [
+            models.Index(fields=['inmueble']),
+        ]
 
 ## Histoial de Actualizacion de tasas para calculo de interes moratorio
 class TasaInteres(models.Model):
@@ -770,6 +1052,11 @@ class TasaMulta(models.Model):
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
     def __str__(self):
         return '%s - %s - %s' % (self.codigo,self.tipo, self.descripcion)
+        
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]
 
 #Maestro de tipos de pago (sirce para validar los conceptos de catastro, dias de vencimiento, pre-carga items que regulamente se cargan en ese tipo de flujo)
 class TipoFlujo(models.Model):
@@ -792,12 +1079,19 @@ class TipoFlujo(models.Model):
     crea_expediente = models.BooleanField(default=False, help_text="genera un nuevo numero de expediente?")
     def __str__(self):
         return '%s - %s - %s - %s - %s - crea flujo:%s - crea expediente:%s' % (self.id,self.codigo,self.descripcion,self.aplica,self.vencimiento,self.carandai,self.crea_expediente)
-    
+    class Meta:
+        indexes = [
+            models.Index(fields=['codigo']),
+        ]   
 class TipoFlujoDetalle(models.Model):
     tipoflujo = models.ForeignKey (TipoFlujo, null=True,blank =True,on_delete=models.PROTECT,help_text="Id TipoFlujo")
     tasamulta = models.ForeignKey(TasaMulta, on_delete=models.PROTECT,help_text="Id Tasa Multa")
     def __str__(self):
         return '%s - %s' % (self.tipoflujo.descripcion,self.tasamulta)
+    class Meta:
+        indexes = [
+            models.Index(fields=['tipoflujo']),
+        ]
 
 class EstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Estado de Cuenta. Correlativo.NumeroEstadoCuenta")
@@ -816,6 +1110,10 @@ class EstadoCuenta(models.Model):
     ReportePdf = models.FileField(upload_to='EstadoCuenta/',help_text="PDF EstadoCuenta", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s - %s' % (self.id,self.numero,self.propietario.nombre,self.tipoflujo)
+    class Meta:
+        indexes = [
+            models.Index(fields=['numero']),
+        ]
     
 class EstadoCuentaDetalle(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
@@ -826,6 +1124,11 @@ class EstadoCuentaDetalle(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     def __str__(self):
         return '%s - %s' % (self.estadocuenta.numero,self.tasamulta)
+    class Meta:
+        indexes = [
+            models.Index(fields=['estadocuenta']),
+        ]
+
 class Liquidacion(models.Model):
     estadocuenta = models.ForeignKey(EstadoCuenta,null=True,blank=True, on_delete=models.PROTECT,help_text="ID Cabecera Estado de Cuenta")
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de Liquidacion. Correlativo.NumeroLiquidacion")
@@ -844,6 +1147,10 @@ class Liquidacion(models.Model):
     ReportePdf = models.FileField(upload_to='PreFactura/',help_text="PDF PreFactura", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
+    class Meta:
+        indexes = [
+            models.Index(fields=['numero']),
+        ]
     
 class LiquidacionDetalle(models.Model):
     liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
@@ -854,6 +1161,10 @@ class LiquidacionDetalle(models.Model):
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     def __str__(self):
         return '%s - %s' % (self.liquidacion.numero,self.tasamulta)
+    class Meta:
+        indexes = [
+            models.Index(fields=['liquidacion']),
+        ]
 
 #Maestro de tipos de pago
 class TipoPago(models.Model):
@@ -861,6 +1172,12 @@ class TipoPago(models.Model):
     codigo  = models.TextField(null=True,blank =True,  help_text="codigo Tipo de pago")
     def __str__(self):
         return '%s' % (self.descripcion)
+    def __str__(self):
+        return '%s - %s' % (self.liquidacion.numero,self.tasamulta)
+    class Meta:
+        indexes = [
+            models.Index(fields=['descripcion']),
+        ]
 
    
 class Banco(models.Model):
@@ -868,6 +1185,10 @@ class Banco(models.Model):
     codigo  = models.TextField(null=True,blank =True, help_text="Codigo del banco")
     def __str__(self):
         return '%s' % (self.descripcion)
+    class Meta:
+        indexes = [
+            models.Index(fields=['descripcion']),
+        ]
 
 class BancoCuenta(models.Model):
     banco = models.ForeignKey(Banco, on_delete=models.PROTECT,help_text="ID Banco")
@@ -908,6 +1229,10 @@ class PagoEstadoCuenta(models.Model):
     def save(self, *args, **kwargs):
         self.fecha = timezone.now()
         super().save(*args, **kwargs) 
+    class Meta:
+        indexes = [
+            models.Index(fields=['numero']),
+        ]
 
 #Detalle de recibo Pago
 class PagoEstadoCuentaDetalle(models.Model):
@@ -919,6 +1244,10 @@ class PagoEstadoCuentaDetalle(models.Model):
     nro_lote = models.TextField(null=True,blank =True,  help_text="numero de lote (debito)")
     nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia (debito, trasferencia y nota de credito)")
     fechapago = models.DateTimeField(blank=True, help_text="Fecha pago")
+    class Meta:
+        indexes = [
+            models.Index(fields=['pagoestadocuenta']),
+        ]
 
 
 
@@ -954,7 +1283,10 @@ class Flujo(models.Model):
     )
     estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado dela solicitud')
     ReportePdf = models.FileField(upload_to='FlujoEntregaDocumentos/',help_text="PDF soporte entrega de documentos", null=True,blank =True)
-
+    class Meta:
+        indexes = [
+            models.Index(fields=['numero']),
+        ]
     def __str__(self):
         return '%s - %s - %s' % (self.inmueble,self.pagoestadocuenta,self.estado)
     def save(self, *args, **kwargs):
@@ -1009,7 +1341,10 @@ class FlujoDetalle(models.Model):
     fin_fecha = models.DateTimeField(blank=True,null=True, help_text="Fecha FIN DE LA SOLICITUD")
 
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
-
+    class Meta:
+        indexes = [
+            models.Index(fields=['flujo']),
+        ]
     def save(self, *args, **kwargs):
         if self.estado=='1':
            self.envia_fecha = timezone.now()

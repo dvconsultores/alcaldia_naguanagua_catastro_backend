@@ -486,6 +486,21 @@ class InmuebleSerializer(serializers.ModelSerializer):
         return obj.categorizacion.descripcion
       return None
 
+    codigo_categorizacion= serializers.SerializerMethodField('loadcodigo_categorizacion')
+    def loadcodigo_categorizacion(self, obj):
+      if obj.categorizacion:
+        return obj.categorizacion.codigo
+      return None
+
+    descripcion_comunidad= serializers.SerializerMethodField('loaddescripcion_comunidad')
+    def loaddescripcion_comunidad(self, obj):
+      if obj.comunidad:
+        return obj.comunidad.comunidad
+      return None
+
+
+
+
     codigo_periodo= serializers.SerializerMethodField('loadcodigo_periodo')
     def loadcodigo_periodo(self, obj):
       if obj.periodo:
@@ -960,11 +975,24 @@ class CorrelativoSerializer(serializers.ModelSerializer):
         fields = '__all__'       
 
 class FlujoSerializer(serializers.ModelSerializer):
-    pagoestadocuenta = PagoEstadoCuentaSerializer()
+    #pagoestadocuenta = PagoEstadoCuentaSerializer()
     #inmueble = InmuebleSerializer()
     class Meta:
         model = Flujo
         fields = '__all__' 
+    
+    descripcion_flujo= serializers.SerializerMethodField('loaddescripcion_flujo')
+    def loaddescripcion_flujo(self, obj):
+      if obj.pagoestadocuenta:
+        return obj.pagoestadocuenta.liquidacion.tipoflujo.descripcion
+      return None
+
+    nombre_propietario= serializers.SerializerMethodField('loadnombre_propietario')
+    def loadnombre_propietario(self, obj):
+      if obj.pagoestadocuenta:
+        return obj.pagoestadocuenta.liquidacion.propietario.nombre
+      return None
+       
     estado_display = serializers.SerializerMethodField('get_estado_display')
     def get_estado_display(self, obj):
         return dict(Flujo.ESTADO)[obj.estado]
