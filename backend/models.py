@@ -10,7 +10,11 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from decimal import Decimal
 from django.utils import timezone
+from .storage_backends import PrivateMediaStorage
 
+
+def logos_path(filename):
+    return "logos/{0}".format(filename)
 
 
 def immuebles_path(instance, filename):
@@ -19,11 +23,28 @@ def immuebles_path(instance, filename):
 def immuebles_path_doc(instance, filename):
     return "immueble_{0}/docs/{1}".format(instance.id, filename)
 
+def immuebles_path_ficha(instance, filename):
+    return "immueble_{0}/ficha/{1}".format(instance.id, filename)
+def immuebles_path_desincopora(instance, filename):
+    return "immueble_{0}/desincopora/{1}".format(instance.id, filename)
+
+def estadocuenta_path(instance, filename):
+    return "estadocuenta_{0}/pdf/{1}".format(instance.id, filename)
+
+def liquidacion_path(instance, filename):
+    return "liquidacion_{0}/pdf/{1}".format(instance.id, filename)
+
+def pagoestadocuenta_path(instance, filename):
+    return "pagoestadocuenta_{0}/pdf/{1}".format(instance.id, filename)   
+
 def correcciones_path(instance, filename):
     return "IC_impuestocorrecciones{0}/imgs/{1}".format(instance.id, filename)
 
 def flujo_path(instance, filename):
     return "flujo_{0}/docs/{1}".format(instance.id, filename)
+
+def flujoentrega_path(instance, filename):
+    return "flujo_{0}/entrega/{1}".format(instance.id, filename)
 
 class Departamento(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False, primary_key=True, help_text="Nombre Depatamento para usuario de catastro FLUJO")
@@ -567,8 +588,8 @@ class Inmueble(models.Model):
     periodo=models.ForeignKey(IC_Periodo, null=True,blank =True,on_delete=models.PROTECT,help_text="Periodo que adeuda")
     tipodesincorporacion=models.ForeignKey(TipoDesincorporacion, null=True,blank =True,on_delete=models.PROTECT,help_text="Motivo Desincorporacion")
     anio = models.PositiveIntegerField(null=True, blank=True,  help_text="Año que adeuda")
-    ReportePdfDesincorporacion = models.FileField(upload_to='Desincorporacion/',help_text="PDF Desincorporacion", null=True,blank =True)
-    ReportePdfCedulaCatastral = models.FileField(upload_to='CedulaCatastral/',help_text="PDF Cedula catastral", null=True,blank =True)
+    ReportePdfDesincorporacion = models.FileField(upload_to=immuebles_path_desincopora,help_text="PDF Desincorporacion", null=True,blank =True)
+    ReportePdfCedulaCatastral = models.FileField(upload_to=immuebles_path_ficha,help_text="PDF Cedula catastral", null=True,blank =True)
     comunidad = models.ForeignKey(Comunidad, null=True,blank =True,on_delete=models.PROTECT,help_text="comunidad")
 
     history = HistoricalRecords()
@@ -1012,6 +1033,9 @@ class TasaBCV(models.Model):
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     def __str__(self):
         return '%s - %s' % (self.monto, self.fecha)
+    def save(self, *args, **kwargs):
+        self.fecha = timezone.now().date() 
+        super().save(*args, **kwargs)
 
 ## Histoial de Actualizacion de precios de UT/petro u otro definido por la ley
 class UnidadTributaria(models.Model):
@@ -1107,7 +1131,7 @@ class EstadoCuenta(models.Model):
     fecha_compra = models.DateField(null=True,blank =True, help_text="Fecha de compra del inmueble (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
-    ReportePdf = models.FileField(upload_to='EstadoCuenta/',help_text="PDF EstadoCuenta", null=True,blank =True)
+    ReportePdf = models.FileField(upload_to=estadocuenta_path,help_text="PDF EstadoCuenta", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s - %s' % (self.id,self.numero,self.propietario.nombre,self.tipoflujo)
     class Meta:
@@ -1144,7 +1168,7 @@ class Liquidacion(models.Model):
     fecha_compra = models.DateField(null=True,blank =True, help_text="Fecha de compra del inmueble (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     area = models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="Area en m2 (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
     tipo=models.ForeignKey(TipoInmueble,null=True,blank =True,on_delete=models.PROTECT,help_text="TipoInmueble asociado (SOLO SE PIDE PARA INSCRIPCION DE INMUEBLES NUEVOS)")
-    ReportePdf = models.FileField(upload_to='PreFactura/',help_text="PDF PreFactura", null=True,blank =True)
+    ReportePdf = models.FileField(upload_to=liquidacion_path,help_text="PDF PreFactura", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s' % (self.numero,self.propietario.nombre,self.tipoflujo)
     class Meta:
@@ -1223,7 +1247,7 @@ class PagoEstadoCuenta(models.Model):
     anula_fecha = models.DateTimeField(blank=True, null=True,help_text="Fecha Anulacion")
     anula_observaciones = models.TextField(null=True,blank =True, help_text="observaciones por la anulacion")
     motivoanulacionpago = models.ForeignKey(MotivoAnulacionPago,null=True,blank =True, on_delete=models.PROTECT,help_text="ID MotivoAnulacionPago")
-    ReportePdf = models.FileField(upload_to='PagoEstadoCuenta/',help_text="PDF PagoEstadoCuenta", null=True,blank =True)
+    ReportePdf = models.FileField(upload_to=pagoestadocuenta_path,help_text="PDF PagoEstadoCuenta", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s' % (self.id,self.numero,self.liquidacion)
     def save(self, *args, **kwargs):
@@ -1265,8 +1289,8 @@ class Correlativo(models.Model):
     NumeroIC_Impuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero Impuesto Catastro")
     NumeroAE_Patente = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio")
     NumeroAE_Patente_Generica = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio genérica")
-    Logo1 = models.ImageField(upload_to='Logos/',help_text="Logo 1 para reporte", null=True,blank =True)
-    Logo2 = models.ImageField(upload_to='Logos/',help_text="Logo 2 para reporte", null=True,blank =True)
+    Logo1 = models.ImageField(upload_to=logos_path,help_text="Logo 1 para reporte", null=True,blank =True)
+    Logo2 = models.ImageField(upload_to=logos_path,help_text="Logo 2 para reporte", null=True,blank =True)
 
 
 
@@ -1282,7 +1306,7 @@ class Flujo(models.Model):
         ('2', 'Cerrado'),
     )
     estado= models.CharField(max_length=1, choices=ESTADO, default='1', help_text='Estado dela solicitud')
-    ReportePdf = models.FileField(upload_to='FlujoEntregaDocumentos/',help_text="PDF soporte entrega de documentos", null=True,blank =True)
+    ReportePdf = models.FileField(upload_to=flujoentrega_path,help_text="PDF soporte entrega de documentos", null=True,blank =True)
     class Meta:
         indexes = [
             models.Index(fields=['numero']),

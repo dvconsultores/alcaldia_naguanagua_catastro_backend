@@ -473,6 +473,12 @@ class InmuebleSerializer(serializers.ModelSerializer):
       if obj.torre:
         return obj.torre.nombre
       return None
+
+    codigo_zona= serializers.SerializerMethodField('loadcodigo_zona')
+    def loadcodigo_zona(self, obj):
+      if obj.zona:
+        return obj.zona.codigo
+      return None  
     
     descripcion_zona= serializers.SerializerMethodField('loaddescripcion_zona')
     def loaddescripcion_zona(self, obj):

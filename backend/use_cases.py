@@ -1462,18 +1462,31 @@ def Datos_Inmuebles_Public(request):
                     total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
                 else:
                     total_area_construccion = 0
+                
+
                 if oInmueble.categorizacion:
                     categoria=oInmueble.categorizacion.codigo
                 else:
                     categoria='SIN CATEGORIZACION!!!'
 
-                dAnio=oInmueble.anio        # Año que incia la deuda
+                dAnio=oInmueble.anio        # Año que incia la deuda    
+
+                if oInmueble.periodo is None and total_area_terreno+total_area_construccion==0:
+                    return Response({'error':3,'mensaje':'Error: Falta Periodo de último pago y no tiene Valoración Económica'}, status=status.HTTP_200_OK)
+                if oInmueble.periodo is None:
+                    return Response({'error':1,'mensaje':'Error: Falta Périodo de último pago'}, status=status.HTTP_200_OK)
+                if total_area_terreno+total_area_construccion==0:
+                    return Response({'error':2,'mensaje':'Error: No tiene Valoración Económica'}, status=status.HTTP_200_OK)
+
+                PetiodoenInmuele=oInmueble.periodo.periodo 
+                print('peri')
+                print('PetiodoenInmuele',PetiodoenInmuele)
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 oPropietario = InmueblePropietarios.objects.filter(inmueble__numero_expediente=request['inmueble'])
             except Inmueble.DoesNotExist:
                  not_process=True
             if not_process:
-                return Response('Inmueble con estatus por procesar en catastro', status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error':4,'mensaje':'Inmueble con estatus por procesar en catastro o No existe'}, status=status.HTTP_200_OK)
             else:
                 if oPropietario:
                     for propietario in oPropietario:
@@ -1497,12 +1510,14 @@ def Datos_Inmuebles_Public(request):
                 datos={
                     'cabacera':Impuesto,
                     'propietarios':aPropietario,
+                    'error':0,
+                    'mensaje':'Carga exitosa'
                 }
                 data.append(datos)
             return Response(data, status=status.HTTP_200_OK)
-        return Response('Insert OK', status=status.HTTP_200_OK)
+        return Response({'error':9,'mensaje':'Sin datos'}, status=status.HTTP_200_OK)
     else:
-        return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error':9,'mensaje':'Sin datos'}, status=status.HTTP_200_OK)
 
 
 def Impuesto_Inmueble_Pago(request):
