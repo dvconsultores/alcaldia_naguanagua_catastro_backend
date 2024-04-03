@@ -793,15 +793,7 @@ def Impuesto_Inmueble2023(request):
                             for dato in ocupacion:
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                                 #posesión por 5 años o más por el mismo propietario
-                                if dato.tipologia.codigo=='17' and ZonaInmueble.codigo=='1':
-                                    mesesTrascurridos = meses_transcurridos(fechaCompra, today)
-                                    if mesesTrascurridos>=60: # tiene 5 años de antiguedad
-                                        Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
-                                    else:
-                                        # si no se cumple aplico Otros Usos=5
-                                        Alicuota=float(oTipologia.get(codigo='15').tarifa)
-                                else:
-                                    Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
+                                Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
                                 Monto=float(dato.area)*(Alicuota*iAlicuota)*baseCalculoBs
                                 mDescuento=0
                                 ppDescuento=0
@@ -941,16 +933,18 @@ def Impuesto_Inmueble2023(request):
                                 #end If
                             # end For oTasaInteres                    
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora4=(tTotalMora/1)
-                            tTotalMora3=(tTotalMora/4)*3
-                            tTotalMora2=(tTotalMora/2)
-                            tTotalMora1=(tTotalMora/4)
+                            tTotalMora4=(tTotal/1)
+                            tTotalMora3=(tTotal/4)*3
+                            tTotalMora2=(tTotal/2)
+                            tTotalMora1=(tTotal/4)
                             incremento=1.200000000
                             incremento_decimal = Decimal(str(incremento))
-
                             for aTasa in oTasaInteres:
                                 if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
-                                    cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
+                                    if (aTasa.mes==today.month and minimo_ano==today.year):
+                                        cantidad_dias = today.day
+                                    else:
+                                        cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes) 
                                     tasa_porcentaje=float((aTasa.tasa*incremento_decimal)/100)
                                     if  aTasa.mes==1: 
                                         monto=0
@@ -1220,16 +1214,8 @@ def Impuesto_Inmueble2023_Public(request):
                                     ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
-                                #posesión por 5 años o más por el mismo propietario
-                                if dato.tipologia.codigo=='17' and ZonaInmueble.codigo=='1':
-                                    mesesTrascurridos = meses_transcurridos(fechaCompra, today)
-                                    if mesesTrascurridos>=60: # tiene 5 años de antiguedad
-                                        Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
-                                    else:
-                                        # si no se cumple aplico Otros Usos=5
-                                        Alicuota=float(oTipologia.get(codigo='15').tarifa)
-                                else:
-                                    Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
+                                #posesión por 5 años o más por el mismo propietario 
+                                Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
                                 Monto=float(dato.area)*(Alicuota*iAlicuota)*baseCalculoBs
                                 mDescuento=0
                                 ppDescuento=0
@@ -1347,16 +1333,18 @@ def Impuesto_Inmueble2023_Public(request):
                                     tRecargo=tRecargo+(Total*(fRecargo/100))
                         if tTotalMora:                   
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora4=(tTotalMora/1)
-                            tTotalMora3=(tTotalMora/4)*3
-                            tTotalMora2=(tTotalMora/2)
-                            tTotalMora1=(tTotalMora/4)
+                            tTotalMora4=(tTotal/1)
+                            tTotalMora3=(tTotal/4)*3
+                            tTotalMora2=(tTotal/2)
+                            tTotalMora1=(tTotal/4)
                             incremento=1.200000000
                             incremento_decimal = Decimal(str(incremento))
-
                             for aTasa in oTasaInteres:
                                 if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
-                                    cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
+                                    if (aTasa.mes==today.month and minimo_ano==today.year):
+                                        cantidad_dias = today.day
+                                    else:
+                                        cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes) 
                                     tasa_porcentaje=float((aTasa.tasa*incremento_decimal)/100)
                                     if  aTasa.mes==1: 
                                         monto=0
@@ -1445,6 +1433,22 @@ def Impuesto_Inmueble2023_Public(request):
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
 
 def Datos_Inmuebles_Public(request):
+    # esta Api publica permite ver la salud de un expediente para calculo de impuestos y retorna los siguientes errorres:
+    # Response({'error':1,'mensaje':'Error: Falta Período de último pago'}, status=status.HTTP_200_OK)
+    # Response({'error':2,'mensaje':'Error: No tiene Valoración Económica'}, status=status.HTTP_200_OK)
+    # Response({'error':3,'mensaje':'Error: Falta Periodo de último pago y no tiene Valoración Económica'}, status=status.HTTP_200_OK)
+    # Response({'error':4,'mensaje':'Inmueble con estatus por procesar en catastro o No existe'}, status=status.HTTP_200_OK)
+    # Response({'error':5,'mensaje':'Error: Sin CATEGORIZACION. Revisar en Catastro'}, status=status.HTTP_200_OK)
+    # Response({'error':5,'mensaje':'Error: Sin ZONA. Revisar en Catastro'}, status=status.HTTP_200_OK)
+    # Response({'error':6,'mensaje':'Error: La ZONA de la ficha no es la misma que tiene el uso de TERRENO.'}, status=status.HTTP_200_OK)
+    # Response({'error':6,'mensaje':'Error: La CATEGORIZACION de la ficha no es la misma que tiene el uso de TERRENO.'}, status=status.HTTP_200_OK)
+    # Response({'error':7,'mensaje':'Error: La ZONA de la ficha no es la misma que tiene el uso de CONSTRUCION.'}, status=status.HTTP_200_OK)
+    # Response({'error':7,'mensaje':'Error: La CATEGORIZACION de la ficha no es la misma que tiene el uso de CONSTRUCION.'}, status=status.HTTP_200_OK) 
+    # Response({'error':9,'mensaje':'Sin datos'}, status=status.HTTP_200_OK)
+    # Response({'error':8,'mensaje':'Error: El area de Valoración Económica de TERRENO NO conincide en ZONA y en CATEGORIZACION.'}, status=status.HTTP_200_OK)     
+    # Response({'error':8,'mensaje':'Error: El area de Valoración Económica de CONSTRUCCION NO conincide en ZONA y en CATEGORIZACION.'}, status=status.HTTP_200_OK)     
+
+
     if (request):
         data = []
         aPropietario = []
@@ -1452,35 +1456,63 @@ def Datos_Inmuebles_Public(request):
             not_process=False
             try:
                 oInmueble = Inmueble.objects.get(numero_expediente=request['inmueble'], status__inmueble_activo=True)
-                terreno =      InmuebleValoracionTerreno.objects.get(inmueble__numero_expediente=request['inmueble'])
-                construccion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
-                if terreno:
-                    total_area_terreno = terreno.area 
-                else:
-                    total_area_terreno = 0
-                if construccion:
-                    total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
-                else:
-                    total_area_construccion = 0
-                
-
                 if oInmueble.categorizacion:
                     categoria=oInmueble.categorizacion.codigo
                 else:
                     categoria='SIN CATEGORIZACION!!!'
-
-                dAnio=oInmueble.anio        # Año que incia la deuda    
-
-                if oInmueble.periodo is None and total_area_terreno+total_area_construccion==0:
-                    return Response({'error':3,'mensaje':'Error: Falta Periodo de último pago y no tiene Valoración Económica'}, status=status.HTTP_200_OK)
+                    return Response({'error':5,'mensaje':'Error: Sin CATEGORIZACION. Revisar en Catastro'}, status=status.HTTP_200_OK)
+                if oInmueble.zona:
+                    zona=oInmueble.zona.codigo
+                else:
+                    zona='SIN ZONA!!!'
+                    return Response({'error':5,'mensaje':'Error: Sin ZONA. Revisar en Catastro'}, status=status.HTTP_200_OK)
+                total_area_terreno=0
+                total_area_construccion = 0
+                total_area_terreno2024=0
+                total_area_construccion2024 = 0
+                dAnio=oInmueble.anio        # Año que inicia la deuda
                 if oInmueble.periodo is None:
                     return Response({'error':1,'mensaje':'Error: Falta Périodo de último pago'}, status=status.HTTP_200_OK)
+
+                if dAnio>=2024:
+                    terreno2024 =      InmuebleValoracionTerreno2024.objects.get(inmueble__numero_expediente=request['inmueble'])
+                    construccion2024 = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno)
+                else:
+                    terreno =          InmuebleValoracionTerreno.objects.get(inmueble__numero_expediente=request['inmueble'])
+                    construccion =     InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
+                    terreno2024 =      InmuebleValoracionTerreno2024.objects.get(inmueble__numero_expediente=request['inmueble'])
+                    construccion2024 = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno2024)
+                # Aca se valida si la zona/categoria del terreno o costruccion es igual a la zona de la ficha solo si tiene algo de area
+                # Si se cumple entonces envia error, esto para avisar que no podra calcular impuesto con esta inconsitencia
+                if terreno:    
+                    total_area_terreno = terreno.area 
+                    if (total_area_terreno>0 and terreno.tipologia.zona.codigo!=zona): 
+                        return Response({'error':6,'mensaje':'Error: La ZONA de la ficha no es la misma que tiene el uso de TERRENO.'}, status=status.HTTP_200_OK)
+                if construccion:
+                    total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
+                    zona_errada = construccion.exclude(tipologia__zona__codigo=zona).count() 
+                    if (total_area_construccion>0 and zona_errada>0): 
+                        return Response({'error':7,'mensaje':'Error: La ZONA de la ficha no es la misma que tiene el uso de CONSTRUCION.'}, status=status.HTTP_200_OK)
+                if terreno2024:
+                    total_area_terreno2024 = terreno2024.area 
+                    if (total_area_terreno2024>0 and terreno2024.tipologia_categorizacion.categorizacion.codigo!=categoria):
+                        return Response({'error':6,'mensaje':'Error: La CATEGORIZACION de la ficha no es la misma que tiene el uso de TERRENO.'}, status=status.HTTP_200_OK)
+                if construccion2024:
+                    total_area_construccion2024 = construccion2024.aggregate(Sum('area'))['area__sum']
+                    categoria_errada = construccion2024.exclude(tipologia_categorizacion__categorizacion__codigo=categoria).count() 
+                    if (total_area_construccion2024>0 and categoria_errada>0): 
+                        return Response({'error':7,'mensaje':'Error: La CATEGORIZACION de la ficha  no es la misma que tiene el uso de CONSTRUCION.'}, status=status.HTTP_200_OK)     
+                # Aca se valida si las area de terreno ZONA es diferente terreno CATEGORIA. Igual en construccion.
+                if dAnio<2024:
+                    if total_area_terreno!=total_area_terreno2024:
+                        return Response({'error':8,'mensaje':'Error: El area de Valoración Económica de TERRENO NO conincide en ZONA y en CATEGORIZACION.'}, status=status.HTTP_200_OK)     
+                    if total_area_construccion!=total_area_construccion2024:
+                        return Response({'error':8,'mensaje':'Error: El área de Valoración Económica de CONSTRUCCION NO conincide en ZONA y en CATEGORIZACION.'}, status=status.HTTP_200_OK)     
+                if oInmueble.periodo is None and total_area_terreno+total_area_construccion==0:
+                    return Response({'error':3,'mensaje':'Error: Falta Período de último pago y no tiene Valoración Económica'}, status=status.HTTP_200_OK)
+
                 if total_area_terreno+total_area_construccion==0:
                     return Response({'error':2,'mensaje':'Error: No tiene Valoración Económica'}, status=status.HTTP_200_OK)
-
-                PetiodoenInmuele=oInmueble.periodo.periodo 
-                print('peri')
-                print('PetiodoenInmuele',PetiodoenInmuele)
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 oPropietario = InmueblePropietarios.objects.filter(inmueble__numero_expediente=request['inmueble'])
             except Inmueble.DoesNotExist:
@@ -1496,6 +1528,7 @@ def Datos_Inmuebles_Public(request):
                             'Telefono':propietario.propietario.telefono_principal,
                             'email':propietario.propietario.email_principal,
                             'direccion':propietario.propietario.direccion,
+                            'direccionI':oInmueble.direccion,
                         }
                         aPropietario.append(inmueblepropietarios)
                 Impuesto={
@@ -1506,6 +1539,8 @@ def Datos_Inmuebles_Public(request):
                     'Periodo':dPeriodo,
                     'AreaTerreno':total_area_terreno,
                     'AreaConstruccion':total_area_construccion,
+                    'AreaTerreno2024':total_area_terreno2024,
+                    'AreaConstruccion2024':total_area_construccion2024,
                 }
                 datos={
                     'cabacera':Impuesto,
@@ -2066,26 +2101,70 @@ def Impuesto_Inmueble(request):
                                     tBaseMultaRecargoInteres=tBaseMultaRecargoInteres+Total
                                     tMulta=tMulta+(Total*(fMulta/100))
                                     tRecargo=tRecargo+(Total*(fRecargo/100))
-                        if tTotalMora:
+                        if tTotalMora:                   
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora=(tTotalMora/12)
+                            # se cambia tTotalMora por ttotal--Arturo 2-4-2024
+                            tTotalMora4=(tTotal/1)
+                            tTotalMora3=(tTotal/4)*3
+                            tTotalMora2=(tTotal/2)
+                            tTotalMora1=(tTotal/4)
+                            incremento=1.200000000
+                            incremento_decimal = Decimal(str(incremento))
                             for aTasa in oTasaInteres:
                                 if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
-                                    cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
-                                    tasa_porcentaje=float(aTasa.tasa/100)
-                                    monto=((tTotalMora*tasa_porcentaje)/360)*cantidad_dias
+                                    if (aTasa.mes==today.month and minimo_ano==today.year):
+                                        cantidad_dias = today.day
+                                    else:
+                                        cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes) 
+                                    tasa_porcentaje=float((aTasa.tasa*incremento_decimal)/100)
+                                    if  aTasa.mes==1: 
+                                        monto=0
+                                        por_mes=0
+                                    if  aTasa.mes==2:
+                                        monto=0
+                                        por_mes=0
+                                    if  aTasa.mes==3:
+                                        monto=0
+                                        por_mes=0
+                                    if  aTasa.mes==4:
+                                        monto=((tTotalMora1*tasa_porcentaje)/360)*cantidad_dias 
+                                        por_mes=tTotalMora1
+                                    if  aTasa.mes==5:
+                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora2
+                                    if  aTasa.mes==6:
+                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora2
+                                    if  aTasa.mes==7:
+                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora2
+                                    if  aTasa.mes==8:
+                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora3
+                                    if  aTasa.mes==9:
+                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora3
+                                    if  aTasa.mes==10:
+                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora3
+                                    if  aTasa.mes==11:
+                                        monto=((tTotalMora4*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora4
+                                    if  aTasa.mes==12:
+                                        monto=((tTotalMora4*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora4
                                     ImpuestoInteresMoratorio={
                                             'anio':aTasa.anio,
                                             'mes':aTasa.mes,
                                             'tasa':tasa_porcentaje*100,
                                             'dias':cantidad_dias,
-                                            'moramensual':tTotalMora,
+                                            'moramensual':por_mes,
                                             'interesmensual':monto,
                                         }
                                     aInteres.append(ImpuestoInteresMoratorio)
                                     tInteres=tInteres+monto
                                 #end If
-                            # end For oTasaInteres                    
+                            # end For oTasaInteres 
                             tTotalMora=0
                         minimo_ano=minimo_ano+1
                     #EndWhile
@@ -2094,7 +2173,7 @@ def Impuesto_Inmueble(request):
 
                     Impuesto={
                         'numero':numero,
-                        'zona':CategorizacionInmueble.id,
+                        'zona':CategorizacionInmueble.codigo,
                         'basecalculobs':baseCalculoBs,
                         'inmueble':oInmueble.id,
                         'subtotal':tTotal,
@@ -2416,26 +2495,69 @@ def Impuesto_Inmueble_Public(request):
                                     tBaseMultaRecargoInteres=tBaseMultaRecargoInteres+Total
                                     tMulta=tMulta+(Total*(fMulta/100))
                                     tRecargo=tRecargo+(Total*(fRecargo/100))
-                        if tTotalMora:
+                        if tTotalMora:                   
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora=(tTotalMora/12)
+                            tTotalMora4=(tTotal/1)
+                            tTotalMora3=(tTotal/4)*3
+                            tTotalMora2=(tTotal/2)
+                            tTotalMora1=(tTotal/4)
+                            incremento=1.200000000
+                            incremento_decimal = Decimal(str(incremento))
                             for aTasa in oTasaInteres:
                                 if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
-                                    cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
-                                    tasa_porcentaje=float(aTasa.tasa/100)
-                                    monto=((tTotalMora*tasa_porcentaje)/360)*cantidad_dias
+                                    if (aTasa.mes==today.month and minimo_ano==today.year):
+                                        cantidad_dias = today.day
+                                    else:
+                                        cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes) 
+                                    tasa_porcentaje=float((aTasa.tasa*incremento_decimal)/100)
+                                    if  aTasa.mes==1: 
+                                        monto=0
+                                        por_mes=0
+                                    if  aTasa.mes==2:
+                                        monto=0
+                                        por_mes=0
+                                    if  aTasa.mes==3:
+                                        monto=0
+                                        por_mes=0
+                                    if  aTasa.mes==4:
+                                        monto=((tTotalMora1*tasa_porcentaje)/360)*cantidad_dias 
+                                        por_mes=tTotalMora1
+                                    if  aTasa.mes==5:
+                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora2
+                                    if  aTasa.mes==6:
+                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora2
+                                    if  aTasa.mes==7:
+                                        monto=((tTotalMora2*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora2
+                                    if  aTasa.mes==8:
+                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora3
+                                    if  aTasa.mes==9:
+                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora3
+                                    if  aTasa.mes==10:
+                                        monto=((tTotalMora3*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora3
+                                    if  aTasa.mes==11:
+                                        monto=((tTotalMora4*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora4
+                                    if  aTasa.mes==12:
+                                        monto=((tTotalMora4*tasa_porcentaje)/360)*cantidad_dias
+                                        por_mes=tTotalMora4
                                     ImpuestoInteresMoratorio={
                                             'anio':aTasa.anio,
                                             'mes':aTasa.mes,
                                             'tasa':tasa_porcentaje*100,
                                             'dias':cantidad_dias,
-                                            'moramensual':tTotalMora,
+                                            'moramensual':por_mes,
                                             'interesmensual':monto,
                                         }
                                     aInteres.append(ImpuestoInteresMoratorio)
                                     tInteres=tInteres+monto
                                 #end If
-                            # end For oTasaInteres                    
+                            # end For oTasaInteres 
                             tTotalMora=0
                         minimo_ano=minimo_ano+1
                     #EndWhile
@@ -2444,7 +2566,7 @@ def Impuesto_Inmueble_Public(request):
 
                     Impuesto={
                         'numero':numero,
-                        'zona':CategorizacionInmueble.id,
+                        'zona':CategorizacionInmueble.codigo,
                         'basecalculobs':baseCalculoBs,
                         'inmueble':oInmueble.id,
                         'subtotal':tTotal,
