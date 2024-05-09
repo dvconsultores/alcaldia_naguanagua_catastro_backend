@@ -1,0 +1,13 @@
+LOAD DATABASE
+    FROM
+        postgresql://postgres:5YvFu7XA76vgq4aW1IUcvDO6ZHYhT9EF@64.225.104.69/catastro_naguanagua  -- Detalles de PostgreSQL
+    INTO
+        sqlite:///home/jorge/Documentos/alcaldia_naguanagua_catastro_backend/database.db  -- Ruta de la base de datos SQLite
+
+    # Opciones de carga
+    WITH include no drop, create tables, create indexes, reset sequences
+
+    # Conversión de tipos de datos
+    CAST type integer to boolean drop typemod using tinyint
+
+

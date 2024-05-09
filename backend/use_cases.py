@@ -18,7 +18,10 @@ from django.core.serializers.json import DjangoJSONEncoder
 import json
 import urllib.parse
 from django.http import HttpResponse
-
+from django.db.models import Count, CharField, Value, When, Case
+#from django.db.models import Count, F
+from django.db.models.functions import ExtractYear, ExtractMonth
+from .storage_backends import PrivateMediaStorage
 
 # obtener la cantidad de dias que tiene un mes en un año especifico
 def obtener_cantidad_dias(year, month):
@@ -198,7 +201,7 @@ def Crear_Pago(request):
         ##print('liquidaciones',liquidacion.id)
         ##print('estado de cuenta',liquidacion.estadocuenta.id)
         # valida si el pago corresponde a un impuesto de inmueble.
-        PagaImpuestoInmueble=False;
+        PagaImpuestoInmueble=False
         AnioPago=0
         PeriodoPago=0
         InmueblePago=0
@@ -749,6 +752,7 @@ def Impuesto_Inmueble2023(request):
                     fMulta=float(oCargos.get(codigo='multa').porcentaje)
                     fRecargo=float(oCargos.get(codigo='recargo').porcentaje)
                     tBaseMultaRecargoInteres=0
+                    tTotalInteresMoratorio=0
                     tMulta=0
                     tRecargo=0
                     tInteres=0
@@ -805,7 +809,7 @@ def Impuesto_Inmueble2023(request):
                                     aPeriodoDiaDesde=aPeriodo.periodo.fechadesde.day
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=False)
+                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=False)
                                         ##print('descuento',pDescuento)
                                         ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
@@ -839,7 +843,7 @@ def Impuesto_Inmueble2023(request):
 
                                     # Aplica descuentos prontopago
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=True)
+                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,)  | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=True)
                                         ##print('descuento Pronto Pago',pDescuento)
                                         ##print('fecha actual',today.year,today.month,today.day) 
                                         ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
@@ -904,6 +908,7 @@ def Impuesto_Inmueble2023(request):
                                     'mdescuento':mDescuento+ppDescuento,
                                     'total':Total,
                                 }
+                                tTotalInteresMoratorio=tTotalInteresMoratorio+Total
                                 tDescuento=tDescuento+mDescuento+ppDescuento
                                 aDetalle.append(ImpuestoDetalle)
                                 tTotal=tTotal+Total
@@ -933,10 +938,13 @@ def Impuesto_Inmueble2023(request):
                                 #end If
                             # end For oTasaInteres                    
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora4=(tTotal/1)
-                            tTotalMora3=(tTotal/4)*3
-                            tTotalMora2=(tTotal/2)
-                            tTotalMora1=(tTotal/4)
+                            if minimo_ano==today.year:
+                                tTotalInteresMoratorio=tTotalInteresMoratorio/request['periodo']
+                                tTotalInteresMoratorio=tTotalInteresMoratorio*4
+                            tTotalMora4=(tTotalInteresMoratorio/1)
+                            tTotalMora3=(tTotalInteresMoratorio/4)*3
+                            tTotalMora2=(tTotalInteresMoratorio/2)
+                            tTotalMora1=(tTotalInteresMoratorio/4)
                             incremento=1.200000000
                             incremento_decimal = Decimal(str(incremento))
                             for aTasa in oTasaInteres:
@@ -998,7 +1006,7 @@ def Impuesto_Inmueble2023(request):
                             tTotalMora=0
 
 
-
+                        tTotalInteresMoratorio=0
                         minimo_ano=minimo_ano+1
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
@@ -1171,6 +1179,7 @@ def Impuesto_Inmueble2023_Public(request):
                     fMulta=float(oCargos.get(codigo='multa').porcentaje)
                     fRecargo=float(oCargos.get(codigo='recargo').porcentaje)
                     tBaseMultaRecargoInteres=0
+                    tTotalInteresMoratorio=0
                     tMulta=0
                     tRecargo=0
                     tInteres=0
@@ -1227,7 +1236,7 @@ def Impuesto_Inmueble2023_Public(request):
                                     aPeriodoDiaDesde=aPeriodo.periodo.fechadesde.day
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=False)
+                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=False)
                                         ##print('descuento',pDescuento)
                                         ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
@@ -1261,7 +1270,7 @@ def Impuesto_Inmueble2023_Public(request):
 
                                     # Aplica descuentos prontopago
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,),prontopago=True)
+                                        pDescuento=oDescuento.filter(Q(tipologia__isnull=True) | Q(tipologia=dato.tipologia.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=True)
                                         ##print('descuento Pronto Pago',pDescuento)
                                         ##print('fecha actual',today.year,today.month,today.day) 
                                         ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
@@ -1323,6 +1332,7 @@ def Impuesto_Inmueble2023_Public(request):
                                     'mdescuento':mDescuento+ppDescuento,
                                     'total':Total,
                                 }
+                                tTotalInteresMoratorio=tTotalInteresMoratorio+Total
                                 tDescuento=tDescuento+mDescuento+ppDescuento
                                 aDetalle.append(ImpuestoDetalle)
                                 tTotal=tTotal+Total
@@ -1333,10 +1343,13 @@ def Impuesto_Inmueble2023_Public(request):
                                     tRecargo=tRecargo+(Total*(fRecargo/100))
                         if tTotalMora:                   
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora4=(tTotal/1)
-                            tTotalMora3=(tTotal/4)*3
-                            tTotalMora2=(tTotal/2)
-                            tTotalMora1=(tTotal/4)
+                            if minimo_ano==today.year:
+                                tTotalInteresMoratorio=tTotalInteresMoratorio/request['periodo']
+                                tTotalInteresMoratorio=tTotalInteresMoratorio*4
+                            tTotalMora4=(tTotalInteresMoratorio/1)
+                            tTotalMora3=(tTotalInteresMoratorio/4)*3
+                            tTotalMora2=(tTotalInteresMoratorio/2)
+                            tTotalMora1=(tTotalInteresMoratorio/4)
                             incremento=1.200000000
                             incremento_decimal = Decimal(str(incremento))
                             for aTasa in oTasaInteres:
@@ -1395,6 +1408,7 @@ def Impuesto_Inmueble2023_Public(request):
                                 #end If
                             # end For oTasaInteres 
                             tTotalMora=0
+                        tTotalInteresMoratorio=0
                         minimo_ano=minimo_ano+1
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
@@ -1475,8 +1489,10 @@ def Datos_Inmuebles_Public(request):
                     return Response({'error':1,'mensaje':'Error: Falta Périodo de último pago'}, status=status.HTTP_200_OK)
 
                 if dAnio>=2024:
+                    terreno=False
+                    construccion=False
                     terreno2024 =      InmuebleValoracionTerreno2024.objects.get(inmueble__numero_expediente=request['inmueble'])
-                    construccion2024 = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno)
+                    construccion2024 = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno2024) 
                 else:
                     terreno =          InmuebleValoracionTerreno.objects.get(inmueble__numero_expediente=request['inmueble'])
                     construccion =     InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
@@ -1510,9 +1526,13 @@ def Datos_Inmuebles_Public(request):
                         return Response({'error':8,'mensaje':'Error: El área de Valoración Económica de CONSTRUCCION NO conincide en ZONA y en CATEGORIZACION.'}, status=status.HTTP_200_OK)     
                 if oInmueble.periodo is None and total_area_terreno+total_area_construccion==0:
                     return Response({'error':3,'mensaje':'Error: Falta Período de último pago y no tiene Valoración Económica'}, status=status.HTTP_200_OK)
-
-                if total_area_terreno+total_area_construccion==0:
-                    return Response({'error':2,'mensaje':'Error: No tiene Valoración Económica'}, status=status.HTTP_200_OK)
+                
+                if (total_area_terreno+total_area_construccion==0 and dAnio<2024) and total_area_terreno2024+total_area_construccion2024==0:
+                    return Response({'error':2,'mensaje':'Error: No tiene Valoración Económica ZONA tampoco Valoración Económica CATEGORIZACION'}, status=status.HTTP_200_OK)
+                if total_area_terreno+total_area_construccion==0 and dAnio<2024:
+                    return Response({'error':2,'mensaje':'Error: No tiene Valoración Económica ZONA'}, status=status.HTTP_200_OK)
+                if total_area_terreno2024+total_area_construccion2024==0:
+                    return Response({'error':2,'mensaje':'Error: No tiene Valoración Económica CATEGORIZACION'}, status=status.HTTP_200_OK)
                 dPeriodo=oInmueble.periodo.periodo  # Periodo que inicia la deuda
                 oPropietario = InmueblePropietarios.objects.filter(inmueble__numero_expediente=request['inmueble'])
             except Inmueble.DoesNotExist:
@@ -1941,6 +1961,7 @@ def Impuesto_Inmueble(request):
                     fMulta=float(oCargos.get(codigo='multa').porcentaje)
                     fRecargo=float(oCargos.get(codigo='recargo').porcentaje)
                     tBaseMultaRecargoInteres=0
+                    tTotalInteresMoratorio=0
                     tMulta=0
                     tRecargo=0
                     tInteres=0
@@ -1994,7 +2015,7 @@ def Impuesto_Inmueble(request):
                                     aPeriodoDiaDesde=aPeriodo.periodo.fechadesde.day
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=False)
+                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=False)
                                         ##print('descuento',pDescuento)
                                         ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
@@ -2028,7 +2049,7 @@ def Impuesto_Inmueble(request):
 
                                     # Aplica descuentos prontopago
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=True)
+                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=True)
                                         ##print('descuento Pronto Pago',pDescuento)
                                         ##print('fecha actual',today.year,today.month,today.day) 
                                         ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
@@ -2093,6 +2114,7 @@ def Impuesto_Inmueble(request):
                                     'mdescuento':mDescuento+ppDescuento,
                                     'total':Total,
                                 }
+                                tTotalInteresMoratorio=tTotalInteresMoratorio+Total
                                 tDescuento=tDescuento+mDescuento+ppDescuento
                                 aDetalle.append(ImpuestoDetalle)
                                 tTotal=tTotal+Total
@@ -2104,10 +2126,13 @@ def Impuesto_Inmueble(request):
                         if tTotalMora:                   
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
                             # se cambia tTotalMora por ttotal--Arturo 2-4-2024
-                            tTotalMora4=(tTotal/1)
-                            tTotalMora3=(tTotal/4)*3
-                            tTotalMora2=(tTotal/2)
-                            tTotalMora1=(tTotal/4)
+                            if minimo_ano==today.year:
+                                tTotalInteresMoratorio=tTotalInteresMoratorio/request['periodo']
+                                tTotalInteresMoratorio=tTotalInteresMoratorio*4
+                            tTotalMora4=(tTotalInteresMoratorio/1)
+                            tTotalMora3=(tTotalInteresMoratorio/4)*3
+                            tTotalMora2=(tTotalInteresMoratorio/2)
+                            tTotalMora1=(tTotalInteresMoratorio/4)
                             incremento=1.200000000
                             incremento_decimal = Decimal(str(incremento))
                             for aTasa in oTasaInteres:
@@ -2166,6 +2191,7 @@ def Impuesto_Inmueble(request):
                                 #end If
                             # end For oTasaInteres 
                             tTotalMora=0
+                        tTotalInteresMoratorio=0
                         minimo_ano=minimo_ano+1
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
@@ -2335,6 +2361,7 @@ def Impuesto_Inmueble_Public(request):
                     fMulta=float(oCargos.get(codigo='multa').porcentaje)
                     fRecargo=float(oCargos.get(codigo='recargo').porcentaje)
                     tBaseMultaRecargoInteres=0
+                    tTotalInteresMoratorio=0
                     tMulta=0
                     tRecargo=0
                     tInteres=0
@@ -2388,7 +2415,7 @@ def Impuesto_Inmueble_Public(request):
                                     aPeriodoDiaDesde=aPeriodo.periodo.fechadesde.day
                                     aPeriodoDiaHasta=aPeriodo.periodo.fechahasta.day
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=False)
+                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=False)
                                         ##print('descuento',pDescuento)
                                         ##print('registros',aPeriodo.periodo.fechadesde,aPeriodo.periodo.fechahasta) 
                                         registros_validos = pDescuento.filter(
@@ -2422,7 +2449,7 @@ def Impuesto_Inmueble_Public(request):
 
                                     # Aplica descuentos prontopago
                                     try:
-                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,),prontopago=True)
+                                        pDescuento=oDescuento.filter(Q(tipologia_categorizacion__isnull=True) | Q(tipologia_categorizacion=dato.tipologia_categorizacion.id,) | Q(inmueble__isnull=True) | Q(inmueble=oInmueble.id,),prontopago=True)
                                         ##print('descuento Pronto Pago',pDescuento)
                                         ##print('fecha actual',today.year,today.month,today.day) 
                                         ##print('fecha periodo',minimo_ano,aPeriodoMesDesde,aPeriodoDiaDesde,minimo_ano,aPeriodoMesHasta,aPeriodoDiaHasta) 
@@ -2487,6 +2514,7 @@ def Impuesto_Inmueble_Public(request):
                                     'mdescuento':mDescuento+ppDescuento,
                                     'total':Total,
                                 }
+                                tTotalInteresMoratorio=tTotalInteresMoratorio+Total
                                 tDescuento=tDescuento+mDescuento+ppDescuento
                                 aDetalle.append(ImpuestoDetalle)
                                 tTotal=tTotal+Total
@@ -2496,11 +2524,14 @@ def Impuesto_Inmueble_Public(request):
                                     tMulta=tMulta+(Total*(fMulta/100))
                                     tRecargo=tRecargo+(Total*(fRecargo/100))
                         if tTotalMora:                   
-                            oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            tTotalMora4=(tTotal/1)
-                            tTotalMora3=(tTotal/4)*3
-                            tTotalMora2=(tTotal/2)
-                            tTotalMora1=(tTotal/4)
+                            oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes') 
+                            if minimo_ano==today.year:
+                                tTotalInteresMoratorio=tTotalInteresMoratorio/request['periodo']
+                                tTotalInteresMoratorio=tTotalInteresMoratorio*4
+                            tTotalMora4=(tTotalInteresMoratorio/1)
+                            tTotalMora3=(tTotalInteresMoratorio/4)*3
+                            tTotalMora2=(tTotalInteresMoratorio/2)
+                            tTotalMora1=(tTotalInteresMoratorio/4)
                             incremento=1.200000000
                             incremento_decimal = Decimal(str(incremento))
                             for aTasa in oTasaInteres:
@@ -2559,6 +2590,7 @@ def Impuesto_Inmueble_Public(request):
                                 #end If
                             # end For oTasaInteres 
                             tTotalMora=0
+                        tTotalInteresMoratorio=0
                         minimo_ano=minimo_ano+1
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
@@ -4554,8 +4586,15 @@ def importar_datos_desde_excel(archivo,pestana):
             fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
             fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
             referencia = row['Referencia']
-            descripcion = row['Descripción']           
-            monto = row['Monto']
+            if 'Descripción' in datos_excel.columns:
+                descripcion = row['Descripción'] 
+            if 'concepto' in datos_excel.columns:
+                descripcion = row['concepto'] 
+            if 'Monto' in datos_excel.columns:     
+                monto = row['Monto']
+            if 'importe' in datos_excel.columns:     
+                monto = row['importe']
+
             try:
                 if isinstance(monto, str):
                     monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
@@ -5648,6 +5687,280 @@ def importar_datos_desde_excel_old(archivo,pestana):
         print("Datos importados exitosamente.")
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
 
+#***************************************************************************************** CorridaBancaria.xlsx
+def importar_corrida_bancaria(archivo,pestana,ruta):
+    print('Backend procesando: ',pestana)
+    importar=pestana
+    ExcelDocumentLOG.objects.filter(codigo=importar).delete()
+    excel_document=ExcelDocument.objects.get(title=archivo)
+    ruta_archivo_excel = ruta
+    if importar=='BNC':
+        print('ruta_archivo_excel',ruta)
+        #ruta_archivo_excel = ruta
+
+        datos_excel = pd.read_excel(ruta_archivo_excel, skiprows=15)
+        print(datos_excel)
+        filas_filtradas = datos_excel[~datos_excel['Fecha'].str.contains("Totales")& (datos_excel['Haber'] > 0)] # se excluyen
+        for index, row in filas_filtradas.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='51')
+            fecha = row['Fecha']
+            fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
+            fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
+            referencia = row['Referencia']
+            descripcion = row['Descripción']
+            monto = row['Haber']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' # este banco NO maneja situado
+            #if row['Situado Nacional']==14:
+            #    situado = 'N'
+            if monto > 0:
+                try:
+                    corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                        bancocuenta=bancocuenta,
+                        fecha=fecha_formateada,
+                        referencia=referencia,
+                        descripcion=descripcion,
+                        monto=monto, 
+                        defaults={
+                            'situado': situado,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+        print("Datos importados exitosamente.")
+   
+    if importar=='BanCaribe':
+        # este banco NO tiene nombre de columnas y se lee  apartir de la linea 2
+        #ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, header=None, skiprows=1)
+        filas_filtradas = datos_excel[~datos_excel[3].str.contains("D")] # se excluyen
+        for index, row in datos_excel.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='17')
+            fecha = row[0]
+            referencia = row[1]
+            descripcion = row[2]           
+            monto = row[4] 
+            print(fecha)
+            print(referencia)
+            print(descripcion)
+            print(monto)
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' # este banco NO maneja situados, todas son transferencias
+            if monto > 0:
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    corridabancaria,creado = CorridasBancarias.objects.get_or_create(
+                        bancocuenta=bancocuenta,
+                        fecha=fecha,
+                        referencia=referencia,
+                        descripcion=descripcion,
+                        monto=monto, 
+                        defaults={
+                            'situado': situado,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    # Maneja cualquier error de integridad si es necesario
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+        print("Datos importados exitosamente.")
+    
+    if importar=='100Banco':
+        #ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel, skiprows=1)
+        filas_filtradas = datos_excel[datos_excel['Cargo'].isna()] # cargo este vacio
+        for index, row in filas_filtradas.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='12')
+            fecha = row['Fecha Efec.']
+            referencia = row['Referencia']
+            descripcion = row['Descripción Movimiento']
+            monto = row['Abono']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' 
+            if monto > 0:
+            #if row['Situado Regional']==14:
+            #    situado = 'R'
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                        bancocuenta=bancocuenta,
+                        fecha=fecha,
+                        referencia=referencia,
+                        descripcion=descripcion,
+                        monto=monto, 
+                        defaults={
+                            'situado': situado,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+        print("Datos importados exitosamente.")
+    
+    if importar=='BANESCO':
+        #ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel)
+        filas_filtradas = datos_excel[datos_excel['Descripción'].str.contains("TRF")] # solo carga las transferencias
+
+        for index, row in filas_filtradas.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='16')
+            fecha = row['Fecha']
+            referencia = row['Referencia']
+            descripcion = row['Descripción']
+            monto = row['Monto']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' 
+            # este banco NO maneja situados
+            if monto > 0:
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                        bancocuenta=bancocuenta,
+                        fecha=fecha,
+                        referencia=referencia,
+                        descripcion=descripcion,
+                        monto=monto, 
+                        defaults={
+                            'situado': situado,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+        print("Datos importados exitosamente.")
+    if importar=='BFC':
+        #ruta_archivo_excel = excel_document.excel_file.path
+        datos_excel = pd.read_excel(ruta_archivo_excel)
+        filas_filtradas = datos_excel[~datos_excel['Descripción'].str.contains("AB.LOTE")] # esos son puntos de venta, se excluyen
+        for index, row in filas_filtradas.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='3')
+            fecha = row['Fecha Efectiva']
+            fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
+            fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
+            referencia = row['Referencia']
+            descripcion = row['Descripción']
+            monto = row['Monto']
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T'
+            #if row['Situado Nacional']==14:
+            #    situado = 'N'
+            if monto > 0:
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                        bancocuenta=bancocuenta,
+                        fecha=fecha_formateada,
+                        referencia=referencia,
+                        descripcion=descripcion,
+                        monto=monto, 
+                        defaults={
+                            'situado': situado,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                except IntegrityError as e:
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+        print("Datos importados exitosamente.")
+    if importar=='BDV':
+        datos_excel = pd.read_excel(ruta_archivo_excel)
+        #datos_excel['tipoMovimiento'] = datos_excel['tipoMovimiento'].str.upper()
+        #filas_filtradas = datos_excel[~datos_excel['tipoMovimiento'].str.contains("Saldo Inicial")]
+
+        for index, row in datos_excel.iterrows():
+            bancocuenta = BancoCuenta.objects.get(codigocuenta='50')
+            fecha = row['fecha']
+            referencia = row['referencia']
+            if 'descripcion' in datos_excel.columns:
+                descripcion = row['descripcion'] 
+            if 'concepto' in datos_excel.columns:
+                descripcion = row['concepto'] 
+            if 'monto' in datos_excel.columns:     
+                monto = row['monto']
+            if 'importe' in datos_excel.columns:     
+                monto = row['importe']
+                fecha_obj = datetime.strptime(fecha, '%d-%m-%Y %H:%M')  # Convierte al formato "YYYY-MM-DD"
+            else:
+                fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
+            fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"   
+            try:
+                if isinstance(monto, str):
+                    monto = float(monto.replace('.', '').replace(',', '.'))  # Intenta convertir la cadena a float
+            except (ValueError, TypeError):
+                monto = 0.0  # Si la conversión falla, asigna 0.0
+
+            if math.isnan(monto):
+                monto = 0.0
+            situado = 'T' # este banco NO maneja situado
+            #if row['Situado Nacional']==14:
+            #    situado = 'N'
+            if monto > 0:
+                try:
+                    # Intenta obtener un registro existente o crear uno nuevo si no existe
+                    corridabancaria, creado = CorridasBancarias.objects.get_or_create(
+                        bancocuenta=bancocuenta,
+                        fecha=fecha_formateada,
+                        referencia=referencia,
+                        descripcion=descripcion,
+                        monto=monto, 
+                        defaults={
+                            'situado': situado,
+                        }
+                    )
+                    if not creado:
+                        print(f"El registro con referencia {referencia} y monto {monto} ya existe y no se creó uno nuevo.")
+                        
+                except IntegrityError as e:
+                    print(f"Error de integridad al crear el registro: {e}")
+                    ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
+
+        print("Datos importados exitosamente.")
+    return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
+
 
 def Crear_Perfil(request):
     #Para crear nuevos usuarios para el sistema de la alcaldia desde uno ya existente
@@ -5734,3 +6047,39 @@ def Crear_Patente(request):
         }
         return Response(result, status=status.HTTP_400_BAD_REQUEST)
  
+
+
+def Estadistica_Flujo(request):
+    queryset=()
+    if (request):
+        queryset = Flujo.objects.values(
+            'fecha__year', 
+            'fecha__month', 
+            'estado', 
+            'pagoestadocuenta__liquidacion__tipoflujo__descripcion'
+        ).annotate(
+            estado_descripcion=Count('estado'),
+            cantidad=Count('*')
+        ).order_by('fecha__year', 'fecha__month', 'estado')
+
+        queryset = (
+            Flujo.objects.annotate(
+                año=ExtractYear('fecha'),
+                mes=ExtractMonth('fecha'),
+                #descripcion='pagoestadocuenta__liquidacion__tipoflujo__descripcion',
+                estado_descripcion=Case(
+                    When(estado='1', then=Value('en proceso')),
+                    When(estado='2', then=Value('Cerrado')),
+                    default=Value('Estado no reconocido'),
+                    output_field=CharField(),
+                ),
+            )
+            .values('año', 'mes', 'estado', 'estado_descripcion', 'pagoestadocuenta__liquidacion__tipoflujo__descripcion')
+            .annotate(total=Count('*'))
+            .order_by('año', 'mes', 'estado')
+        )
+
+
+        return Response(queryset, status=status.HTTP_200_OK)
+    else:
+        return Response(queryset, status=status.HTTP_400_BAD_REQUEST)

@@ -127,18 +127,19 @@ urlpatterns = [
     path('ImpuestoInmueblePublic/', views.ImpuestoInmueblePublic),
     path('ImpuestoInmueble2023Public/', views.ImpuestoInmueble2023Public),
     path('DatosInmueblesPublic/', views.DatosInmueblesPublic),
-
     path('CertificaFicha/', views.CertificaFicha),
-
     path('ImpuestoInmueblePago/', views.ImpuestoInmueblePago),
     path('ValidarTransferencia/', views.ValidarTransferencia),
     path('ImpuestoInmuebleDetalle/', views.ImpuestoInmuebleDetalle),
     path('importardatosdesdeexcel', views.importardatosdesdeexcel),
+    path('importarcorridabancaria', views.importarcorridabancaria),
     path('subir-archivo-excel2/', views.subir_archivo_excel),
     path('upload_excel/', views.upload_excel),
     path('filtrar_propietarios/', views.filtrar_propietarios, name='filtrar_propietarios'),
     path('filtrar_inmuebles/', views.filtrar_inmuebles, name='filtrar_inmuebles'),
     path('filtrar_patentes/', views.filtrar_patentes, name='filtrar_patentes'),
     path('crearpatente/', views.CrearPatente),
+    path('estadisticaflujo/', views.EstadisticaFlujo),
+ 
 
 ]

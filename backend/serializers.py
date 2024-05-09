@@ -868,24 +868,141 @@ class TipoFlujoDetalleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class EstadoCuentaSerializer(serializers.ModelSerializer):
-    inmueble = InmuebleSerializer()
-    tipoflujo = TipoFlujoSerializer()
-    propietario = PropietarioSerializer()
+    tipoflujo_descripcion= serializers.SerializerMethodField('loaddescripcion_flujo')
+    def loaddescripcion_flujo(self, obj):
+      if obj.tipoflujo:
+        return obj.tipoflujo.descripcion
+      return None
+    
+    tipoflujo_vencimiento= serializers.SerializerMethodField('loaddescripcion_vcto')
+    def loaddescripcion_vcto(self, obj):
+      if obj.tipoflujo:
+        return obj.tipoflujo.vencimiento
+      return None
+   
+    propietario_nombre= serializers.SerializerMethodField('loadnombre_propietario')
+    def loadnombre_propietario(self, obj):
+      if obj.propietario:
+        return obj.propietario.nombre
+      return None
+
+    propietario_direccion= serializers.SerializerMethodField('loadnombre_propietariodireccion')
+    def loadnombre_propietariodireccion(self, obj):
+      if obj.propietario:
+        return obj.propietario.direccion
+      return None
+    
+    propietario_telefono_principal= serializers.SerializerMethodField('loadnombre_propietariotelefono_principal')
+    def loadnombre_propietariotelefono_principal(self, obj):
+      if obj.propietario:
+        return obj.propietario.telefono_principal
+      return None
+
+    propietario_nacionalidad= serializers.SerializerMethodField('loadnombre_propietariotnacionalidad')
+    def loadnombre_propietariotnacionalidad(self, obj):
+      if obj.propietario:
+        return obj.propietario.nacionalidad
+      return None
+       
+    propietario_numero_documento= serializers.SerializerMethodField('loadnombre_propietarionumero_documento')
+    def loadnombre_propietarionumero_documento(self, obj):
+      if obj.propietario:
+        return obj.propietario.numero_documento
+      return None   
+
+    inmueble_numero_expediente= serializers.SerializerMethodField('loadpexpediente')
+    def loadpexpediente(self, obj):
+      if obj.inmueble:
+        return obj.inmueble.numero_expediente
+      return None
+    
+    fechaformato = serializers.SerializerMethodField('get_fecha')
+    def get_fecha(self, obj):
+      if obj.fecha is not None:
+          formatted_date = obj.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+       
     class Meta:
         model = EstadoCuenta
         fields = '__all__' 
 
 class EstadoCuentaDetalleSerializer(serializers.ModelSerializer):
-    #estadocuenta=EstadoCuentaSerializer()
     class Meta:
         model = EstadoCuentaDetalle
         fields = '__all__'       
 
 class LiquidacionSerializer(serializers.ModelSerializer):
-    inmueble = InmuebleSerializer()
-    tipoflujo = TipoFlujoSerializer()
-    propietario = PropietarioSerializer()
-    estadocuenta = EstadoCuentaSerializer()
+
+    estadocuenta_numero= serializers.SerializerMethodField('loadestadocuenta_numero')
+    def loadestadocuenta_numero(self, obj):
+      if obj.estadocuenta:
+        return obj.estadocuenta.numero
+      return None
+
+    tipoflujo_descripcion= serializers.SerializerMethodField('loaddescripcion_flujo')
+    def loaddescripcion_flujo(self, obj):
+      if obj.tipoflujo:
+        return obj.tipoflujo.descripcion
+      return None
+    
+    tipoflujo_vencimiento= serializers.SerializerMethodField('loaddescripcion_vcto')
+    def loaddescripcion_vcto(self, obj):
+      if obj.tipoflujo:
+        return obj.tipoflujo.vencimiento
+      return None
+  
+    propietario_nombre= serializers.SerializerMethodField('loadnombre_propietario')
+    def loadnombre_propietario(self, obj):
+      if obj.propietario:
+        return obj.propietario.nombre
+      return None
+
+    propietario_direccion= serializers.SerializerMethodField('loadnombre_propietariodireccion')
+    def loadnombre_propietariodireccion(self, obj):
+      if obj.propietario:
+        return obj.propietario.direccion
+      return None
+    
+    propietario_telefono_principal= serializers.SerializerMethodField('loadnombre_propietariotelefono_principal')
+    def loadnombre_propietariotelefono_principal(self, obj):
+      if obj.propietario:
+        return obj.propietario.telefono_principal
+      return None
+
+    propietario_nacionalidad= serializers.SerializerMethodField('loadnombre_propietariotnacionalidad')
+    def loadnombre_propietariotnacionalidad(self, obj):
+      if obj.propietario:
+        return obj.propietario.nacionalidad
+      return None
+    
+    propietario_numero_documento= serializers.SerializerMethodField('loadnombre_propietarionumero_documento')
+    def loadnombre_propietarionumero_documento(self, obj):
+      if obj.propietario:
+        return obj.propietario.numero_documento
+      return None 
+
+    inmueble_numero_expediente= serializers.SerializerMethodField('loadpexpediente')
+    def loadpexpediente(self, obj):
+      if obj.inmueble:
+        return obj.inmueble.numero_expediente
+      return None
+
+    inmueble_direccion= serializers.SerializerMethodField('loadpexpedientedireccion')
+    def loadpexpedientedireccion(self, obj):
+      if obj.inmueble:
+        return obj.inmueble.direccion
+      return None
+        
+    fechaformato = serializers.SerializerMethodField('get_fecha')
+    def get_fecha(self, obj):
+      if obj.fecha is not None:
+          formatted_date = obj.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+
     class Meta:
         model = Liquidacion
         fields = '__all__'
@@ -914,7 +1031,48 @@ class BancoCuentaSerializer(serializers.ModelSerializer):
       return obj.banco.descripcion+'-'+obj.numero
 
 class PagoEstadoCuentaSerializer(serializers.ModelSerializer):
-    liquidacion = LiquidacionSerializer()
+    #liquidacion = LiquidacionSerializer()
+
+    liquidacion_numero= serializers.SerializerMethodField('load_numero')
+    def load_numero(self, obj):
+      if obj.liquidacion:
+        return obj.liquidacion.numero
+      return None
+
+    liquidacion_estadocuenta_numero= serializers.SerializerMethodField('loadestadocuenta_numero')
+    def loadestadocuenta_numero(self, obj):
+      if obj.liquidacion.estadocuenta:
+        return obj.liquidacion.estadocuenta.numero
+      return None
+
+    liquidacion_tipoflujo_descripcion= serializers.SerializerMethodField('loaddescripcion_flujo')
+    def loaddescripcion_flujo(self, obj):
+      if obj.liquidacion.tipoflujo:
+        return obj.liquidacion.tipoflujo.descripcion
+      return None
+   
+    liquidacion_propietario_nombre= serializers.SerializerMethodField('loadnombre_propietario')
+    def loadnombre_propietario(self, obj):
+      if obj.liquidacion.propietario:
+        return obj.liquidacion.propietario.nombre
+      return None
+       
+    liquidacion_inmueble_numero_expediente= serializers.SerializerMethodField('loadpexpediente')
+    def loadpexpediente(self, obj):
+      if obj.liquidacion.inmueble:
+        return obj.liquidacion.inmueble.numero_expediente
+      return None
+
+
+
+    fecha = serializers.SerializerMethodField('get_fecha')
+    def get_fecha(self, obj):
+      if obj.fecha is not None:
+          formatted_date = obj.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
+    
     class Meta:
         model = PagoEstadoCuenta
         fields = '__all__' 
@@ -963,6 +1121,14 @@ class PagoEstadoCuentaDetalleSerializer(serializers.ModelSerializer):
       if obj.pagoestadocuenta.fecha:
         return obj.pagoestadocuenta.fecha
       return None
+    
+    fecha = serializers.SerializerMethodField('get_fecha')
+    def get_fecha(self, obj):
+      if obj.pagoestadocuenta.fecha is not None:
+          formatted_date = obj.pagoestadocuenta.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.pagoestadocuenta.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return "" 
     
    # fecha = serializers.SerializerMethodField('get_fechapago')
    # def get_fechapago(self, obj):
@@ -1229,6 +1395,22 @@ class NotaCreditoSerializer(serializers.ModelSerializer):
     def loadpropietario_nombre(self, obj):
       return obj.propietario.nombre
     
+    propietario_numero_documento= serializers.SerializerMethodField('loadpropietario_numero')
+    def loadpropietario_numero(self, obj):
+      return obj.propietario.numero_documento
+      
+
+    fecha = serializers.SerializerMethodField('get_procesa_fecha')
+    def get_procesa_fecha(self, obj):
+      if obj.fecha is not None:
+          formatted_date = obj.fecha.strftime("%d/%m/%Y")
+          formatted_time = obj.fecha.strftime("%I:%M %p")
+          return f"{formatted_date} {formatted_time}"
+      return ""    
+    numero_recibo= serializers.SerializerMethodField('loadnumero_recibo')
+    def loadnumero_recibo(self, obj):
+      return obj.pagoestadocuenta.numero
+        
 
 class ExcelDocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1244,7 +1426,13 @@ class CorridasBancariasSerializer(serializers.ModelSerializer):
     class Meta:
         model = CorridasBancarias
         fields = '__all__'
-
+    fecha_corrida = serializers.SerializerMethodField('get_procesa_fecha')
+    def get_procesa_fecha(self, obj):
+      if obj.fecha is not None:
+          formatted_date = obj.fecha.strftime("%d/%m/%Y")
+          return f"{formatted_date}"
+      return "" 
+    
 class ComunidadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comunidad 

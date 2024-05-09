@@ -16,6 +16,8 @@ from .storage_backends import PrivateMediaStorage
 def logos_path(filename):
     return "logos/{0}".format(filename)
 
+def excel_path(instance, filename):
+    return "excel_files/{0}".format(filename)
 
 def immuebles_path(instance, filename):
     return "immueble_{0}/imgs/{1}".format(instance.id, filename)
@@ -538,15 +540,16 @@ class IC_Periodo(models.Model):
 class Comunidad(models.Model):
     comunidad = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
     categoria = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
-    clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
+    clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente.")
 
     history = HistoricalRecords()
+
     def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+        user = kwargs.pop('user', None)
         super().save(*args, **kwargs)
         if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
+            history_instance = self.history.most_recent()
+            history_instance.history_user = user  # Aquí cambiamos "user" a "history_user"
             history_instance.save()
 
     class Meta:
@@ -1196,8 +1199,6 @@ class TipoPago(models.Model):
     codigo  = models.TextField(null=True,blank =True,  help_text="codigo Tipo de pago")
     def __str__(self):
         return '%s' % (self.descripcion)
-    def __str__(self):
-        return '%s - %s' % (self.liquidacion.numero,self.tasamulta)
     class Meta:
         indexes = [
             models.Index(fields=['descripcion']),
@@ -1494,6 +1495,8 @@ class IC_ImpuestoDescuento(models.Model):
     tipologia_categorizacion = models.ForeignKey (Tipologia_Categorizacion, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado. Solo para Inmuebles. Si no tiene aplica a cualquier uso") 
     habilitado = models.BooleanField(default=True, help_text="Esta activo?")
     prontopago = models.BooleanField(default=False, help_text="Es de pronto pago?, True si y valida la fecha con la fecha de sistema, false aplica por fecha y periododo")
+    inmueble=models.ForeignKey(Inmueble,blank=True,null=True, on_delete=models.PROTECT,help_text="Inmueble")
+
     APLICA = (
         ('C', 'Inmuebles Urbanos'),
         ('A', 'Actividades económicas'),
@@ -1628,6 +1631,13 @@ class NotaCredito(models.Model):
     monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito")     
     saldo=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="saldo de la nota de credito")
     pagoestadocuenta = models.ForeignKey(PagoEstadoCuenta,null=True,blank =True, on_delete=models.PROTECT,help_text="Id Pago Liquidacion")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    anula_usuario = models.TextField(null=True,blank =True, help_text="usuario que anula")
+    anula_fecha = models.DateTimeField(blank=True, null=True,help_text="Fecha Anulacion")
+    anula_observaciones = models.TextField(null=True,blank =True, help_text="observaciones por la anulacion")
+    motivoanulacionpago = models.ForeignKey(MotivoAnulacionPago,null=True,blank =True, on_delete=models.PROTECT,help_text="ID MotivoAnulacionPago")
+
     def __str__(self):
         return '%s - %s - %s - %s - %s - %s' % (self.id,self.numeronotacredito,self.propietario.nombre,self.monto,self.saldo,self.pagoestadocuenta)  
      
@@ -1638,15 +1648,15 @@ class NotaCredito(models.Model):
 
 class ExcelDocument(models.Model):
     title = models.CharField(max_length=255)
-    excel_file = models.FileField(upload_to='excel_files/')
+    excel_file = models.FileField(upload_to=excel_path)
 
     def __str__(self):
         return self.title
 
 class ExcelDocumentLOG(models.Model):
-    pestana = models.CharField(max_length=255, help_text="Pestaña del archivo de excel")
-    codigo = models.CharField(max_length=255, help_text="id del registro con error")
-    error = models.CharField(max_length=255, help_text="codigo del error")
+    pestana = models.TextField( help_text="Pestaña del archivo de excel")
+    codigo = models.TextField( help_text="id del registro con error")
+    error = models.TextField( help_text="codigo del error")
     fecha = models.DateTimeField(blank=False, help_text="Fecha registro error")
     def __str__(self):
         return '%s - %s - %s - %s' % (self.pestana,self.codigo,self.error,self.fecha)
@@ -1679,8 +1689,8 @@ class CorridasBancarias(models.Model):
     def __str__(self):
         return '%s - %s - %s - %s - %s - %s' % (self.bancocuenta.codigocuenta,self.fecha,self.referencia,self.descripcion,self.monto,self.situado)
     class Meta:
-        unique_together = ('bancocuenta', 'fecha','referencia','monto')
-        ordering = ['bancocuenta','fecha','referencia','monto'] 
+        unique_together = ('bancocuenta', 'fecha','referencia','descripcion','monto')
+        ordering = ['bancocuenta','fecha','referencia','descripcion','monto'] 
 
     def save(self, *args, **kwargs):
         self.fechacreacion = timezone.now()

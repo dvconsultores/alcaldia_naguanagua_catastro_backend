@@ -54,7 +54,7 @@ def upload_excel(request):
         ExcelDocument.objects.filter(title=title,).delete()
         document = ExcelDocument(title=title, excel_file=excel_file)
         document.save()
-        return JsonResponse({'message': 'Excel file uploaded successfully'})
+        return JsonResponse({'message': 'Excel file uploaded successfully','id':document.id})
     return JsonResponse({'message': 'No file uploaded'}, status=400)
 
 
@@ -158,6 +158,13 @@ def ValidarTransferencia(request):
     datos=request.data
     return Validar_Transferencia(datos)
 
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def EstadisticaFlujo(request):
+    datos=request.data
+    return Estadistica_Flujo(datos)
+
 
 # API PUBLICA!!!!!!!!!!!!
 @api_view(["POST"])
@@ -221,6 +228,14 @@ def ImpuestoInmuebleDetalle(request):
 def importardatosdesdeexcel(request):
     datos=request.data
     return importar_datos_desde_excel(datos['archivoExcel'],datos['opcion'])
+
+
+@api_view(["POST"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def importarcorridabancaria(request):
+    datos=request.data
+    return importar_corrida_bancaria(datos['archivoExcel'],datos['opcion'],datos['ruta'])
 
 ###################################################
 
@@ -1146,7 +1161,9 @@ class NotaCreditoFilter(filters.FilterSet):
 
     class Meta:
         model = NotaCredito
-        fields = ['propietario', 'saldo_gt']
+        fields = ['propietario', 'saldo_gt','pagoestadocuenta']
+
+        
 
 class NotaCreditoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
