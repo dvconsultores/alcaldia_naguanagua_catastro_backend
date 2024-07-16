@@ -195,36 +195,40 @@ def Crear_Pago(request):
         ##print('NroPlanilla',NroPlanilla)
         correlativo.NumeroPago=correlativo.NumeroPago+1
         correlativo.save()
-        propietario = Propietario.objects.get(id=request['propietario'])
-        #liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
-        liquidacion = Liquidacion.objects.get(id=request['liquidacion'])
+        #propietario = Propietario.objects.get(id=request['propietario'])
+        propietario = None if request['propietario']==None else Propietario.objects.get(id=request['propietario'])
+        liquidacion = None if request['liquidacion']==None else Liquidacion.objects.get(id=request['liquidacion'])
+        #liquidacion = Liquidacion.objects.get(id=request['liquidacion'])
         ##print('liquidaciones',liquidacion.id)
         ##print('estado de cuenta',liquidacion.estadocuenta.id)
         # valida si el pago corresponde a un impuesto de inmueble.
-        PagaImpuestoInmueble=False
-        AnioPago=0
-        PeriodoPago=0
-        InmueblePago=0
-        try:
-            oIC_Impuesto = IC_Impuesto.objects.get(estadocuenta__id=liquidacion.estadocuenta.id)  #tabla de detalle de impuesto del estado de cuenta
-            PagaImpuestoInmueble=True
-            tPeriodo= IC_Periodo.objects.filter(aplica='C')             # maestro de periodos
-            CountPeriodo= tPeriodo.count()                              # cuenta el total de periodos de cayastro para saber cual es el ultimo
-            oPeriodoPago=tPeriodo.get(id=oIC_Impuesto.periodopagofin)   #ubica el numero de periodo pagado 
-            AnioPago=oIC_Impuesto.aniopagofin                           #año ultimo pago
-            ##print('CountPeriodo',CountPeriodo,oPeriodoPago.periodo)
-            if oPeriodoPago.periodo==CountPeriodo:                      #evalua si el "periodo" pagado es el ultimo segun el maestro de periodos de catastro
-                oPeriodoPago= tPeriodo.get(periodo=1)
-                AnioPago=AnioPago+1
-            else:
-                oPeriodoPago= tPeriodo.get(periodo=oPeriodoPago.periodo+1)          
-            InmueblePago=Inmueble.objects.get(id=oIC_Impuesto.estadocuenta.inmueble.id)
-            InmueblePago.anio=AnioPago
-            InmueblePago.periodo=oPeriodoPago
-            InmueblePago.save()
+        
+        #PagaImpuestoInmueble=False
+        #AnioPago=0
+        #PeriodoPago=0
+        #InmueblePago=0
+        #try:
+        #    oIC_Impuesto = IC_Impuesto.objects.get(estadocuenta__id=liquidacion.estadocuenta.id)  #tabla de detalle de impuesto del estado de cuenta
+        #    PagaImpuestoInmueble=True
+        #    tPeriodo= IC_Periodo.objects.filter(aplica='C')             # maestro de periodos
+        #    CountPeriodo= tPeriodo.count()                              # cuenta el total de periodos de cayastro para saber cual es el ultimo
+        #    oPeriodoPago=tPeriodo.get(id=oIC_Impuesto.periodopagofin)   #ubica el numero de periodo pagado 
+        #    AnioPago=oIC_Impuesto.aniopagofin                           #año ultimo pago
+        #    ##print('CountPeriodo',CountPeriodo,oPeriodoPago.periodo)
+        #    if oPeriodoPago.periodo==CountPeriodo:                      #evalua si el "periodo" pagado es el ultimo segun el maestro de periodos de catastro
+        #        oPeriodoPago= tPeriodo.get(periodo=1)
+        #        AnioPago=AnioPago+1
+        #    else:
+        #        oPeriodoPago= tPeriodo.get(periodo=oPeriodoPago.periodo+1)          
+        #    InmueblePago=Inmueble.objects.get(id=oIC_Impuesto.estadocuenta.inmueble.id)
+        #    InmueblePago.anio=AnioPago
+        #    InmueblePago.periodo=oPeriodoPago
+        #    InmueblePago.save()
+        #except IC_Impuesto.DoesNotExist:
+        #    PagaImpuestoInmueble=False
 
-        except IC_Impuesto.DoesNotExist:
-            PagaImpuestoInmueble=False
+
+        print('liquidacion1',liquidacion)
         ##print('PagaImpuestoInmueble',PagaImpuestoInmueble,AnioPago,PeriodoPago,InmueblePago)  
         Cabacera=PagoEstadoCuenta(
             numero=NroPlanilla,
@@ -238,22 +242,24 @@ def Crear_Pago(request):
         Cabacera.save()
         # evalua si se pago de mas para crear la nota de credito a favor del contribuyente
         ##print(request['monto'],request['monto_cxc'])
-        monto_credito= float(request['monto'])-float(request['monto_cxc'])
-        if monto_credito>0:
-            tipopago = TipoPago.objects.get(codigo='N')
-            notacredito=NotaCredito(
-                numeronotacredito  = correlativo.NumeroNotaCredito,
-                tipopago =  tipopago,
-                propietario = propietario,
-                observacion  = '',
-                fecha=str(date.today()),
-                monto=   monto_credito, 
-                saldo=    monto_credito,
-                pagoestadocuenta=Cabacera
-            )
-            notacredito.save()
-            correlativo.NumeroNotaCredito=correlativo.NumeroNotaCredito+1
-            correlativo.save()
+
+        if liquidacion:
+            monto_credito= float(request['monto'])-float(request['monto_cxc'])
+            if monto_credito>0:
+                tipopago = TipoPago.objects.get(codigo='N')
+                notacredito=NotaCredito(
+                    numeronotacredito  = correlativo.NumeroNotaCredito,
+                    tipopago =  tipopago,
+                    propietario = propietario,
+                    observacion  = '',
+                    fecha=str(date.today()),
+                    monto=   monto_credito, 
+                    saldo=    monto_credito,
+                    pagoestadocuenta=Cabacera
+                )
+                notacredito.save()
+                correlativo.NumeroNotaCredito=correlativo.NumeroNotaCredito+1
+                correlativo.save()
         
         for detalle in items:
             tipopago =    None if detalle['tipopago']==   None else TipoPago.objects.get(codigo=detalle['tipopago'])
@@ -278,76 +284,81 @@ def Crear_Pago(request):
         #actualiza el correlativo de numero de pagos
         #correlativo.NumeroPago=correlativo.NumeroPago+1  
         # solo aplica cuando la peticion viene de catastro y es una de esas 3 opciones
-        if liquidacion.tipoflujo.carandai:
-            #solo aplica cuanbdo es inscripcion, el inmueble se debe crear nuevo
-            if liquidacion.tipoflujo.crea_expediente:
-                #crear inmuebles
-                estatusinmueble=EstatusInmueble.objects.get(codigo='99')
-                ##print(estatusinmueble)
+        print('liquidacion',liquidacion)
+        if liquidacion:
+            if liquidacion.tipoflujo.carandai:
+                #solo aplica cuanbdo es inscripcion, el inmueble se debe crear nuevo
+                if liquidacion.tipoflujo.crea_expediente:
+                    #crear inmuebles
+                    estatusinmueble=EstatusInmueble.objects.get(codigo='99')
+                    ##print(estatusinmueble)
 
-                InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro,
-                                     #fecha_inscripcion=date.today(),
-                                     fecha_creacion=date.today(),
-                                     status=estatusinmueble)
-                InmuebleNew.save()
-                InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
-                                                            propietario=propietario,
-                                                            fecha_compra=date.today())
-                InmueblePropietariosNew.save()
-                InmueblePropiedadNew=InmueblePropiedad(inmueble=InmuebleNew)
-                InmueblePropiedadNew.save()
-                InmuebleTerrenoNew=InmuebleTerreno(inmueble=InmuebleNew)
-                InmuebleTerrenoNew.save()
-                InmuebleConstruccionNew=InmuebleConstruccion(inmueble=InmuebleNew)
-                InmuebleConstruccionNew.save()
-                InmuebleValoracionTerrenoNew=InmuebleValoracionTerreno(inmueble=InmuebleNew)
-                InmuebleValoracionTerrenoNew.save()
-                InmuebleValoracionTerreno2024New=InmuebleValoracionTerreno2024(inmueble=InmuebleNew)
-                InmuebleValoracionTerreno2024New.save()
-                InmuebleUbicacionNew=InmuebleUbicacion(inmueble=InmuebleNew)
-                InmuebleUbicacionNew.save()
-                InmuebleFaltanteNew=InmuebleFaltante(inmueble=InmuebleNew)
-                InmuebleFaltanteNew.save()
+                    InmuebleNew=Inmueble(numero_expediente=correlativo.ExpedienteCatastro,
+                                        #fecha_inscripcion=date.today(),
+                                        fecha_creacion=date.today(),
+                                        status=estatusinmueble)
+                    InmuebleNew.save()
+                    InmueblePropietariosNew=InmueblePropietarios(inmueble=InmuebleNew,
+                                                                propietario=propietario,
+                                                                fecha_compra=date.today())
+                    InmueblePropietariosNew.save()
+                    InmueblePropiedadNew=InmueblePropiedad(inmueble=InmuebleNew)
+                    InmueblePropiedadNew.save()
+                    InmuebleTerrenoNew=InmuebleTerreno(inmueble=InmuebleNew)
+                    InmuebleTerrenoNew.save()
+                    InmuebleConstruccionNew=InmuebleConstruccion(inmueble=InmuebleNew)
+                    InmuebleConstruccionNew.save()
+                    InmuebleValoracionTerrenoNew=InmuebleValoracionTerreno(inmueble=InmuebleNew)
+                    InmuebleValoracionTerrenoNew.save()
+                    InmuebleValoracionTerreno2024New=InmuebleValoracionTerreno2024(inmueble=InmuebleNew)
+                    InmuebleValoracionTerreno2024New.save()
+                    InmuebleUbicacionNew=InmuebleUbicacion(inmueble=InmuebleNew)
+                    InmuebleUbicacionNew.save()
+                    InmuebleFaltanteNew=InmuebleFaltante(inmueble=InmuebleNew)
+                    InmuebleFaltanteNew.save()
+                    #actualiza en correlativo del expediente 
+                    correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
+                    correlativo.save()
+                else:
+                    #seleciona el inmueble ya seleccionado desde la liquidacion
+                    InmuebleNew=Inmueble.objects.get(id=liquidacion.inmueble.id)
+                #crear flujo
+                FlujoNew=Flujo(numero=correlativo.NumeroSolicitud,
+                            inmueble=InmuebleNew,
+                            pagoestadocuenta=Cabacera,
+                            estado='1')
+                FlujoNew.save()
+                departamentoenvia=Departamento.objects.get(nombre='Admin')
+                usuarioenvia=User.objects.get(username='Admin')
+                departamentorecibe=Departamento.objects.get(nombre='Taquilla Catastro')
+                FlujoDetalleNew=FlujoDetalle(
+                    flujo=FlujoNew,
+                    estado='1',
+                    tarea='1',
+                    departamento_envia=departamentoenvia,
+                    envia_usuario=usuarioenvia,
+                    departamento_recibe=departamentorecibe
+                )
+                FlujoDetalleNew.save()
                 #actualiza en correlativo del expediente 
-                correlativo.ExpedienteCatastro=correlativo.ExpedienteCatastro+1
-                correlativo.save()
-            else:
-                #seleciona el inmueble ya seleccionado desde la liquidacion
-                InmuebleNew=Inmueble.objects.get(id=liquidacion.inmueble.id)
-            #crear flujo
-            FlujoNew=Flujo(numero=correlativo.NumeroSolicitud,
-                           inmueble=InmuebleNew,
-                           pagoestadocuenta=Cabacera,
-                           estado='1')
-            FlujoNew.save()
-            departamentoenvia=Departamento.objects.get(nombre='Admin')
-            usuarioenvia=User.objects.get(username='Admin')
-            departamentorecibe=Departamento.objects.get(nombre='Taquilla Catastro')
-            FlujoDetalleNew=FlujoDetalle(
-                flujo=FlujoNew,
-                estado='1',
-                tarea='1',
-                departamento_envia=departamentoenvia,
-                envia_usuario=usuarioenvia,
-                departamento_recibe=departamentorecibe
-            )
-            FlujoDetalleNew.save()
-            #actualiza en correlativo del expediente 
-            correlativo.NumeroSolicitud=correlativo.NumeroSolicitud+1
-            correlativo.save() 
-        #actualiza corrrelativo de pago
-        #correlativo.save()
-        #marca la liquidacion como procesada
-        liquidacion.habilitado=False
-        liquidacion.save()
+                correlativo.NumeroSolicitud=correlativo.NumeroSolicitud+1
+                correlativo.save() 
+            #actualiza corrrelativo de pago
+            #correlativo.save()
+            #marca la liquidacion como procesada
+            print('entre a liq')
+            liquidacion.habilitado=False
+            liquidacion.save()
 
-        queryset = LiquidacionDetalle.objects.filter(liquidacion=liquidacion.id)
+            queryset = LiquidacionDetalle.objects.filter(liquidacion=liquidacion.id)
+            # Convierte el QuerySet a una lista de diccionarios
+            lista_de_diccionarios = list(queryset.values())
 
-        # Convierte el QuerySet a una lista de diccionarios
-        lista_de_diccionarios = list(queryset.values())
+            # Convierte la lista de diccionarios a una cadena JSON
+            json_resultado = json.dumps(lista_de_diccionarios, cls=DjangoJSONEncoder)          
+        else:
+            json_resultado = {}
 
-        # Convierte la lista de diccionarios a una cadena JSON
-        json_resultado = json.dumps(lista_de_diccionarios, cls=DjangoJSONEncoder)
         ##print(json_resultado)
         result = {
         "documento": Cabacera.numero,
@@ -367,7 +378,8 @@ def Crear_Inmueble_Propietario(request):
         inmubelepropietario=InmueblePropietarios(
             inmueble=inmueble,
             propietario=propietario,
-            fecha_compra=request['fecha_compra']
+            #fecha_compra=request['fecha_compra']
+
         )
         inmubelepropietario.save()
         return Response('Insert OK', status=status.HTTP_200_OK)

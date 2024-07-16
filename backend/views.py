@@ -10,7 +10,12 @@ from django_filters import rest_framework as filters
 from django.db.models import Q
 from django.http import JsonResponse
 import json
+from django.db.models import Sum, Prefetch
 
+
+import pandas as pd
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 
 
@@ -142,6 +147,7 @@ def CrearPerfl(request):
 @permission_classes([IsAuthenticated])
 def ImpuestoInmueble(request):
     datos=request.data
+    print('datos',datos)
     return Impuesto_Inmueble(datos)
 
 @api_view(["POST"])
@@ -149,6 +155,7 @@ def ImpuestoInmueble(request):
 @permission_classes([IsAuthenticated])
 def ImpuestoInmueble2023(request):
     datos=request.data
+    print('datos2023',datos)
     return Impuesto_Inmueble2023(datos)
 
 @api_view(["POST"])
@@ -416,14 +423,7 @@ def filtrar_propietarios(request):
 @csrf_exempt
 def filtrar_inmuebles(request):
     numero_expediente = request.GET.get('numero_expediente', None)
-
-    #if numero_expediente:
     inmuebles_filtrados = Inmueble.objects.filter(numero_expediente=numero_expediente)
-    #else:
-    #    inmuebles_filtrados = Inmueble.objects.all()
-
-    # Convierte los resultados a JSON
-
     data = [
         {'id': prop.id, 
             'numero_expediente': prop.numero_expediente,
@@ -442,6 +442,195 @@ def filtrar_inmuebles(request):
             'anio ': prop.anio
         } 
         for prop in inmuebles_filtrados
+        ]
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def listar_inmuebles_old(request):
+    inmuebles_filtrados = Inmueble.objects.all()
+    data = []
+    today = date.today() # año vigente para evaluar si los pagos estan vigentes o no 
+    for prop in inmuebles_filtrados:
+        try:
+            terreno2024 = InmuebleValoracionTerreno2024.objects.get(inmueble__numero_expediente=prop.numero_expediente)
+            total_area_terreno2024=terreno2024.area or 0
+            construccion2024 = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno2024) 
+            total_area_construccion2024 = construccion2024.aggregate(Sum('area'))['area__sum']
+            total_area_construccion2024 = total_area_construccion2024 or 0
+        except InmuebleValoracionTerreno2024.DoesNotExist:
+            terreno2024 = None
+            total_area_construccion2024 = None
+
+                # Obtener y concatenar propietarios
+        oInmueblePropietarios = InmueblePropietarios.objects.filter(inmueble=prop.id)
+        propietarios = ", ".join([f"{propietario.propietario.nombre} ({propietario.propietario.numero_documento})" for propietario in oInmueblePropietarios])
+        # Verificar si anio es None antes de la comparación
+        if prop.anio is not None:
+            estatus = "Vigente" if prop.anio >= today.year else "No Vigente"
+        else:
+            estatus = "No Vigente"
+        print(prop.numero_expediente)
+        data.append({
+            'estatus': estatus,
+            'expediente': prop.numero_expediente,
+            'zona': None if prop.zona is None else prop.zona.codigo,
+            'categorizacion': None if prop.categorizacion is None else prop.categorizacion.codigo,
+            'direccion': prop.direccion,
+            'referencia': prop.referencia,
+            'observaciones': prop.observaciones,
+            'habilitado': prop.habilitado,
+            'anio': prop.anio,
+            'periodo': None if prop.periodo is None else prop.periodo.periodo,
+            'area_terreno': float(total_area_terreno2024),
+            'area_construccion': float(total_area_construccion2024),
+            'tipo': None if prop.tipo is None else prop.tipo.descripcion,
+            'propietarios': propietarios  # Concatenated owners
+        })
+
+    return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def listar_inmuebles(request):
+    today = date.today()  # Año vigente para evaluar si los pagos están vigentes o no
+
+    # Prefetch related data
+    inmuebles_filtrados = Inmueble.objects.filter(
+    Q(anio__lte=today.year) | Q(anio__isnull=True)).prefetch_related(
+        Prefetch('inmueblevaloracionterreno2024_set', queryset=InmuebleValoracionTerreno2024.objects.all(), to_attr='valoracion_terreno'),
+        Prefetch('inmueblepropietarios_set', queryset=InmueblePropietarios.objects.select_related('propietario'), to_attr='propietarios_list')
+    )
+
+    data = []
+
+    for prop in inmuebles_filtrados:
+        baseCalculo2023=0
+        TotalImpuesto2023=0
+        baseCalculo=0
+        TotalImpuesto=0
+        valor_error=0
+        mensaje=''
+
+        print(prop.numero_expediente)
+
+        #datosinmueble ={'inmueble': int(prop.numero_expediente)}
+        ##valida si el expeidnte esta sano para calcular sus impuestos
+        #salud=Datos_Inmuebles_Public(datosinmueble)
+        #json_data = salud.data
+        #try:
+        #    primer_elemento = json_data[0]
+        #    mensaje=primer_elemento["mensaje"]
+        #    valor_error = primer_elemento["error"]
+        #except KeyError:
+        #    primer_elemento = json_data
+        #    mensaje=primer_elemento["mensaje"]
+        #    valor_error = primer_elemento["error"]
+
+
+
+        if valor_error==0:
+            if prop.anio<=2023:
+                try:
+                    deuda2023=Impuesto_Inmueble2023({'inmueble': prop.id, 'anio': 2023, 'periodo': 1})
+                    json_data_deuda2023 = deuda2023.data
+                    #print(json_data_deuda2023)
+                    baseCalculo2023 = json_data_deuda2023[0]['cabacera']['basecalculobs']
+                    TotalImpuesto2023 = json_data_deuda2023[0]['cabacera']['total']
+                    #print('TOTAL',TotalImpuesto2023,baseCalculo2023) 
+                except Exception as e:
+                    mensaje = 'Error: ' + str(e)
+            try:
+                deuda=Impuesto_Inmueble({'inmueble': prop.id, 'anio': 2024, 'periodo': 4})
+                json_data_deuda = deuda.data
+                #print(json_data_deuda)
+                baseCalculo = json_data_deuda[0]['cabacera']['basecalculobs']
+                TotalImpuesto = json_data_deuda[0]['cabacera']['total']
+                #print('TOTAL',TotalImpuesto,baseCalculo) 
+
+            except Exception as e:
+                mensaje = 'Error: ' + str(e)
+                
+
+        terreno2024 = prop.valoracion_terreno[0] if prop.valoracion_terreno else None
+        total_area_terreno2024 = terreno2024.area if terreno2024 and terreno2024.area else 0
+        uso_area_terreno2024 = terreno2024.tipologia_categorizacion.descripcion if terreno2024 and terreno2024.tipologia_categorizacion else 0
+
+        total_area_construccion2024 = 0
+
+        if terreno2024:
+            construccion2024 = InmuebleValoracionConstruccion2024.objects.filter(inmueblevaloracionterreno=terreno2024)
+            total_area_construccion2024 = construccion2024.aggregate(total_area=Sum('area'))['total_area'] or 0
+            if total_area_construccion2024:
+
+                uso_construccion2024 = ", ".join([f"{uso.tipologia_categorizacion.descripcion} ({float(uso.area)})" for uso in construccion2024])
+            else:
+                uso_construccion2024='SIN CONSTRUCCION'
+
+        # Obtener y concatenar propietarios
+        propietarios = ", ".join([
+            f"{propietario.propietario.nombre} ({propietario.propietario.numero_documento})"
+            for propietario in prop.propietarios_list
+        ])
+
+        # Verificar si el año es None antes de la comparación
+        estatus = "Vigente" if prop.anio and prop.anio > today.year else "No Vigente"
+        data.append({
+            'estatus': estatus,
+            'expediente': prop.numero_expediente,
+            'tipo': prop.tipo.descripcion if prop.tipo else None,
+            'zona': prop.zona.codigo if prop.zona else None,
+            'categorizacion': prop.categorizacion.codigo if prop.categorizacion else None,
+            'direccion': prop.direccion,
+            'referencia': prop.referencia,
+            'observaciones': prop.observaciones,
+            'habilitado': prop.habilitado,
+            'anio': prop.anio,
+            'periodo': prop.periodo.periodo if prop.periodo else None,
+            'area_terreno': float(total_area_terreno2024),
+            'uso_terreno':uso_area_terreno2024,
+            'area_construccion': float(total_area_construccion2024),
+            'uso_construccion': uso_construccion2024,
+            'propietarios': propietarios,  # Concatenated owners
+            'mensaje':mensaje,
+            'impuesto2023':float(TotalImpuesto2023),
+            'BaseCalculo2023':float(baseCalculo2023),
+            'impuesto':float(TotalImpuesto),
+            'BaseCalculo':float(baseCalculo),
+            'TOTAL impuesto':float(TotalImpuesto+TotalImpuesto2023)
+
+
+        })
+
+    df = pd.DataFrame(data)
+
+    # Escribir el DataFrame en un archivo Excel
+    excel_buffer = BytesIO()
+    df.to_excel(excel_buffer, index=False)
+    excel_buffer.seek(0)
+
+    # Guardar el archivo en el modelo ExcelDocument
+    excel_document = ExcelDocument(title='Mi Excel', excel_file='mi_excel.xlsx')
+    excel_document.excel_file.save('mi_excel.xlsx', ContentFile(excel_buffer.getvalue()))
+
+    print("Archivo Excel guardado en el modelo ExcelDocument.")
+
+    return JsonResponse(data, safe=False) 
+
+
+@csrf_exempt
+def filtrar_flujos(request):
+    numero_expediente = request.GET.get('numero_expediente', None)
+    flujos_filtrados = Flujo.objects.filter( Q(inmueble__numero_expediente__icontains=numero_expediente))
+    data = [
+        {'id': prop.id,
+         'descripcion_flujo': prop.pagoestadocuenta.liquidacion.tipoflujo.descripcion,
+         'expediente': prop.inmueble.numero_expediente,
+         'nombre_propietario': prop.pagoestadocuenta.liquidacion.propietario.nombre,
+         'estado_display': dict(Flujo.ESTADO)[prop.estado],
+         'fecha': prop.fecha
+        } 
+        for prop in flujos_filtrados
         ]
 
     return JsonResponse(data, safe=False)
@@ -961,7 +1150,10 @@ class TipoPagoViewset(MultiSerializerViewSet):
     serializers = {
         'default': TipoPagoSerializer
     }
-
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'codigo':['exact'],
+    }
 
 class BancoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]
@@ -991,6 +1183,23 @@ class PagoEstadoCuentaDetalleViewset(MultiSerializerViewSet):
     serializers = {
         'default': PagoEstadoCuentaDetalleSerializer
     }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+      'pagoestadocuenta_id':['exact'],
+      'tipopago_id':['exact'],
+      'bancocuenta':['exact'],
+    }
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        bancocuenta_isnull = self.request.query_params.get('bancocuenta__isnull', None)
+
+        if bancocuenta_isnull == 'true':
+            queryset = queryset.filter(bancocuenta__isnull=True)
+        elif bancocuenta_isnull == 'false':
+            queryset = queryset.filter(bancocuenta__isnull=False)
+
+        return queryset
+
 
 class CorrelativoViewset(MultiSerializerViewSet):
     permission_classes = [IsAuthenticated]

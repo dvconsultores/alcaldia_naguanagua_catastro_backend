@@ -137,6 +137,10 @@ urlpatterns = [
     path('upload_excel/', views.upload_excel),
     path('filtrar_propietarios/', views.filtrar_propietarios, name='filtrar_propietarios'),
     path('filtrar_inmuebles/', views.filtrar_inmuebles, name='filtrar_inmuebles'),
+    path('listar_inmuebles/', views.listar_inmuebles, name='listar_inmuebles'),
+
+    path('filtrar_flujos/', views.filtrar_flujos, name='filtrar_flujos'),
+
     path('filtrar_patentes/', views.filtrar_patentes, name='filtrar_patentes'),
     path('crearpatente/', views.CrearPatente),
     path('estadisticaflujo/', views.EstadisticaFlujo),

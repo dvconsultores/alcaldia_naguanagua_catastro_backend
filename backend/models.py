@@ -544,14 +544,6 @@ class Comunidad(models.Model):
 
     history = HistoricalRecords()
 
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()
-            history_instance.history_user = user  # Aquí cambiamos "user" a "history_user"
-            history_instance.save()
-
     class Meta:
         indexes = [
             models.Index(fields=['comunidad']),
@@ -596,13 +588,6 @@ class Inmueble(models.Model):
     comunidad = models.ForeignKey(Comunidad, null=True,blank =True,on_delete=models.PROTECT,help_text="comunidad")
 
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
 
     class Meta:
         indexes = [
@@ -645,13 +630,6 @@ class InmueblePropiedad(models.Model):
     pdf_documento = models.FileField(upload_to=immuebles_path_doc, null=True, blank=True, help_text="Pdf del documento de registro")
 
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
 
     def __str__(self):
         return '%s' % (self.inmueble.numero_expediente)
@@ -667,13 +645,13 @@ class InmueblePropietarios(models.Model):
     modificacion_paga = models.BooleanField(default=False, help_text="True desde use_case de crear pago cuando se cancele el flujo de cambio de propietario")
 
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
+    # def save(self, *args, **kwargs):
+    #     user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
+    #     super().save(*args, **kwargs)
+    #     if user:
+    #         history_instance = self.history.most_recent()  # Obtiene la instancia histórica
+    #         history_instance.user = user
+    #         history_instance.save()
 
     def __str__(self):
         return '%s - %s' % (self.inmueble.numero_expediente,self.propietario.nombre)
@@ -877,13 +855,6 @@ class InmuebleValoracionTerreno(models.Model):
     aplica= models.CharField(max_length=1, default='T', help_text='TERRENO')
     
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
 
     def __str__(self):
         return '%s - %s' % (self.inmueble.id, self.observaciones)
@@ -905,13 +876,7 @@ class InmuebleValoracionConstruccion(models.Model):
     aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
 
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
+
     def __str__(self):
         return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id) 
     class Meta:
@@ -935,13 +900,6 @@ class InmuebleValoracionTerreno2024(models.Model):
     aplica= models.CharField(max_length=1, default='T', help_text='TERRENO')
 
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
     
     def __str__(self):
         return '%s - %s' % (self.inmueble.id, self.observaciones)
@@ -963,13 +921,7 @@ class InmuebleValoracionConstruccion2024(models.Model):
     aplica= models.CharField(max_length=1, default='C', help_text='CONSTRUCCION')  
     
     history = HistoricalRecords()
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extrae el usuario de los kwargs
-        super().save(*args, **kwargs)
-        if user:
-            history_instance = self.history.most_recent()  # Obtiene la instancia histórica
-            history_instance.user = user
-            history_instance.save()
+
     def __str__(self):
         return '%s - %s ' % (self.inmueblevaloracionterreno.inmueble.id, self.inmueblevaloracionterreno.id)
     class Meta:
@@ -1063,6 +1015,7 @@ class TasaMulta(models.Model):
         ('I', 'Impuesto'),
         ('T', 'Tasa'),
         ('M', 'Multa'),
+        ('R', 'Recaudacion'),
         ('O', 'Otro')
     )
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
@@ -1071,9 +1024,11 @@ class TasaMulta(models.Model):
     tipo= models.CharField(max_length=1, choices=TIPO, default='O', help_text='tipo de recaudacion')
     APLICA = (
         ('C', 'Inmuebles Urbanos'),
+        ('I', 'Catastro'),
         ('A', 'Actividades económicas'),
         ('V', 'Vehiculos'),
         ('P', 'Propaganda y publicidad'),
+        ('R', 'Recaudacion'),
         ('X', 'Todos')
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
@@ -1099,6 +1054,7 @@ class TipoFlujo(models.Model):
         ('A', 'Actividades económicas'),
         ('V', 'Vehiculos'),
         ('P', 'Propaganda y publicidad'),
+        ('R', 'Recaudacion'),
         ('X', 'Todos')
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')
@@ -1197,8 +1153,21 @@ class LiquidacionDetalle(models.Model):
 class TipoPago(models.Model):
     descripcion  = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion Tipo de pago")
     codigo  = models.TextField(null=True,blank =True,  help_text="codigo Tipo de pago")
+    lstar = models.BooleanField(default=True, help_text="se lista en los formularios?")
+    #(
+    #    ('3', 'TRANSFERENCIA'),
+    #    ('5', 'DEPOSITO'),
+    #    ('11', 'DEBITO'),
+#        ('14', 'SITUADO'),
+#        ('4', 'INTERESES'),
+#        ('12', 'FCI'),
+#        ('X', 'Todos')
+#    )
+    operacion  = models.TextField(null=True,blank =True,  help_text="codigo Tipo de operacion")
+
+
     def __str__(self):
-        return '%s' % (self.descripcion)
+        return '%s - %s - %s - %s' % (self.id,self.descripcion,self.codigo,self.operacion)
     class Meta:
         indexes = [
             models.Index(fields=['descripcion']),
@@ -1237,7 +1206,7 @@ class MotivoAnulacionPago(models.Model):
 #Maestro de recibo Pago
 class PagoEstadoCuenta(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago. Correlativo.NumeroPago")
-    liquidacion = models.ForeignKey(Liquidacion, on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
+    liquidacion = models.ForeignKey(Liquidacion, null=True,blank =True,on_delete=models.PROTECT,help_text="ID Cabecera liquidacion")
     fecha = models.DateTimeField(blank=True, help_text="Fecha Estado Cuenta")
     caja = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Caja . Viene del modelo Perfil")
     observaciones = models.TextField(null=True,blank =True, help_text="observaciones")

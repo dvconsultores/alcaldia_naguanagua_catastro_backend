@@ -1106,6 +1106,12 @@ class PagoEstadoCuentaDetalleSerializer(serializers.ModelSerializer):
         return obj.tipopago.descripcion
       return None
 
+    operacion_tipo= serializers.SerializerMethodField('loadoperacion_tipo')
+    def loadoperacion_tipo(self, obj):
+      if obj.tipopago:
+        return obj.tipopago.operacion
+      return None
+    
     numero_recibo= serializers.SerializerMethodField('loadnumero_recibo')
     def loadnumero_recibo(self, obj):
       return obj.pagoestadocuenta.numero
@@ -1168,6 +1174,7 @@ class FlujoSerializer(serializers.ModelSerializer):
     estado_display = serializers.SerializerMethodField('get_estado_display')
     def get_estado_display(self, obj):
         return dict(Flujo.ESTADO)[obj.estado]
+    
     expediente= serializers.SerializerMethodField('loadpexpediente')
     def loadpexpediente(self, obj):
       return obj.inmueble.numero_expediente
