@@ -90,7 +90,7 @@ class Perfil(models.Model):
     modulo = models.ForeignKey(Modulo, null=True, blank=True,on_delete=models.CASCADE, help_text="Modulo INICAL al entrar")
     caja = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Caja en caso que el perfil sea de cajero")
     def __str__(self):
-        return '%s - %s - %s' % (self.usuario.username, self.tipo,self.departamento)
+        return '%s - %s - %s - %s' % (self.usuario.username, self.tipo,self.departamento,self.caja)
 
 class Permiso(models.Model):
     modulo = models.ForeignKey(Modulo, null=False, blank=False,on_delete=models.CASCADE, help_text="Opcion de menu asociada")
@@ -541,6 +541,8 @@ class Comunidad(models.Model):
     comunidad = models.TextField(null=False,blank =False, unique=True,  help_text="numero_civico de expediente")
     categoria = models.TextField(null=True,blank =True, help_text="numero_civico de expediente")
     clave = models.TextField(null=True,blank =True, help_text="numero_civico de expediente.")
+    def __str__(self):
+        return '%s - %s' % (self.comunidad,self.categoria)
 
     history = HistoricalRecords()
 
@@ -1032,6 +1034,8 @@ class TasaMulta(models.Model):
         ('X', 'Todos')
     )
     aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
+    utiliza_m2 = models.BooleanField(default=False, help_text="si True utiliza m2, pra catastro lo busca de la valoracion economica")
+
     def __str__(self):
         return '%s - %s - %s' % (self.codigo,self.tipo, self.descripcion)
         
@@ -1201,7 +1205,39 @@ class MotivoAnulacionPago(models.Model):
     def __str__(self):
         return '%s' % (self.descripcion)
     
+class CorridasBancarias(models.Model):
+    """
+    CorridasBancaria
+    """
+    bancocuenta = models.ForeignKey(BancoCuenta, on_delete=models.PROTECT,help_text="ID Banco")
+    fecha = models.DateField(blank=False,null=False, help_text="Fecha creacion")
+    referencia = models.TextField(null=False,blank =False, help_text="referencia")
+    descripcion = models.TextField(null=False,blank =False, help_text="descripcion")
+    monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito") 
+    SITUADO = (
+    ('R', 'Situado Regional'),
+    ('N', 'Situado Nacional'),
+    ('I', 'Interes'),
+    ('D', 'Deposito'),
+    ('T', 'Transferencia')
+    )
+    situado= models.CharField(max_length=1, choices=SITUADO, default='T', help_text='Tipo de transaccion')
+    fechacreacion = models.DateTimeField(null=True,blank =True,  help_text="Fecha registro error")
+    referencia_complemento = models.TextField(null=True,blank =True, help_text="referencia complementaria (en caso de repetirse se complementa)")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones.")
+    habilitado = models.BooleanField(default=True, help_text="Si esta habiltado quiere decir que NO se ha liquido en contabilidad como Ingreso No Liquidado") 
 
+    #Para hacer la trasibilidad de los registros que fueron parte de alguna relacion de ingresos no liquidados,  se agrupa por observacion y por bancocuenta
+    #esa misma observacion esta en pagoestadodecuenta
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.bancocuenta.codigocuenta,self.fecha,self.referencia,self.descripcion,self.monto,self.situado)
+    class Meta:
+        unique_together = ('bancocuenta', 'fecha','referencia','descripcion','monto')
+        ordering = ['bancocuenta','fecha','referencia','descripcion','monto'] 
+
+    def save(self, *args, **kwargs):
+        self.fechacreacion = timezone.now()
+        super().save(*args, **kwargs)
 
 #Maestro de recibo Pago
 class PagoEstadoCuenta(models.Model):
@@ -1217,6 +1253,7 @@ class PagoEstadoCuenta(models.Model):
     anula_fecha = models.DateTimeField(blank=True, null=True,help_text="Fecha Anulacion")
     anula_observaciones = models.TextField(null=True,blank =True, help_text="observaciones por la anulacion")
     motivoanulacionpago = models.ForeignKey(MotivoAnulacionPago,null=True,blank =True, on_delete=models.PROTECT,help_text="ID MotivoAnulacionPago")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones. Aca se coloca el titulo del cuadre de caja cuando se hagan por ejempplo liquidaciones de transferencias de contribuyentes no recaudadas")
     ReportePdf = models.FileField(upload_to=pagoestadocuenta_path,help_text="PDF PagoEstadoCuenta", null=True,blank =True)
     def __str__(self):
         return '%s - %s - %s' % (self.id,self.numero,self.liquidacion)
@@ -1237,15 +1274,21 @@ class PagoEstadoCuentaDetalle(models.Model):
     nro_aprobacion = models.TextField(null=True,blank =True,  help_text="numero de aprobacion (debito)")
     nro_lote = models.TextField(null=True,blank =True,  help_text="numero de lote (debito)")
     nro_referencia = models.TextField(null=True,blank =True,  help_text="numero de referencia (debito, trasferencia y nota de credito)")
+    nro_referencia2 = models.TextField(null=True,blank =True,  help_text="numero de referencia complementaria - cuando se repite (debito, trasferencia y nota de credito)")
+    nro_descripcion = models.TextField(null=True,blank =True,  help_text="descripcion d ela trasferencia (esto se toma del extracto bancario")
+    observaciones = models.TextField(null=True,blank =True, help_text="observaciones")
     fechapago = models.DateTimeField(blank=True, help_text="Fecha pago")
+    corridasbancarias = models.ForeignKey(CorridasBancarias, null=True,blank =True,on_delete=models.PROTECT,help_text="ID CorridaBancaria")
+
     class Meta:
         indexes = [
             models.Index(fields=['pagoestadocuenta']),
         ]
+    def __str__(self):
+        return '%s - %s - %s - %s' % (self.fechapago,self.pagoestadocuenta,self.tipopago,self.monto)
 
 
-
-# tabla dee control para manejo de correlativos
+# tabla de control para manejo de correlativos
 class Correlativo(models.Model):
     ExpedienteCatastro = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Expediente de Catastro")	
     NumeroEstadoCuenta = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de Estado de Cuenta")
@@ -1257,13 +1300,11 @@ class Correlativo(models.Model):
     NumeroCalculoImpuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero calculo de impuesto")
     NumeroCorreccionImpuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero correccion impuesto Catastro")
     NumeroIC_Impuesto = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero Impuesto Catastro")
+    Numero_Referencia_Bancaria = models.PositiveIntegerField(null=True, blank=True,  help_text="Correltivo para referencias repetidas")
     NumeroAE_Patente = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio")
     NumeroAE_Patente_Generica = models.PositiveIntegerField(null=True, blank=True,  help_text="Numero de licencia o patente de Indistria y comercio genérica")
     Logo1 = models.ImageField(upload_to=logos_path,help_text="Logo 1 para reporte", null=True,blank =True)
     Logo2 = models.ImageField(upload_to=logos_path,help_text="Logo 2 para reporte", null=True,blank =True)
-
-
-
 
 # Caranday ver 1.0
 class Flujo(models.Model):
@@ -1289,7 +1330,7 @@ class Flujo(models.Model):
 
 
 class FlujoDetalle(models.Model):
-    flujo = models.ForeignKey(Flujo, on_delete=models.PROTECT,help_text="ID Cabecera PAGO")
+    flujo = models.ForeignKey(Flujo, on_delete=models.PROTECT,help_text="ID FLUJO")
     ESTADO = (
         ('1', 'Pendiente por Recibir'),
         ('2', 'Recibido'),
@@ -1452,6 +1493,53 @@ class IC_ImpuestoDetalleMora(models.Model):
         return '%s - %s - %s - %s - %s - %s - %s' % (self.IC_impuesto.numero,self.anio,self.mes,self.tasa,self.dias,self.moramensual,self.interesmensual) 
 
 
+
+
+# MAESTRO Configuración de exoneraciones por impuestos si la fecha del pago del impuesto esta contenida entra fechadesde y fecha 
+# hasta aplica es descuento, si no tiene tipologia aplica a cualquier uso, si tiene tipologia solo aplica a ese uso. 
+# Si seccion es detalle aplica a los usos pero si es total, aplica a la cabecera y en este caso si el registro 
+class IC_ImpuestoExoneracion(models.Model):
+    descripcion = models.TextField(null=False,blank =False, unique=True, help_text="Descripcion")
+    fechadesde  = models.DateField(blank=True,null=True,help_text="fecha Desde donde valida si aplica el descuento")
+    fechahasta  = models.DateField(blank=True,null=True, help_text="fecha Hasta donde valida si aplica el descuento")
+    m2desde =  models.DecimalField(max_digits=22, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="M2 desde") 
+    m2hasta= models.DecimalField(max_digits=22, decimal_places=2, default=Decimal(0.0), null=True,blank =True, help_text="m2 hasta") 
+    porcentaje =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Porcentaje de descuento")
+    tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado. Solo para Inmuebles. Si no tiene aplica a cualquier uso") 
+    tipologia_categorizacion = models.ForeignKey (Tipologia_Categorizacion, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado. Solo para Inmuebles. Si no tiene aplica a cualquier uso") 
+    habilitado = models.BooleanField(default=True, help_text="Esta activo?")
+    multa = models.BooleanField(default=False, help_text="Considera la multa para la exoneracion")
+    recargo = models.BooleanField(default=False, help_text="Considera el recargo para la exoneracion")
+    interes = models.BooleanField(default=False, help_text="Considera el interes para la exoneracion")
+    inmueble=models.ForeignKey(Inmueble,blank=True,null=True, on_delete=models.PROTECT,help_text="Inmueble")
+
+    APLICA = (
+        ('C', 'Inmuebles Urbanos'),
+        ('A', 'Actividades económicas'),
+        ('V', 'Vehiculos'),
+        ('P', 'Propaganda y publicidad'),
+        ('X', 'Todos')
+    )
+    aplica= models.CharField(max_length=1, choices=APLICA, default='X', help_text='A que tipo de sector aplica')  
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.id,self.fechadesde,self.fechahasta,self.porcentaje,self.tipologia,self.descripcion)
+    
+# Descuentos aplicados por cada IC_ImpuestoExoneracion
+class IC_ImpuestoDetalleExoneracion(models.Model):
+    IC_impuesto  = models.ForeignKey(IC_Impuesto, on_delete=models.PROTECT,null=True,blank =True,help_text="ID IC_Impuesto") 
+    IC_impuestoexoneracion  = models.ForeignKey(IC_ImpuestoExoneracion, on_delete=models.PROTECT,null=True,blank =True,help_text="ID Impuesto Inmueble")
+    periodo=models.ForeignKey(IC_Periodo, on_delete=models.PROTECT,null=True,blank =True,help_text="Periodo de proceso")
+    anio=models.PositiveIntegerField(null=True, blank=True,  help_text="Año de proceso")
+    tipologia = models.ForeignKey (Tipologia, null=True,blank =True,on_delete=models.PROTECT,help_text="tipologia asociado")
+    base =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Base de calculo") 
+    porcentaje =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Porcentaje de descuento") 
+    total =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Total. Segun la tipologia:IC_ImpuestoDetalle.base * TC_ImpuestoDescuentos.porcentaje")  
+    def __str__(self):
+        return '%s - %s - %s - %s - %s - %s' % (self.IC_impuesto.numero,self.anio,self.periodo.periodo,self.tipologia.descripcion,self.IC_impuestodescuento.descripcion,self.porcentaje) 
+
+
+
+
 # MAESTRO Configuración de descuentos por impuestos si la fecha del pago del impuesto esta contenida entra fechadesde y fecha 
 # hasta aplica es descuento, si no tiene tipologia aplica a cualquier uso, si tiene tipologia solo aplica a ese uso. 
 # Si seccion es detalle aplica a los usos pero si es total, aplica a la cabecera y en este caso si el registro 
@@ -1489,6 +1577,10 @@ class IC_ImpuestoDetalleDescuentos(models.Model):
     total =  models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=True,blank =True, help_text="Total. Segun la tipologia:IC_ImpuestoDetalle.base * TC_ImpuestoDescuentos.porcentaje")  
     def __str__(self):
         return '%s - %s - %s - %s - %s - %s' % (self.IC_impuesto.numero,self.anio,self.periodo.periodo,self.tipologia.descripcion,self.IC_impuestodescuento.descripcion,self.porcentaje) 
+
+
+
+
 
 class IC_Multa(models.Model):
     numero = models.TextField(null=False,blank =False, unique=True, help_text="Numero de pago")
@@ -1636,34 +1728,7 @@ class ExcelDocumentLOG(models.Model):
 
 
 
-class CorridasBancarias(models.Model):
-    """
-    CorridasBancaria
-    """
-    bancocuenta = models.ForeignKey(BancoCuenta, on_delete=models.PROTECT,help_text="ID Banco")
-    fecha = models.DateField(blank=False,null=False, help_text="Fecha creacion")
-    referencia = models.TextField(null=False,blank =False, help_text="referencia")
-    descripcion = models.TextField(null=False,blank =False, help_text="descripcion")
-    monto=models.DecimalField(max_digits=22, decimal_places=8, default=Decimal(0.0), null=False, help_text="monto original de la nota de credito") 
-    SITUADO = (
-    ('R', 'Situado Regional'),
-    ('N', 'Situado Nacional'),
-    ('I', 'Interes'),
-    ('D', 'Deposito'),
-    ('T', 'Transferencia')
-    )
-    situado= models.CharField(max_length=1, choices=SITUADO, default='T', help_text='Tipo de transaccion')
-    fechacreacion = models.DateTimeField(null=True,blank =True,  help_text="Fecha registro error")
 
-    def __str__(self):
-        return '%s - %s - %s - %s - %s - %s' % (self.bancocuenta.codigocuenta,self.fecha,self.referencia,self.descripcion,self.monto,self.situado)
-    class Meta:
-        unique_together = ('bancocuenta', 'fecha','referencia','descripcion','monto')
-        ordering = ['bancocuenta','fecha','referencia','descripcion','monto'] 
-
-    def save(self, *args, **kwargs):
-        self.fechacreacion = timezone.now()
-        super().save(*args, **kwargs)
 
 
 class InmuebleCategorizacion(models.Model):

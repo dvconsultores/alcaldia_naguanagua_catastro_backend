@@ -5,7 +5,7 @@ from knox.models import AuthToken
 from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
 import re
-from django.db.models import Max,Min,Sum,Q 
+from django.db.models import Max,Min,Sum,Q,F
 import pandas as pd
 import os
 import calendar
@@ -262,12 +262,20 @@ def Crear_Pago(request):
                 correlativo.save()
         
         for detalle in items:
-            tipopago =    None if detalle['tipopago']==   None else TipoPago.objects.get(codigo=detalle['tipopago'])
+            corridasbancarias = None if detalle['corridasbancarias']==None else CorridasBancarias.objects.get(id=detalle['corridasbancarias'])
+            transferenciacontabilizada= True if detalle['corridasbancarias']==None else corridasbancarias.habilitado
+            # validamos si en pago es una transferencia que en CorridasBancarias tienen habilitado= False, esto significa que fue contabilizado como TRANSFERENCIAS CONTABILIZADAS RECAUDADAS
+            if transferenciacontabilizada:
+                tipopago =    None if detalle['tipopago']==   None else TipoPago.objects.get(codigo=detalle['tipopago']) #toma el tipo de pago que trae el detalle de pago
+            else:
+                tipopago =    None if detalle['tipopago']==   None else TipoPago.objects.get(codigo=16) # TRANSFERENCIAS CONTABILIZADAS RECAUDADAS
             bancocuenta = None if detalle['bancocuenta']==None else BancoCuenta.objects.get(id=detalle['bancocuenta'])
+            
             Detalle=PagoEstadoCuentaDetalle(
                 pagoestadocuenta=Cabacera,
                 tipopago = tipopago,
                 bancocuenta=bancocuenta,
+                corridasbancarias=corridasbancarias,
                 monto  = float(detalle['monto']),
                 #fechapago =  str(date.today()),#detalle['fechapago'],
                 fechapago =  detalle['fechapago'],
@@ -378,7 +386,7 @@ def Crear_Inmueble_Propietario(request):
         inmubelepropietario=InmueblePropietarios(
             inmueble=inmueble,
             propietario=propietario,
-            #fecha_compra=request['fecha_compra']
+            fecha_compra=request['fecha_compra']
 
         )
         inmubelepropietario.save()
@@ -417,8 +425,8 @@ def Multa_Inmueble(request):
             fecha_inscripcion = oInmueble.fecha_inscripcion
             bInscripcion=True if (((today-fecha_inscripcion).days)>90 and binscripcion_paga==False) else False
             
-            diferenciac=today-fecha_compra
-            diferenciai=today-fecha_inscripcion
+            #diferenciac=today-fecha_compra
+            #diferenciai=today-fecha_inscripcion
             ##print('fecha_inscripcion:',fecha_inscripcion,'today:',today,'diferencia:',diferenciai.days,'bInscripcion:',bInscripcion)
 
             ##print('fecha_compra:',fecha_compra,'today:',today,'diferencia:',diferenciac.days,'bModifica:',bModifica)
@@ -639,6 +647,7 @@ def Impuesto_Inmueble2023(request):
         data = []
         aDetalle = []
         aDescuento = []
+        aExoneracion = []
         aInteres = []
         if (request['inmueble']):
             not_process=False
@@ -714,13 +723,17 @@ def Impuesto_Inmueble2023(request):
                     construccion = InmuebleValoracionConstruccion.objects.filter(inmueblevaloracionterreno=terreno)
                     if terreno:
                         total_area_terreno = terreno.area 
+                        
                     else:
                         total_area_terreno = 0
+                    uso_area_terreno = terreno.tipologia.descripcion if terreno and terreno.tipologia else ''
 
                     if construccion:
                         total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
+                        uso_construccion = ", ".join([f"{uso.tipologia.descripcion} ({float(uso.area)}'m2')" for uso in construccion])
                     else:
                         total_area_construccion = 0
+                        uso_construccion='SIN CONSTRUCCION'
 
                     if (total_area_construccion > total_area_terreno) or (total_area_terreno==0 and total_area_construccion>0):
                         ocupacion=construccion
@@ -744,9 +757,23 @@ def Impuesto_Inmueble2023(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
+                    if isinstance(ocupacion, list):
+                        # Es una lista
+                        ocupacion.sort(key=lambda x: x.tipologia.descripcion)
+                    else:
+                        # Es un QuerySet de Django
+                        ocupacion = ocupacion.order_by('tipologia__descripcion')
+                    
                     ##print('ocupacion',ocupacion)
                     ZonaInmueble=Zona.zona
                     oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
+                    ObservacionRecibo={
+                        'total_area_terreno':total_area_terreno,
+                        'uso_area_terreno':uso_area_terreno,
+                        'total_area_construccion':total_area_construccion,
+                        'uso_construccion':uso_construccion,
+                    }
+
 
                     #Ubicar la fecha de compra
                     ##oPropietario = InmueblePropietarios.objects.get(propietario=request['propietario'],inmueble=request['inmueble'])
@@ -771,6 +798,14 @@ def Impuesto_Inmueble2023(request):
                     tTotal=0
                     tTotalMora=0
                     tDescuento=0
+                    # PARA EXONERACIONES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    banderaExonera=True
+                    tExonerado=0
+                    PorcentajeExonerado=0
+                    ExoneraMulta=0
+                    ExoneraRecargo=0
+                    ExoneraInteres=0
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     while minimo_ano<=maximo_ano:
                         oBaseCalculo = UnidadTributaria.objects.get(habilitado=True,fecha__year=minimo_ano)
                         baseCalculoBs= float(oBaseCalculo.monto)
@@ -807,6 +842,47 @@ def Impuesto_Inmueble2023(request):
                                     # La fecha actual NO está entre las fechas del modelo
                                     ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
+                                
+                                 ## evaluar banderas de exoneracion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                if banderaExonera:
+                                    try:
+                                        oExonera=IC_ImpuestoExoneracion.objects.get(
+                                                tipologia=dato.tipologia.id,  #!!!!!!!!!!!!!!!!!!!!cambiar cuando sea categorizacion
+                                                    fechadesde__year__lte=today.year,
+                                                    fechahasta__year__gte=today.year,
+                                                    fechadesde__month__lte=today.month,
+                                                    fechahasta__month__gte=today.month,
+                                                    fechadesde__day__lte=today.day,
+                                                    fechahasta__day__gte=today.day,
+                                                    m2desde__lte=dato.area,
+                                                    m2hasta__gte=dato.area,
+                                                    habilitado=True,
+                                                    aplica='C'
+                                                    )
+                                    except IC_ImpuestoExoneracion.DoesNotExist:
+                                        oExonera=[]
+                                    if oExonera:
+                                        PorcentajeExonerado=float(oExonera.porcentaje)
+                                        ExoneraMulta=oExonera.multa
+                                        ExoneraRecargo=oExonera.recargo
+                                        ExoneraInteres=oExonera.interes
+                                        InmuebleExoneracon={
+                                                    'IC_ImpuestoExoneracion':oExonera.id,
+                                                    'fechadesde':oExonera.fechadesde,
+                                                    'fechahasta':oExonera.fechahasta,
+                                                    'descripcion':oExonera.descripcion,
+                                                    'exonerado':PorcentajeExonerado,
+                                                    'uso_id':dato.tipologia.id,
+                                                    'uso_descripcion':dato.tipologia.descripcion,
+                                                    'ExoneraMulta':ExoneraMulta,
+                                                    'ExoneraRecargo':ExoneraRecargo,
+                                                    'ExoneraInteres':ExoneraInteres
+                                                }
+                                        aExoneracion.append(InmuebleExoneracon)
+                                        banderaExonera=False
+                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ 
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                                 #posesión por 5 años o más por el mismo propietario
                                 Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
@@ -929,26 +1005,7 @@ def Impuesto_Inmueble2023(request):
                                     tBaseMultaRecargoInteres=tBaseMultaRecargoInteres+Total
                                     tMulta=tMulta+(Total*(fMulta/100))
                                     tRecargo=tRecargo+(Total*(fRecargo/100))
-                        if tTotalMora:
-                            #oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
-                            #tTotalMora=(tTotalMora/12)
-                            #for aTasa in oTasaInteres:
-                                #if (aTasa.mes<=today.month and minimo_ano==today.year) or minimo_ano!=today.year:
-                                    #cantidad_dias = obtener_cantidad_dias(aTasa.anio, aTasa.mes)
-                                    #tasa_porcentaje=float(aTasa.tasa/100)
-                                    #monto=((tTotalMora*tasa_porcentaje)/360)*cantidad_dias
-                                    #ImpuestoInteresMoratorio={
-                                    #        'anio':aTasa.anio,
-                                    #        'mes':aTasa.mes,
-                                    #        'tasa':tasa_porcentaje*100,
-                                    #        'dias':cantidad_dias,
-                                    #        'moramensual':tTotalMora,
-                                    #        'interesmensual':monto,
-                                    #    }
-                                    #aInteres.append(ImpuestoInteresMoratorio)
-                                    #tInteres=tInteres+monto
-                                #end If
-                            # end For oTasaInteres                    
+                        if tTotalMora:                   
                             oTasaInteres=TasaInteres.objects.filter(anio=minimo_ano).order_by('mes')
                             if minimo_ano==today.year:
                                 tTotalInteresMoratorio=tTotalInteresMoratorio/request['periodo']
@@ -1023,7 +1080,17 @@ def Impuesto_Inmueble2023(request):
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
                     numero=correlativo.NumeroIC_Impuesto
-
+                    #EXONERACION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if PorcentajeExonerado:
+                        if ExoneraMulta:
+                           tMulta=0
+                        if ExoneraRecargo:
+                           tRecargo=0
+                        if ExoneraInteres:
+                           tInteres=0
+                        tExonerado=tTotal+tMulta+tRecargo+tInteres
+                        tExonerado=tExonerado*(PorcentajeExonerado/100)
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     Impuesto={
                         'numero':numero,
                         'zona':ZonaInmueble.id,
@@ -1036,19 +1103,22 @@ def Impuesto_Inmueble2023(request):
                         'fmulta':fMulta,
                         'frecargo':fRecargo,
                         'descuento':tDescuento,
-                        'total':tTotal+tMulta+tRecargo+tInteres,
+                        'total':tTotal+tMulta+tRecargo+tInteres-tExonerado,
                         'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
                         'flujo':Flujo.objects.filter(inmueble=oInmueble,estado='1').count() ,
                         'anioini':anioini,
                         'mesini':mesini,
                         'aniofin':request['anio'],
                         'mesfin':request['periodo'],
+                        'exonerado':tExonerado, #!!!!!!!!!!!!!!!!!!!! EXONERACION
                     }
                     datos={
                         'cabacera':Impuesto,
                         'detalle':aDetalle,
                         'descuento':aDescuento,
                         'interes':aInteres,
+                        'exonerado':aExoneracion,  #!!!!!!!!!!!!!!!!!!!! EXONERACION
+                        'ObservacionRecibo':ObservacionRecibo
                     }
                     data.append(datos)
 
@@ -1064,6 +1134,7 @@ def Impuesto_Inmueble2023_Public(request):
         data = []
         aDetalle = []
         aDescuento = []
+        aExoneracion = []
         aInteres = []
         if (request['inmueble']):
             not_process=False
@@ -1159,7 +1230,6 @@ def Impuesto_Inmueble2023_Public(request):
                         if terreno: # hay inmuebles que NO TIENEN TERRENO, PARA ESE CASO NO ENTRA, SOLO TOMA LA CONTRUCCION
                             if total_area_construccion < total_area_terreno:
                                 # Crear una nueva instancia de InmuebleValoracionConstruccion sin guardar en la base de datos
-                                
                                 nuevo_objeto_construccion = InmuebleValoracionConstruccion(
                                     tipologia=terreno.tipologia,
                                     tipo=terreno.tipo,
@@ -1171,7 +1241,13 @@ def Impuesto_Inmueble2023_Public(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
-                    ##print('ocupacion',ocupacion)
+
+                    if isinstance(ocupacion, list):
+                        # Es una lista
+                        ocupacion.sort(key=lambda x: x.tipologia.descripcion)
+                    else:
+                        # Es un QuerySet de Django
+                        ocupacion = ocupacion.order_by('tipologia__descripcion')
                     ZonaInmueble=Zona.zona
                     oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
 
@@ -1198,6 +1274,14 @@ def Impuesto_Inmueble2023_Public(request):
                     tTotal=0
                     tTotalMora=0
                     tDescuento=0
+                    # PARA EXONERACIONES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    banderaExonera=True
+                    tExonerado=0
+                    PorcentajeExonerado=0
+                    ExoneraMulta=0
+                    ExoneraRecargo=0
+                    ExoneraInteres=0
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     while minimo_ano<=maximo_ano:
                         oBaseCalculo = UnidadTributaria.objects.get(habilitado=True,fecha__year=minimo_ano)
                         baseCalculoBs= float(oBaseCalculo.monto)
@@ -1233,7 +1317,47 @@ def Impuesto_Inmueble2023_Public(request):
 
                                     # La fecha actual NO está entre las fechas del modelo
                                     ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
+                            
                             for dato in ocupacion:
+                                ## evaluar banderas de exoneracion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                if banderaExonera:
+                                    try:
+                                        oExonera=IC_ImpuestoExoneracion.objects.get(
+                                                tipologia=dato.tipologia.id,  #!!!!!!!!!!!!!!!!!!!!cambiar cuando sea categorizacion
+                                                    fechadesde__year__lte=today.year,
+                                                    fechahasta__year__gte=today.year,
+                                                    fechadesde__month__lte=today.month,
+                                                    fechahasta__month__gte=today.month,
+                                                    fechadesde__day__lte=today.day,
+                                                    fechahasta__day__gte=today.day,
+                                                    m2desde__lte=dato.area,
+                                                    m2hasta__gte=dato.area,
+                                                    habilitado=True,
+                                                    aplica='C'
+                                                    )
+                                    except IC_ImpuestoExoneracion.DoesNotExist:
+                                        oExonera=[]
+                                    if oExonera:
+                                        PorcentajeExonerado=float(oExonera.porcentaje)
+                                        ExoneraMulta=oExonera.multa
+                                        ExoneraRecargo=oExonera.recargo
+                                        ExoneraInteres=oExonera.interes
+                                        InmuebleExoneracon={
+                                                    'IC_ImpuestoExoneracion':oExonera.id,
+                                                    'fechadesde':oExonera.fechadesde,
+                                                    'fechahasta':oExonera.fechahasta,
+                                                    'descripcion':oExonera.descripcion,
+                                                    'exonerado':PorcentajeExonerado,
+                                                    'uso_id':dato.tipologia.id,
+                                                    'uso_descripcion':dato.tipologia.descripcion,
+                                                    'ExoneraMulta':ExoneraMulta,
+                                                    'ExoneraRecargo':ExoneraRecargo,
+                                                    'ExoneraInteres':ExoneraInteres
+                                                }
+                                        aExoneracion.append(InmuebleExoneracon)
+                                        banderaExonera=False
+                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                                 #Zona 1: Terrenos sin edificar mayores de 2.000 m2 en
                                 #posesión por 5 años o más por el mismo propietario 
                                 Alicuota=float(oTipologia.get(id=dato.tipologia.id).tarifa)
@@ -1425,6 +1549,25 @@ def Impuesto_Inmueble2023_Public(request):
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
                     numero=correlativo.NumeroIC_Impuesto
+                    #EXONERACION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if PorcentajeExonerado:
+                        if ExoneraMulta:
+                           tMulta=0
+                        if ExoneraRecargo:
+                           tRecargo=0
+                        if ExoneraInteres:
+                           tInteres=0
+
+                        tExonerado=tTotal+tMulta+tRecargo+tInteres
+                        #if not ExoneraMulta:
+                        #    tExonerado+=tMulta
+                        #if not ExoneraRecargo:
+                        #    tExonerado+=tRecargo
+                        #if not ExoneraInteres:
+                        #    tExonerado+=tInteres
+
+                        tExonerado=tExonerado*(PorcentajeExonerado/100)
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     Impuesto={
                         'numero':numero,
                         'zona':ZonaInmueble.id,
@@ -1437,19 +1580,21 @@ def Impuesto_Inmueble2023_Public(request):
                         'fmulta':fMulta,
                         'frecargo':fRecargo,
                         'descuento':tDescuento,
-                        'total':tTotal+tMulta+tRecargo+tInteres,
+                        'total':tTotal+tMulta+tRecargo+tInteres-tExonerado,
                         'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
                         'flujo':Flujo.objects.filter(inmueble=oInmueble,estado='1').count() ,
                         'anioini':anioini,
                         'mesini':mesini,
                         'aniofin':request['anio'],
                         'mesfin':request['periodo'],
+                        'exonerado':tExonerado, #!!!!!!!!!!!!!!!!!!!! EXONERACION
                     }
                     datos={
                         'cabacera':Impuesto,
                         'detalle':aDetalle,
                         'descuento':aDescuento,
                         'interes':aInteres,
+                        'exonerado':aExoneracion  #!!!!!!!!!!!!!!!!!!!! EXONERACION
                     }
                     data.append(datos)
 
@@ -1849,6 +1994,7 @@ def Impuesto_Inmueble(request):
         data = []
         aDetalle = []
         aDescuento = []
+        aExoneracion = []
         aInteres = []
         if (request['inmueble']):
             not_process=False
@@ -1925,11 +2071,15 @@ def Impuesto_Inmueble(request):
                         total_area_terreno = terreno.area 
                     else:
                         total_area_terreno = 0
+                    uso_area_terreno = terreno.tipologia_categorizacion.descripcion if terreno and terreno.tipologia_categorizacion else ''
+
 
                     if construccion:
                         total_area_construccion = construccion.aggregate(Sum('area'))['area__sum']
+                        uso_construccion = ", ".join([f"{uso.tipologia_categorizacion.descripcion} ({float(uso.area)}'m2')" for uso in construccion])
                     else:
                         total_area_construccion = 0
+                        uso_construccion='SIN CONSTRUCCION'
 
                     if (total_area_construccion > total_area_terreno) or (total_area_terreno==0 and total_area_construccion>0):
                         ocupacion=construccion
@@ -1953,6 +2103,18 @@ def Impuesto_Inmueble(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
+                    if isinstance(ocupacion, list):
+                        # Es una lista
+                        ocupacion.sort(key=lambda x: x.tipologia_categorizacion.descripcion)
+                    else:
+                        # Es un QuerySet de Django
+                        ocupacion = ocupacion.order_by('tipologia_categorizacion__descripcion')
+                    ObservacionRecibo={
+                        'total_area_terreno':total_area_terreno,
+                        'uso_area_terreno':uso_area_terreno,
+                        'total_area_construccion':total_area_construccion,
+                        'uso_construccion':uso_construccion,
+                    }
                     ##print('ocupacion',ocupacion)
                     CategorizacionInmueble=Categorizacion.categorizacion
                     oTipologia=Tipologia_Categorizacion.objects.filter(categorizacion=CategorizacionInmueble)
@@ -1980,6 +2142,14 @@ def Impuesto_Inmueble(request):
                     tTotal=0
                     tTotalMora=0
                     tDescuento=0
+                    # PARA EXONERACIONES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    banderaExonera=True
+                    tExonerado=0
+                    PorcentajeExonerado=0
+                    ExoneraMulta=0
+                    ExoneraRecargo=0
+                    ExoneraInteres=0
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     while minimo_ano<=maximo_ano:
                         #para los años menores al actual, toma los periodos pendientes segun el historico
                         PeriodosCxc=oImpuestoPeriodo.filter(anio=minimo_ano).order_by('periodo')
@@ -2014,6 +2184,44 @@ def Impuesto_Inmueble(request):
                                     # La fecha actual NO está entre las fechas del modelo
                                     ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
+                                ## evaluar banderas de exoneracion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                if banderaExonera:
+                                    try:
+                                        oExonera=IC_ImpuestoExoneracion.objects.get(
+                                                    tipologia_categorizacion=dato.tipologia_categorizacion.id,  #!!!!!!!!!!!!!!!!!!!!cambiar cuando sea categorizacion
+                                                    fechadesde__year__lte=today.year,
+                                                    fechahasta__year__gte=today.year,
+                                                    fechadesde__month__lte=today.month,
+                                                    fechahasta__month__gte=today.month,
+                                                    fechadesde__day__lte=today.day,
+                                                    fechahasta__day__gte=today.day,
+                                                    m2desde__lte=dato.area,
+                                                    m2hasta__gte=dato.area,
+                                                    habilitado=True,
+                                                    aplica='C'
+                                                    )
+                                    except IC_ImpuestoExoneracion.DoesNotExist:
+                                        oExonera=[]
+                                    if oExonera:
+                                        PorcentajeExonerado=float(oExonera.porcentaje)
+                                        ExoneraMulta=oExonera.multa
+                                        ExoneraRecargo=oExonera.recargo
+                                        ExoneraInteres=oExonera.interes
+                                        InmuebleExoneracon={
+                                                    'IC_ImpuestoExoneracion':oExonera.id,
+                                                    'fechadesde':oExonera.fechadesde,
+                                                    'fechahasta':oExonera.fechahasta,
+                                                    'descripcion':oExonera.descripcion,
+                                                    'exonerado':PorcentajeExonerado,
+                                                    'uso_id':dato.tipologia_categorizacion.id,
+                                                    'uso_descripcion':dato.tipologia_categorizacion.descripcion,
+                                                    'ExoneraMulta':ExoneraMulta,
+                                                    'ExoneraRecargo':ExoneraRecargo,
+                                                    'ExoneraInteres':ExoneraInteres
+                                                }
+                                        aExoneracion.append(InmuebleExoneracon)
+                                        banderaExonera=False
+                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                                 Alicuota=float(oTipologia.get(id=dato.tipologia_categorizacion.id).tarifa)
                                 Monto=float(dato.area)*(Alicuota*iAlicuota)*baseCalculoBs
@@ -2208,7 +2416,25 @@ def Impuesto_Inmueble(request):
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
                     numero=correlativo.NumeroIC_Impuesto
+                    #EXONERACION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if PorcentajeExonerado:
+                        if ExoneraMulta:
+                           tMulta=0
+                        if ExoneraRecargo:
+                           tRecargo=0
+                        if ExoneraInteres:
+                           tInteres=0
 
+                        tExonerado=tTotal+tMulta+tRecargo+tInteres
+                        #if not ExoneraMulta:
+                        #    tExonerado+=tMulta
+                        #if not ExoneraRecargo:
+                        #    tExonerado+=tRecargo
+                        #if not ExoneraInteres:
+                        #    tExonerado+=tInteres
+
+                        tExonerado=tExonerado*(PorcentajeExonerado/100)
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     Impuesto={
                         'numero':numero,
                         'zona':CategorizacionInmueble.codigo,
@@ -2221,19 +2447,22 @@ def Impuesto_Inmueble(request):
                         'fmulta':fMulta,
                         'frecargo':fRecargo,
                         'descuento':tDescuento,
-                        'total':tTotal+tMulta+tRecargo+tInteres,
+                        'total':tTotal+tMulta+tRecargo+tInteres-tExonerado,
                         'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
                         'flujo':Flujo.objects.filter(inmueble=oInmueble,estado='1').count() ,
                         'anioini':anioini,
                         'mesini':mesini,
                         'aniofin':request['anio'],
                         'mesfin':request['periodo'],
+                        'exonerado':tExonerado, #!!!!!!!!!!!!!!!!!!!! EXONERACION
                     }
                     datos={
                         'cabacera':Impuesto,
                         'detalle':aDetalle,
                         'descuento':aDescuento,
                         'interes':aInteres,
+                        'exonerado':aExoneracion, #!!!!!!!!!!!!!!!!!!!! EXONERACION
+                        'ObservacionRecibo':ObservacionRecibo
                     }
                     data.append(datos)
 
@@ -2249,6 +2478,7 @@ def Impuesto_Inmueble_Public(request):
         data = []
         aDetalle = []
         aDescuento = []
+        aExoneracion = []
         aInteres = []
         if (request['inmueble']):
             not_process=False
@@ -2353,6 +2583,12 @@ def Impuesto_Inmueble_Public(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
+                    if isinstance(ocupacion, list):
+                        # Es una lista
+                        ocupacion.sort(key=lambda x: x.tipologia_categorizacion.descripcion)
+                    else:
+                        # Es un QuerySet de Django
+                        ocupacion = ocupacion.order_by('tipologia_categorizacion__descripcion')
                     ##print('ocupacion',ocupacion)
                     CategorizacionInmueble=Categorizacion.categorizacion
                     oTipologia=Tipologia_Categorizacion.objects.filter(categorizacion=CategorizacionInmueble)
@@ -2380,6 +2616,14 @@ def Impuesto_Inmueble_Public(request):
                     tTotal=0
                     tTotalMora=0
                     tDescuento=0
+                    # PARA EXONERACIONES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    banderaExonera=True
+                    tExonerado=0
+                    PorcentajeExonerado=0
+                    ExoneraMulta=0
+                    ExoneraRecargo=0
+                    ExoneraInteres=0
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     while minimo_ano<=maximo_ano:
                         #para los años menores al actual, toma los periodos pendientes segun el historico
                         PeriodosCxc=oImpuestoPeriodo.filter(anio=minimo_ano).order_by('periodo')
@@ -2414,6 +2658,44 @@ def Impuesto_Inmueble_Public(request):
                                     # La fecha actual NO está entre las fechas del modelo
                                     ##print("La fecha actual NO está entre fecha_desde y fecha_hasta.")
                             for dato in ocupacion:
+                                ## evaluar banderas de exoneracion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                if banderaExonera:
+                                    try:
+                                        oExonera=IC_ImpuestoExoneracion.objects.get(
+                                                    tipologia_categorizacion=dato.tipologia_categorizacion.id,  #!!!!!!!!!!!!!!!!!!!!cambiar cuando sea categorizacion
+                                                    fechadesde__year__lte=today.year,
+                                                    fechahasta__year__gte=today.year,
+                                                    fechadesde__month__lte=today.month,
+                                                    fechahasta__month__gte=today.month,
+                                                    fechadesde__day__lte=today.day,
+                                                    fechahasta__day__gte=today.day,
+                                                    m2desde__lte=dato.area,
+                                                    m2hasta__gte=dato.area,
+                                                    habilitado=True,
+                                                    aplica='C'
+                                                    )
+                                    except IC_ImpuestoExoneracion.DoesNotExist:
+                                        oExonera=[] 
+                                    if oExonera:
+                                        PorcentajeExonerado=float(oExonera.porcentaje)
+                                        ExoneraMulta=oExonera.multa
+                                        ExoneraRecargo=oExonera.recargo
+                                        ExoneraInteres=oExonera.interes
+                                        InmuebleExoneracon={
+                                                    'IC_ImpuestoExoneracion':oExonera.id,
+                                                    'fechadesde':oExonera.fechadesde,
+                                                    'fechahasta':oExonera.fechahasta,
+                                                    'descripcion':oExonera.descripcion,
+                                                    'exonerado':PorcentajeExonerado,
+                                                    'uso_id':dato.tipologia_categorizacion.id,
+                                                    'uso_descripcion':dato.tipologia_categorizacion.descripcion,
+                                                    'ExoneraMulta':ExoneraMulta,
+                                                    'ExoneraRecargo':ExoneraRecargo,
+                                                    'ExoneraInteres':ExoneraInteres
+                                                }
+                                        aExoneracion.append(InmuebleExoneracon)
+                                        banderaExonera=False
+                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                                 Alicuota=float(oTipologia.get(id=dato.tipologia_categorizacion.id).tarifa)
                                 Monto=float(dato.area)*(Alicuota*iAlicuota)*baseCalculoBs
@@ -2607,7 +2889,25 @@ def Impuesto_Inmueble_Public(request):
                     #EndWhile
                     correlativo=Correlativo.objects.get(id=1)
                     numero=correlativo.NumeroIC_Impuesto
+                    #EXONERACION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if PorcentajeExonerado:
+                        if ExoneraMulta:
+                           tMulta=0
+                        if ExoneraRecargo:
+                           tRecargo=0
+                        if ExoneraInteres:
+                           tInteres=0
 
+                        tExonerado=tTotal+tMulta+tRecargo+tInteres
+                        #if not ExoneraMulta:
+                        #    tExonerado+=tMulta
+                        #if not ExoneraRecargo:
+                        #    tExonerado+=tRecargo
+                        #if not ExoneraInteres:
+                        #    tExonerado+=tInteres
+
+                        tExonerado=tExonerado*(PorcentajeExonerado/100)
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     Impuesto={
                         'numero':numero,
                         'zona':CategorizacionInmueble.codigo,
@@ -2620,19 +2920,21 @@ def Impuesto_Inmueble_Public(request):
                         'fmulta':fMulta,
                         'frecargo':fRecargo,
                         'descuento':tDescuento,
-                        'total':tTotal+tMulta+tRecargo+tInteres,
+                        'total':tTotal+tMulta+tRecargo+tInteres-tExonerado,
                         'BaseMultaRecargoInteres':tBaseMultaRecargoInteres,
                         'flujo':Flujo.objects.filter(inmueble=oInmueble,estado='1').count() ,
                         'anioini':anioini,
                         'mesini':mesini,
                         'aniofin':request['anio'],
                         'mesfin':request['periodo'],
+                        'exonerado':tExonerado, #!!!!!!!!!!!!!!!!!!!! EXONERACION
                     }
                     datos={
                         'cabacera':Impuesto,
                         'detalle':aDetalle,
                         'descuento':aDescuento,
                         'interes':aInteres,
+                        'exonerado':aExoneracion  #!!!!!!!!!!!!!!!!!!!! EXONERACION
                     }
                     data.append(datos)
 
@@ -2750,6 +3052,12 @@ def Impuesto_Inmueble_Public_old(request):
                                 ocupacion = list(ocupacion)  # Convertir "ocupacion" en una lista
                                 ocupacion.append(nuevo_objeto_construccion)  # Agregar el nuevo objeto a la lista
                             # En este punto, "ocupacion" contiene todos los objetos, incluido el nuevo objeto si se cumple la condición
+                    if isinstance(ocupacion, list):
+                        # Es una lista
+                        ocupacion.sort(key=lambda x: x.tipologia.descripcion)
+                    else:
+                        # Es un QuerySet de Django
+                        ocupacion = ocupacion.order_by('tipologia.descripcion')
                     ##print('ocupacion',ocupacion)
                     ZonaInmueble=Zona.zona
                     oTipologia=Tipologia.objects.filter(zona=ZonaInmueble)
@@ -2999,19 +3307,6 @@ def Impuesto_Inmueble_Public_old(request):
         return Response('Insert OK', status=status.HTTP_200_OK)
     else:
         return Response('Insert NOT Ok', status=status.HTTP_400_BAD_REQUEST)
-
-def Validar_Transferencia(request):
-    oTransfencia=CorridasBancarias.objects.get(id=request['id'])
-    try:
-        oPagoEstadoCuentaDetalle=PagoEstadoCuentaDetalle.objects.get(bancocuenta=oTransfencia.bancocuenta, 
-                                                fechapago=oTransfencia.fecha,
-                                                nro_referencia=oTransfencia.referencia,
-                                                monto=oTransfencia.monto)
-    except PagoEstadoCuentaDetalle.DoesNotExist:
-        oPagoEstadoCuentaDetalle=[]
-    return Response(oPagoEstadoCuentaDetalle, status=status.HTTP_200_OK)
-
-
 
 def Impuesto_Inmueble_Detalle(request):
     oCabacera=request['cabecera']
@@ -5709,9 +6004,13 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
     if importar=='BNC':
         print('ruta_archivo_excel',ruta)
         #ruta_archivo_excel = ruta
-
         datos_excel = pd.read_excel(ruta_archivo_excel, skiprows=15)
-        print(datos_excel)
+        
+        # se hace el siguiente artificio para que no inserte la referencia con un .0 al final
+        datos_excel['Referencia'].fillna(0, inplace=True)  # Replace NaN with 0
+        datos_excel['Referencia'] = datos_excel['Referencia'].astype(int) 
+        # fin artificio
+        #print(datos_excel)
         filas_filtradas = datos_excel[~datos_excel['Fecha'].str.contains("Totales")& (datos_excel['Haber'] > 0)] # se excluyen
         for index, row in filas_filtradas.iterrows():
             bancocuenta = BancoCuenta.objects.get(codigocuenta='51')
@@ -5719,7 +6018,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
             fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")  # Convierte al formato "YYYY-MM-DD"
             fecha_formateada = fecha_obj.strftime("%Y-%m-%d")  # Formatea como "YYYY-MM-DD"
             referencia = row['Referencia']
-            descripcion = row['Descripción']
+            #print(referencia)
+            descripcion = row['Descripción'] 
             monto = row['Haber']
             try:
                 if isinstance(monto, str):
@@ -5742,6 +6042,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                         monto=monto, 
                         defaults={
                             'situado': situado,
+                            'referencia_complemento': None,
+                            'observaciones': None,
                         }
                     )
                     if not creado:
@@ -5762,10 +6064,10 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
             referencia = row[1]
             descripcion = row[2]           
             monto = row[4] 
-            print(fecha)
-            print(referencia)
-            print(descripcion)
-            print(monto)
+            #print(fecha)
+            #print(referencia)
+            #print(descripcion)
+            #print(monto)
             try:
                 if isinstance(monto, str):
                     monto = float(monto.replace(',', ''))  # Intenta convertir la cadena a float
@@ -5785,6 +6087,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                         monto=monto, 
                         defaults={
                             'situado': situado,
+                            'referencia_complemento': None,
+                            'observaciones': None,
                         }
                     )
                     if not creado:
@@ -5827,6 +6131,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                         monto=monto, 
                         defaults={
                             'situado': situado,
+                            'referencia_complemento': None,
+                            'observaciones': None,
                         }
                     )
                     if not creado:
@@ -5868,6 +6174,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                         monto=monto, 
                         defaults={
                             'situado': situado,
+                            'referencia_complemento': None,
+                            'observaciones': None,
                         }
                     )
                     if not creado:
@@ -5910,6 +6218,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                         monto=monto, 
                         defaults={
                             'situado': situado,
+                            'referencia_complemento': None,
+                            'observaciones': None,
                         }
                     )
                     if not creado:
@@ -5961,6 +6271,8 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                         monto=monto, 
                         defaults={
                             'situado': situado,
+                            'referencia_complemento': None,
+                            'observaciones': None,
                         }
                     )
                     if not creado:
@@ -5971,6 +6283,28 @@ def importar_corrida_bancaria(archivo,pestana,ruta):
                     ExcelDocumentLOG.objects.create(pestana=importar, codigo=referencia, error=e)
 
         print("Datos importados exitosamente.")
+    #INICIO DE LA CORRECCION DE REFERENCIAS REPETIDAS
+    # se actualiza referencia_complento con la concatenacion de referencia mas un correlativo del modelo Correlativo
+    corridas_repetidas = CorridasBancarias.objects.filter(
+        referencia__in=CorridasBancarias.objects.values('referencia')
+        .annotate(count=Count('referencia'))
+        .filter(count__gt=1, referencia_complemento__isnull=True)
+        .values_list('referencia', flat=True)
+    ).values('id', 'referencia').order_by('referencia')
+    #print('corridas_repetidas',corridas_repetidas)
+    correlativo=Correlativo.objects.get(id=1)
+    contador=correlativo.Numero_Referencia_Bancaria
+    for corrida in corridas_repetidas:
+        contador += 1
+        corrida_obj = CorridasBancarias.objects.get(id=corrida['id'])
+        corrida_obj.referencia_complemento = f"{corrida['referencia']}-{contador}"
+        corrida_obj.save()
+    correlativo.Numero_Referencia_Bancaria=contador
+    correlativo.save()
+    # FIN DE LA CORRECCION
+    # UNA VEZ CORREGIDAS LAS REFERENCIAS REPETIDAS SE PROCEDE A COLOCAR LA MISMA REFERENCIA EN EN CAMPO REFERENCIA_COMPLEMENTO
+    CorridasBancarias.objects.filter(referencia_complemento__isnull=True).update(referencia_complemento=F('referencia'))
+
     return Response('Datos importados exitosamente.',status=status.HTTP_200_OK) 
 
 

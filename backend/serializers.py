@@ -531,6 +531,12 @@ class InmueblePropietariosSerializer(serializers.ModelSerializer):
     class Meta:
         model = InmueblePropietarios
         fields = '__all__'
+    fecha_de_compra = serializers.SerializerMethodField('get_fecha')
+    def get_fecha(self, obj):
+      if obj.fecha_compra is not None:
+          formatted_date = obj.fecha_compra.strftime("%d/%m/%Y")
+          return f"{formatted_date}"
+      return "" 
 
 class InmueblePropiedadSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1041,28 +1047,34 @@ class PagoEstadoCuentaSerializer(serializers.ModelSerializer):
 
     liquidacion_estadocuenta_numero= serializers.SerializerMethodField('loadestadocuenta_numero')
     def loadestadocuenta_numero(self, obj):
-      if obj.liquidacion.estadocuenta:
+      if obj.liquidacion:
         return obj.liquidacion.estadocuenta.numero
       return None
 
     liquidacion_tipoflujo_descripcion= serializers.SerializerMethodField('loaddescripcion_flujo')
     def loaddescripcion_flujo(self, obj):
-      if obj.liquidacion.tipoflujo:
+      if obj.liquidacion:
         return obj.liquidacion.tipoflujo.descripcion
       return None
    
     liquidacion_propietario_nombre= serializers.SerializerMethodField('loadnombre_propietario')
     def loadnombre_propietario(self, obj):
-      if obj.liquidacion.propietario:
+      if obj.liquidacion:
         return obj.liquidacion.propietario.nombre
       return None
        
     liquidacion_inmueble_numero_expediente= serializers.SerializerMethodField('loadpexpediente')
     def loadpexpediente(self, obj):
-      if obj.liquidacion.inmueble:
-        return obj.liquidacion.inmueble.numero_expediente
+      if obj.liquidacion:
+        if obj.liquidacion.inmueble:
+          return obj.liquidacion.inmueble.numero_expediente
       return None
 
+    fecha_recibo= serializers.SerializerMethodField('loadfecha_recibo')
+    def loadfecha_recibo(self, obj):
+      if obj.fecha:
+        return obj.fecha
+      return None
 
 
     fecha = serializers.SerializerMethodField('get_fecha')
@@ -1333,6 +1345,43 @@ class IC_ImpuestoDescuentoSerializer(serializers.ModelSerializer):
         model = IC_ImpuestoDescuento
         fields = '__all__' 
 
+class IC_ImpuestoExoneracionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IC_ImpuestoExoneracion
+        fields = '__all__' 
+    zona_codigo= serializers.SerializerMethodField('loadzona_codigo')
+    def loadzona_codigo(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.zona.codigo
+        return None
+    uso_zona_codigo= serializers.SerializerMethodField('loaduso_codigo')
+    def loaduso_codigo(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.codigo
+        return None
+    uso_zona_descripcion= serializers.SerializerMethodField('loaduso_descripcion')
+    def loaduso_descripcion(self, obj):
+        if obj.tipologia:
+          return obj.tipologia.descripcion
+        return None
+    categorizacion_codigo= serializers.SerializerMethodField('loadcategorizacion_codigoC')
+    def loadcategorizacion_codigoC(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.categorizacion.codigo
+        return None
+    
+    uso_categorizacion_codigo= serializers.SerializerMethodField('loaduso_codigoC')
+    def loaduso_codigoC(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.codigo
+        return None
+    
+    uso_categorizacion_descripcion= serializers.SerializerMethodField('loaduso_descripcionC')
+    def loaduso_descripcionC(self, obj):
+        if obj.tipologia_categorizacion:
+          return obj.tipologia_categorizacion.descripcion
+        return None    
+
 class IC_ImpuestoDetalleDescuentosSerializer(serializers.ModelSerializer):
     class Meta:
         model = IC_ImpuestoDetalleDescuentos
@@ -1432,7 +1481,34 @@ class ExcelDocumentLOGSerializer(serializers.ModelSerializer):
 class CorridasBancariasSerializer(serializers.ModelSerializer):
     class Meta:
         model = CorridasBancarias
-        fields = '__all__'
+        fields = '__all__'  
+
+    banco_nombre= serializers.SerializerMethodField('loadbanco_nombre')
+    def loadbanco_nombre(self, obj):
+      if obj.bancocuenta:
+        return obj.bancocuenta.banco.descripcion
+      return None
+
+    banco_codigo= serializers.SerializerMethodField('loadbanco_codigo')
+    def loadbanco_codigo(self, obj):
+      if obj.bancocuenta:
+        return obj.bancocuenta.banco.codigo
+      return None
+    
+    banco_cuenta= serializers.SerializerMethodField('loadbanco_cuenta')
+    def loadbanco_cuenta(self, obj):
+      if obj.bancocuenta:
+        return obj.bancocuenta.numero
+      return None
+
+    banco_cuenta_corta= serializers.SerializerMethodField('loadbanco_cuenta_corta')
+    def loadbanco_cuenta_corta(self, obj):
+      if obj.bancocuenta:
+        cuentacorta = obj.bancocuenta.numero
+        cuentacorta = cuentacorta.replace("-","")
+        return cuentacorta[-4:]
+      return None
+    
     fecha_corrida = serializers.SerializerMethodField('get_procesa_fecha')
     def get_procesa_fecha(self, obj):
       if obj.fecha is not None:

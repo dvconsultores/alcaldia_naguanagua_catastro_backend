@@ -96,6 +96,7 @@ router.register(r'ic_impuestocorrecciones', views.IC_ImpuestoCorreccionesViewset
 router.register(r'ic_impuestocorreccionesdetalle', views.IC_ImpuestoCorreccionesDetalleViewset,basename='ic_impuestocorreccionesDetalle')
 router.register(r'ic_impuestoperiodo', views.IC_ImpuestoPeriodoViewset,basename='ic_impuestoperiodo')
 router.register(r'ic_impuestodescuento', views.IC_ImpuestoDescuentoViewset,basename='ic_impuestodescuento')
+router.register(r'ic_impuestoexoneracion', views.IC_ImpuestoExoneracionViewset,basename='ic_impuestoexoneracion')
 router.register(r'ic_impuestodetalledescuentos', views.IC_ImpuestoDetalleDescuentosViewset,basename='ic_impuestodetalledescuentos')
 router.register(r'ic_impuestodetallemora', views.IC_ImpuestoDetalleMoraViewset,basename='ic_impuestodetallemora')
 router.register(r'ae_actividadeconomica', views.AE_ActividadEconomicaViewset,basename='ae_actividadeconomica')
@@ -129,7 +130,6 @@ urlpatterns = [
     path('DatosInmueblesPublic/', views.DatosInmueblesPublic),
     path('CertificaFicha/', views.CertificaFicha),
     path('ImpuestoInmueblePago/', views.ImpuestoInmueblePago),
-    path('ValidarTransferencia/', views.ValidarTransferencia),
     path('ImpuestoInmuebleDetalle/', views.ImpuestoInmuebleDetalle),
     path('importardatosdesdeexcel', views.importardatosdesdeexcel),
     path('importarcorridabancaria', views.importarcorridabancaria),
@@ -144,6 +144,8 @@ urlpatterns = [
     path('filtrar_patentes/', views.filtrar_patentes, name='filtrar_patentes'),
     path('crearpatente/', views.CrearPatente),
     path('estadisticaflujo/', views.EstadisticaFlujo),
+    path('corridaancaria-sin-pago/', views.CorridasBancariaSinPagoView.as_view()),
+    path('corridaancaria-sin-pago-recaudos/', views.CorridasBancariaSinPagoRecaudosView.as_view()),
  
 
 ]
